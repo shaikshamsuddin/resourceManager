@@ -1,94 +1,113 @@
-body, .app-root {
+body {
   font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
   background: #f7f8fa;
   margin: 0;
   padding: 0;
 }
 
-.app-container {
-  max-width: 700px;
-  margin: 40px auto;
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  padding: 32px 36px 28px 36px;
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 40px 0 40px;
 }
-
-h2 {
-  color: #2d6cdf;
-  margin-bottom: 18px;
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #6d28d9;
   letter-spacing: 1px;
 }
+.dashboard-search {
+  min-width: 320px;
+}
 
-label {
+.dashboard-summary {
+  display: flex;
+  gap: 24px;
+  padding: 24px 40px 0 40px;
+}
+.summary-card {
+  flex: 1;
+  min-width: 180px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(109,40,217,0.07);
+  padding: 18px 24px 14px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.summary-title {
+  font-size: 1.1rem;
+  color: #6d28d9;
   font-weight: 500;
-  margin-right: 10px;
+}
+.summary-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 8px 0 2px 0;
+  color: #222b45;
+}
+.summary-desc {
+  font-size: 0.95rem;
+  color: #888;
 }
 
-select, input[type="text"], input[type="number"], input[type="password"] {
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  padding: 7px 10px;
-  margin: 0 8px 10px 0;
-  font-size: 1rem;
-  background: #fafdff;
-  transition: border 0.2s;
+.main-content {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
 }
-
-select:focus, input:focus {
-  border: 1.5px solid #2d6cdf;
-  outline: none;
+.server-card {
+  width: 520px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(109,40,217,0.10);
+  padding: 32px 36px 28px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
-
+.server-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 8px;
+}
+.server-select {
+  min-width: 220px;
+}
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #6d28d9;
+  margin-bottom: 8px;
+}
+.pod-list {
+  margin-bottom: 12px;
+}
 .pod-card {
+  margin-bottom: 14px;
   background: #fafdff;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(45,108,223,0.07);
+  box-shadow: 0 2px 8px rgba(109,40,217,0.07);
   border: 1px solid #e3e8ee;
-  margin: 12px 0;
   padding: 16px 20px;
-  transition: box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-.pod-card:hover {
-  box-shadow: 0 4px 16px rgba(45,108,223,0.13);
-}
-
-button {
-  background: linear-gradient(90deg, #2d6cdf 60%, #4fd1c5 100%);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 18px;
+.pod-info {
   font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  margin-top: 8px;
-  box-shadow: 0 2px 6px rgba(45,108,223,0.08);
-  transition: background 0.2s, box-shadow 0.2s;
+  color: #222b45;
 }
-button:hover {
-  background: linear-gradient(90deg, #4fd1c5 0%, #2d6cdf 100%);
-  box-shadow: 0 4px 12px rgba(45,108,223,0.16);
-}
-
-form {
+.add-pod-form {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 14px;
   margin-bottom: 10px;
   align-items: center;
 }
-
-input::placeholder {
-  color: #b0b8c1;
-  opacity: 1;
-}
-
-h3 {
-  margin-top: 32px;
-  color: #222b45;
-}
-
 .message {
   color: #22c55e;
   font-weight: 500;
