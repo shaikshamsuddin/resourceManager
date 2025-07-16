@@ -1,0 +1,63 @@
+<div class="dashboard-header">
+  <div class="dashboard-title">Resource Manager</div>
+  <input class="dashboard-search" type="text" placeholder="Search servers, pods...">
+</div>
+
+<div class="dashboard-summary">
+  <div class="summary-card">
+    <div class="summary-title">Total Servers</div>
+    <div class="summary-value">{{ servers.length }}</div>
+    <div class="summary-desc">online</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-title">Total Pods</div>
+    <div class="summary-value">{{ servers.reduce((acc, s) => acc + (s.pods?.length || 0), 0) }}</div>
+    <div class="summary-desc">Currently running</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-title">Allocated CPU</div>
+    <div class="summary-value">-</div>
+    <div class="summary-desc">Cores available</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-title">Allocated Memory</div>
+    <div class="summary-value">-</div>
+    <div class="summary-desc">GB available</div>
+  </div>
+</div>
+
+<div class="app-container">
+  <h2>Resource Manager</h2>
+  <div *ngIf="servers.length">
+    <label>Server:
+      <select [(ngModel)]="selectedServer" [compareWith]="compareServers">
+        <option *ngFor="let s of servers" [ngValue]="s">{{s.name}}</option>
+      </select>
+    </label>
+  </div>
+
+  <h3>Pods</h3>
+  <div *ngIf="selectedServer">
+    <div *ngFor="let pod of selectedServer.pods" class="pod-card">
+      <b>{{pod.pod_id}}</b> ({{pod.status}})
+      <div>Owner: {{pod.owner}}</div>
+      <div>GPUs: {{pod.requested.gpus}}, RAM: {{pod.requested.ram_gb}} GB, Storage: {{pod.requested.storage_gb}} GB</div>
+      <button (click)="deletePod(pod)">Delete</button>
+    </div>
+  </div>
+
+  <h3>Add Pod</h3>
+  <form (ngSubmit)="createPod()">
+    <input placeholder="Pod Name" [(ngModel)]="newPod.PodName" name="PodName" required>
+    <input placeholder="GPUs" type="number" [(ngModel)]="newPod.Resources.gpus" name="gpus" required>
+    <input placeholder="RAM (GB)" type="number" [(ngModel)]="newPod.Resources.ram_gb" name="ram_gb" required>
+    <input placeholder="Storage (GB)" type="number" [(ngModel)]="newPod.Resources.storage_gb" name="storage_gb" required>
+    <input placeholder="Image URL" [(ngModel)]="newPod.image_url" name="image_url" required>
+    <input placeholder="K8s Machine IP" [(ngModel)]="newPod.machine_ip" name="machine_ip" required>
+    <input placeholder="K8s Username" [(ngModel)]="newPod.username" name="username" required>
+    <input placeholder="K8s Password" [(ngModel)]="newPod.password" name="password" required>
+    <button type="submit">Create Pod</button>
+  </form>
+
+  <div *ngIf="message" class="message">{{message}}</div>
+</div>
