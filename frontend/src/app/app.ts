@@ -123,4 +123,8 @@ export class App {
       }
     });
   }
+
+  get totalPods() {
+    return this.servers.reduce((acc: number, s: any) => acc + (s.pods?.length || 0), 0);
+  }
 }

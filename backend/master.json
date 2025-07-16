@@ -38,7 +38,7 @@
         }
       }
     ]
-  }
+  },
   {
     "id": "server-02",
     "name": "gpu-node-h100-b",
