@@ -11,14 +11,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddPodDialogComponent } from './add-pod-dialog/add-pod-dialog';
+import { MatTableModule } from '@angular/material/table';
 
 @Component({
   selector: 'app-root',
   imports: [
     CommonModule, FormsModule, HttpClientModule, RouterOutlet,
     MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatDividerModule,
-    MatDialogModule,
-    AddPodDialogComponent
+    MatDialogModule, MatTableModule, AddPodDialogComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css'
@@ -41,18 +41,51 @@ export class App {
     password: ''
   };
   message = '';
+  searchTerm: string = '';
+  filteredServers: any[] = [];
+  filteredPods: any[] = [];
+  consistencyMessage: string = '';
+  consistencyCheckInterval: any;
 
   constructor(private http: HttpClient, private dialog: MatDialog) {
     this.fetchServers();
+  }
+
+  ngOnInit() {
+    this.onSearch();
+    this.startConsistencyPolling();
+  }
+
+  ngOnDestroy() {
+    if (this.consistencyCheckInterval) {
+      clearInterval(this.consistencyCheckInterval);
+    }
+  }
+
+  startConsistencyPolling() {
+    this.checkConsistency();
+    this.consistencyCheckInterval = setInterval(() => this.checkConsistency(), 10000);
+  }
+
+  checkConsistency() {
+    this.http.get<any>('http://127.0.0.1:5000/consistency-check').subscribe({
+      next: (res) => {
+        this.consistencyMessage = res.message;
+      },
+      error: (err) => {
+        this.consistencyMessage = err?.error?.message || 'data inconsistency error';
+      }
+    });
   }
 
   fetchServers() {
     this.http.get<any[]>('http://127.0.0.1:5000/servers').subscribe({
       next: (data) => {
         this.servers = data;
-        if (this.servers.length > 0) {
+        if (this.servers.length > 0 && !this.selectedServer) {
           this.selectedServer = this.servers[0];
         }
+        this.onSearch();
       },
       error: () => {
         this.message = 'Failed to load servers from backend.';
@@ -116,7 +149,7 @@ export class App {
   openAddPodDialog() {
     const dialogRef = this.dialog.open(AddPodDialogComponent, {
       width: '480px',
-      data: { servers: this.servers }
+      data: { selectedServer: this.selectedServer }
     });
     dialogRef.componentInstance.podCreated.subscribe((podData: any) => {
       this.createPodFromDialog(podData);
@@ -124,9 +157,16 @@ export class App {
   }
 
   createPodFromDialog(podData: any) {
-    this.http.post('http://127.0.0.1:5000/create', podData).subscribe({
+    // Use selectedServer if not already set in podData
+    const serverId = podData.ServerName || (this.selectedServer && this.selectedServer.id);
+    if (!serverId) {
+      this.message = 'Please select a server to deploy the pod.';
+      return;
+    }
+    const payload = { ...podData, ServerName: serverId };
+    this.http.post('http://127.0.0.1:5000/create', payload).subscribe({
       next: () => {
-        this.message = `Pod ${podData.PodName} created.`;
+        this.message = `Pod ${payload.PodName} created.`;
         this.fetchServers();
         setTimeout(() => this.message = '', 3000);
       },
@@ -160,19 +200,69 @@ export class App {
     });
   }
 
+  get totalServers() {
+    return this.servers.length;
+  }
+
   get totalPods() {
     return this.servers.reduce((acc: number, s: any) => acc + (s.pods?.length || 0), 0);
   }
 
-  get allocatedCPU() {
-    return this.servers.reduce((acc: number, s: any) =>
-      acc + ((s.resources?.total?.gpus || 0) - (s.resources?.available?.gpus || 0)), 0
+  get totalCPUs() {
+    return this.servers.reduce((acc: number, s: any) => acc + (s.resources?.total?.cpus || 0), 0);
+  }
+
+  get allocatedCPUs() {
+    return Math.max(
+      0,
+      this.servers.reduce((acc: number, s: any) => acc + ((s.resources?.total?.cpus || 0) - (s.resources?.available?.cpus || 0)), 0)
     );
   }
 
-  get allocatedMemory() {
-    return this.servers.reduce((acc: number, s: any) =>
-      acc + ((s.resources?.total?.ram_gb || 0) - (s.resources?.available?.ram_gb || 0)), 0
+  get totalGPUs() {
+    return this.servers.reduce((acc: number, s: any) => acc + (s.resources?.total?.gpus || 0), 0);
+  }
+
+  get allocatedGPUs() {
+    return Math.max(
+      0,
+      this.servers.reduce((acc: number, s: any) => acc + ((s.resources?.total?.gpus || 0) - (s.resources?.available?.gpus || 0)), 0)
     );
+  }
+
+  get totalRAM() {
+    return this.servers.reduce((acc: number, s: any) => acc + (s.resources?.total?.ram_gb || 0), 0);
+  }
+
+  get availableRAM() {
+    return this.servers.reduce((acc: number, s: any) => acc + (s.resources?.available?.ram_gb || 0), 0);
+  }
+
+  get allPods() {
+    // Flatten all pods from all servers, add serverName property
+    return this.servers.flatMap((s: any) => (s.pods || []).map((p: any) => ({ ...p, serverName: s.name })));
+  }
+
+  onSearch() {
+    const term = this.searchTerm.trim().toLowerCase();
+    if (!term) {
+      this.filteredServers = this.servers;
+      this.filteredPods = this.allPods;
+      return;
+    }
+    this.filteredServers = this.servers.filter((s: any) =>
+      s.name?.toLowerCase().includes(term) ||
+      s.ip?.toLowerCase().includes(term) ||
+      (s.status || '').toLowerCase().includes(term)
+    );
+    this.filteredPods = this.allPods.filter((p: any) =>
+      p.pod_id?.toLowerCase().includes(term) ||
+      p.serverName?.toLowerCase().includes(term) ||
+      (p.status || '').toLowerCase().includes(term)
+    );
+  }
+
+  selectServer(server: any) {
+    this.selectedServer = server;
   }
 }

@@ -3,80 +3,130 @@
     "id": "server-01",
     "name": "gpu-node-h100-a",
     "resources": {
-      "total": {
-        "gpus": 8,
-        "ram_gb": 512,
-        "storage_gb": 2048
-      },
-      "available": {
-        "gpus": 4,
-        "ram_gb": 256,
-        "storage_gb": 1348
-      }
+      "total": { "gpus": 8, "ram_gb": 512, "storage_gb": 2048 },
+      "available": { "gpus": 2, "ram_gb": 128, "storage_gb": 548 }
     },
     "pods": [
-      {
-        "pod_id": "pod-001",
-        "owner": "team-a",
-        "status": "running",
-        "timestamp": "2025-06-22T15:00:00Z",
-        "requested": {
-          "gpus": 2,
-          "ram_gb": 128,
-          "storage_gb": 500
-        }
-      },
-      {
-        "pod_id": "pod-004",
-        "owner": "team-a",
-        "status": "running",
-        "timestamp": "2025-06-23T08:45:00Z",
-        "requested": {
-          "gpus": 2,
-          "ram_gb": 128,
-          "storage_gb": 200
-        }
-      }
+      { "pod_id": "pod-101", "owner": "team-a", "status": "running", "timestamp": "2025-06-22T10:00:00Z", "requested": { "gpus": 2, "ram_gb": 128, "storage_gb": 500 } },
+      { "pod_id": "pod-102", "owner": "team-b", "status": "running", "timestamp": "2025-06-22T11:00:00Z", "requested": { "gpus": 2, "ram_gb": 128, "storage_gb": 500 } },
+      { "pod_id": "pod-103", "owner": "team-c", "status": "running", "timestamp": "2025-06-22T12:00:00Z", "requested": { "gpus": 2, "ram_gb": 128, "storage_gb": 500 } }
     ]
   },
   {
     "id": "server-02",
     "name": "gpu-node-h100-b",
     "resources": {
-      "total": {
-        "gpus": 8,
-        "ram_gb": 1024,
-        "storage_gb": 4096
-      },
-      "available": {
-        "gpus": 16,
-        "ram_gb": 1024,
-        "storage_gb": 4096
-      }
+      "total": { "gpus": 8, "ram_gb": 1024, "storage_gb": 4096 },
+      "available": { "gpus": 2, "ram_gb": 400, "storage_gb": 1096 }
     },
     "pods": [
-      {
-        "pod_id": "pod-011",
-        "owner": "team-c",
-        "status": "running",
-        "timestamp": "2025-06-22T15:00:00Z",
-        "requested": {
-          "gpus": 2,
-          "ram_gb": 128,
-          "storage_gb": 500
-        }
-      },
-      {
-        "pod_id": "pod-055",
-        "owner": "team-d",
-        "status": "running",
-        "timestamp": "2025-06-23T08:45:00Z",
-        "requested": {
-          "gpus": 2,
-          "ram_gb": 128,
-          "storage_gb": 200
-        }
-      }
+      { "pod_id": "pod-201", "owner": "team-d", "status": "running", "timestamp": "2025-06-23T08:45:00Z", "requested": { "gpus": 2, "ram_gb": 200, "storage_gb": 1000 } },
+      { "pod_id": "pod-202", "owner": "team-e", "status": "running", "timestamp": "2025-06-23T09:00:00Z", "requested": { "gpus": 2, "ram_gb": 200, "storage_gb": 1000 } },
+      { "pod_id": "pod-203", "owner": "team-f", "status": "running", "timestamp": "2025-06-23T09:15:00Z", "requested": { "gpus": 2, "ram_gb": 224, "storage_gb": 1000 } }
+    ]
+  },
+  {
+    "id": "server-03",
+    "name": "aws-gpu-rtx-4090",
+    "resources": {
+      "total": { "gpus": 4, "ram_gb": 256, "storage_gb": 2048 },
+      "available": { "gpus": 1, "ram_gb": 56, "storage_gb": 548 }
+    },
+    "pods": [
+      { "pod_id": "pod-301", "owner": "team-g", "status": "running", "timestamp": "2025-06-24T10:00:00Z", "requested": { "gpus": 1, "ram_gb": 100, "storage_gb": 500 } },
+      { "pod_id": "pod-302", "owner": "team-h", "status": "running", "timestamp": "2025-06-24T11:00:00Z", "requested": { "gpus": 1, "ram_gb": 50, "storage_gb": 500 } },
+      { "pod_id": "pod-303", "owner": "team-i", "status": "running", "timestamp": "2025-06-24T12:00:00Z", "requested": { "gpus": 1, "ram_gb": 50, "storage_gb": 500 } }
+    ]
+  },
+  {
+    "id": "server-04",
+    "name": "azure-gpu-l40s",
+    "resources": {
+      "total": { "gpus": 8, "ram_gb": 512, "storage_gb": 4096 },
+      "available": { "gpus": 2, "ram_gb": 112, "storage_gb": 1096 }
+    },
+    "pods": [
+      { "pod_id": "pod-401", "owner": "team-j", "status": "running", "timestamp": "2025-06-25T10:00:00Z", "requested": { "gpus": 2, "ram_gb": 100, "storage_gb": 1000 } },
+      { "pod_id": "pod-402", "owner": "team-k", "status": "running", "timestamp": "2025-06-25T11:00:00Z", "requested": { "gpus": 2, "ram_gb": 150, "storage_gb": 1000 } },
+      { "pod_id": "pod-403", "owner": "team-l", "status": "running", "timestamp": "2025-06-25T12:00:00Z", "requested": { "gpus": 2, "ram_gb": 150, "storage_gb": 1000 } }
+    ]
+  },
+  {
+    "id": "server-05",
+    "name": "gcp-gpu-h100-sxm",
+    "resources": {
+      "total": { "gpus": 8, "ram_gb": 1024, "storage_gb": 8192 },
+      "available": { "gpus": 2, "ram_gb": 224, "storage_gb": 3192 }
+    },
+    "pods": [
+      { "pod_id": "pod-501", "owner": "team-m", "status": "running", "timestamp": "2025-06-26T10:00:00Z", "requested": { "gpus": 2, "ram_gb": 200, "storage_gb": 1500 } },
+      { "pod_id": "pod-502", "owner": "team-n", "status": "running", "timestamp": "2025-06-26T11:00:00Z", "requested": { "gpus": 2, "ram_gb": 300, "storage_gb": 1500 } },
+      { "pod_id": "pod-503", "owner": "team-o", "status": "running", "timestamp": "2025-06-26T12:00:00Z", "requested": { "gpus": 2, "ram_gb": 300, "storage_gb": 1500 } }
+    ]
+  },
+  {
+    "id": "server-06",
+    "name": "lambda-gpu-rtx-6000-ada",
+    "resources": {
+      "total": { "gpus": 4, "ram_gb": 256, "storage_gb": 2048 },
+      "available": { "gpus": 1, "ram_gb": 56, "storage_gb": 548 }
+    },
+    "pods": [
+      { "pod_id": "pod-601", "owner": "team-p", "status": "running", "timestamp": "2025-06-27T10:00:00Z", "requested": { "gpus": 1, "ram_gb": 100, "storage_gb": 500 } },
+      { "pod_id": "pod-602", "owner": "team-q", "status": "running", "timestamp": "2025-06-27T11:00:00Z", "requested": { "gpus": 1, "ram_gb": 50, "storage_gb": 500 } },
+      { "pod_id": "pod-603", "owner": "team-r", "status": "running", "timestamp": "2025-06-27T12:00:00Z", "requested": { "gpus": 1, "ram_gb": 50, "storage_gb": 500 } }
+    ]
+  },
+  {
+    "id": "server-07",
+    "name": "aws-cpu-c5n-18xlarge",
+    "resources": {
+      "total": { "gpus": 0, "ram_gb": 192, "storage_gb": 2000, "cpus": 72 },
+      "available": { "gpus": 0, "ram_gb": 12, "storage_gb": 500, "cpus": 12 }
+    },
+    "pods": [
+      { "pod_id": "pod-701", "owner": "team-s", "status": "running", "timestamp": "2025-06-28T10:00:00Z", "requested": { "cpus": 20, "ram_gb": 60, "storage_gb": 500 } },
+      { "pod_id": "pod-702", "owner": "team-t", "status": "running", "timestamp": "2025-06-28T11:00:00Z", "requested": { "cpus": 20, "ram_gb": 60, "storage_gb": 500 } },
+      { "pod_id": "pod-703", "owner": "team-u", "status": "running", "timestamp": "2025-06-28T12:00:00Z", "requested": { "cpus": 20, "ram_gb": 60, "storage_gb": 500 } }
+    ]
+  },
+  {
+    "id": "server-08",
+    "name": "azure-cpu-d32-v5",
+    "resources": {
+      "total": { "gpus": 0, "ram_gb": 128, "storage_gb": 1000, "cpus": 32 },
+      "available": { "gpus": 0, "ram_gb": 8, "storage_gb": 100, "cpus": 2 }
+    },
+    "pods": [
+      { "pod_id": "pod-801", "owner": "team-v", "status": "running", "timestamp": "2025-06-29T10:00:00Z", "requested": { "cpus": 10, "ram_gb": 40, "storage_gb": 300 } },
+      { "pod_id": "pod-802", "owner": "team-w", "status": "running", "timestamp": "2025-06-29T11:00:00Z", "requested": { "cpus": 10, "ram_gb": 40, "storage_gb": 300 } },
+      { "pod_id": "pod-803", "owner": "team-x", "status": "running", "timestamp": "2025-06-29T12:00:00Z", "requested": { "cpus": 10, "ram_gb": 40, "storage_gb": 300 } }
+    ]
+  },
+  {
+    "id": "server-09",
+    "name": "gcp-cpu-n2-standard-32",
+    "resources": {
+      "total": { "gpus": 0, "ram_gb": 128, "storage_gb": 1000, "cpus": 32 },
+      "available": { "gpus": 0, "ram_gb": 8, "storage_gb": 100, "cpus": 2 }
+    },
+    "pods": [
+      { "pod_id": "pod-901", "owner": "team-y", "status": "running", "timestamp": "2025-06-30T10:00:00Z", "requested": { "cpus": 10, "ram_gb": 40, "storage_gb": 300 } },
+      { "pod_id": "pod-902", "owner": "team-z", "status": "running", "timestamp": "2025-06-30T11:00:00Z", "requested": { "cpus": 10, "ram_gb": 40, "storage_gb": 300 } },
+      { "pod_id": "pod-903", "owner": "team-aa", "status": "running", "timestamp": "2025-06-30T12:00:00Z", "requested": { "cpus": 10, "ram_gb": 40, "storage_gb": 300 } }
+    ]
+  },
+  {
+    "id": "server-10",
+    "name": "lambda-cpu-a10g",
+    "resources": {
+      "total": { "gpus": 0, "ram_gb": 64, "storage_gb": 500, "cpus": 16 },
+      "available": { "gpus": 0, "ram_gb": 4, "storage_gb": 50, "cpus": 1 }
+    },
+    "pods": [
+      { "pod_id": "pod-1001", "owner": "team-ab", "status": "running", "timestamp": "2025-07-01T10:00:00Z", "requested": { "cpus": 5, "ram_gb": 20, "storage_gb": 150 } },
+      { "pod_id": "pod-1002", "owner": "team-ac", "status": "running", "timestamp": "2025-07-01T11:00:00Z", "requested": { "cpus": 5, "ram_gb": 20, "storage_gb": 150 } },
+      { "pod_id": "pod-1003", "owner": "team-ad", "status": "running", "timestamp": "2025-07-01T12:00:00Z", "requested": { "cpus": 5, "ram_gb": 20, "storage_gb": 150 } }
     ]
   }
 ]

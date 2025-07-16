@@ -281,5 +281,30 @@ def update_pod():
     save_data(data)
     return jsonify({'message': 'Pod updated', 'pod': pod})
 
+@app.route('/consistency-check', methods=['GET'])
+def consistency_check():
+    with open('master.json') as f:
+        servers = json.load(f)
+    errors = []
+    for server in servers:
+        total = server['resources']['total']
+        available = server['resources']['available']
+        # Check available <= total for each resource
+        for key in total:
+            if available.get(key, 0) > total.get(key, 0):
+                errors.append(f"Server {server['name']}: available {key} > total {key}")
+        # Check sum of pod resources <= total for each resource
+        pod_sums = {}
+        for pod in server.get('pods', []):
+            for k, v in pod.get('requested', {}).items():
+                pod_sums[k] = pod_sums.get(k, 0) + v
+        for key in total:
+            if pod_sums.get(key, 0) > total.get(key, 0):
+                errors.append(f"Server {server['name']}: sum of pod {key} > total {key}")
+    if errors:
+        return jsonify({"status": "error", "message": "data inconsistency error", "details": errors}), 400
+    else:
+        return jsonify({"status": "ok", "message": "all data seems consistent"})
+
 if __name__ == '__main__':
     app.run(debug=True)
