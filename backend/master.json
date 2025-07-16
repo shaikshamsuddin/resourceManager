@@ -45,13 +45,13 @@
     "resources": {
       "total": {
         "gpus": 8,
-        "ram_gb": 512,
-        "storage_gb": 2048
+        "ram_gb": 1024,
+        "storage_gb": 4096
       },
       "available": {
-        "gpus": 4,
-        "ram_gb": 256,
-        "storage_gb": 1348
+        "gpus": 16,
+        "ram_gb": 1024,
+        "storage_gb": 4096
       }
     },
     "pods": [
