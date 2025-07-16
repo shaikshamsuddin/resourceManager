@@ -1,0 +1,98 @@
+body, .app-root {
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  background: #f7f8fa;
+  margin: 0;
+  padding: 0;
+}
+
+.app-container {
+  max-width: 700px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 32px 36px 28px 36px;
+}
+
+h2 {
+  color: #2d6cdf;
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+}
+
+label {
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+select, input[type="text"], input[type="number"], input[type="password"] {
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 7px 10px;
+  margin: 0 8px 10px 0;
+  font-size: 1rem;
+  background: #fafdff;
+  transition: border 0.2s;
+}
+
+select:focus, input:focus {
+  border: 1.5px solid #2d6cdf;
+  outline: none;
+}
+
+.pod-card {
+  background: #fafdff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(45,108,223,0.07);
+  border: 1px solid #e3e8ee;
+  margin: 12px 0;
+  padding: 16px 20px;
+  transition: box-shadow 0.2s;
+}
+.pod-card:hover {
+  box-shadow: 0 4px 16px rgba(45,108,223,0.13);
+}
+
+button {
+  background: linear-gradient(90deg, #2d6cdf 60%, #4fd1c5 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 8px;
+  box-shadow: 0 2px 6px rgba(45,108,223,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+button:hover {
+  background: linear-gradient(90deg, #4fd1c5 0%, #2d6cdf 100%);
+  box-shadow: 0 4px 12px rgba(45,108,223,0.16);
+}
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+input::placeholder {
+  color: #b0b8c1;
+  opacity: 1;
+}
+
+h3 {
+  margin-top: 32px;
+  color: #222b45;
+}
+
+.message {
+  color: #22c55e;
+  font-weight: 500;
+  margin-top: 16px;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+}

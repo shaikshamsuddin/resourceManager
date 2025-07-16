@@ -236,15 +236,36 @@ def create_pod():
 @app.route('/delete', methods=['POST'])
 def delete_pod():
     req = request.json
-    required_fields = ["ServerName", "PodName", "machine_ip", "username", "password"]
+    required_fields = ["PodName"]
+    missing = [f for f in required_fields if f not in req]
+    if missing:
+        return jsonify({'error': f'Missing fields: {", ".join(missing)}'}), 400
+    pod_name = req['PodName']
+    data = load_data()
+    found = False
+    for server in data:
+        pod = next((p for p in server['pods'] if p['pod_id'] == pod_name), None)
+        if pod:
+            # Release resources
+            for key in ['gpus', 'ram_gb', 'storage_gb']:
+                server['resources']['available'][key] += pod['requested'].get(key, 0)
+            server['pods'].remove(pod)
+            found = True
+            break
+    if not found:
+        return jsonify({'error': 'Pod not found'}), 404
+    save_data(data)
+    return jsonify({'message': 'Pod deleted'})
+
+@app.route('/update', methods=['POST'])
+def update_pod():
+    req = request.json
+    required_fields = ["ServerName", "PodName"]
     missing = [f for f in required_fields if f not in req]
     if missing:
         return jsonify({'error': f'Missing fields: {", ".join(missing)}'}), 400
     server_id = req['ServerName']
     pod_name = req['PodName']
-    machine_ip = req['machine_ip']
-    username = req['username']
-    password = req['password']
     data = load_data()
     server = next((s for s in data if s['id'] == server_id), None)
     if not server:
@@ -252,18 +273,13 @@ def delete_pod():
     pod = next((p for p in server['pods'] if p['pod_id'] == pod_name), None)
     if not pod:
         return jsonify({'error': 'Pod not found'}), 404
-    # Release resources
-    for key in ['gpus', 'ram_gb', 'storage_gb']:
-        server['resources']['available'][key] += pod['requested'].get(key, 0)
-    server['pods'].remove(pod)
+    # Update fields
+    updatable_fields = ["owner", "status", "requested", "image_url"]
+    for field in updatable_fields:
+        if field in req:
+            pod[field] = req[field]
     save_data(data)
-    # K8s integration
-    try:
-        kubeconfig_path = fetch_kubeconfig(machine_ip, username, password)
-        delete_k8s_resources(kubeconfig_path, pod)
-    except Exception as e:
-        return jsonify({'error': f'Kubernetes error: {str(e)}'}), 500
-    return jsonify({'message': 'Pod deleted'})
+    return jsonify({'message': 'Pod updated', 'pod': pod})
 
 if __name__ == '__main__':
     app.run(debug=True)
