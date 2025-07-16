@@ -151,21 +151,19 @@ def delete_k8s_resources(kubeconfig_path, pod_data):
 
 # --- API Endpoints ---
 @app.route('/')
-def home():
-    return (
-        """
-        <h2>🎉 Resource Manager Backend is Running! 🎉</h2>
-        <p>Welcome! Available API endpoints:</p>
-        <ul>
-            <li><b>GET /servers</b> - List all servers and pods</li>
-            <li><b>POST /create</b> - Create a new pod (JSON body required)</li>
-            <li><b>POST /delete</b> - Delete a pod (JSON body required)</li>
-        </ul>
-        <p>See the frontend UI for a friendly interface.</p>
-        """,
-        200,
-        {"Content-Type": "text/html"}
-    )
+def index():
+    return '''
+    <h1>ðŸŽ‰ Resource Manager Backend is Running! ðŸŽ‰</h1>
+    <p>Welcome! Available API endpoints:</p>
+    <ul>
+      <li><b>GET /servers</b> - List all servers and pods</li>
+      <li><b>POST /create</b> - Create a new pod (JSON body required)</li>
+      <li><b>POST /delete</b> - Delete a pod (JSON body required)</li>
+      <li><b>POST /update</b> - Update a pod (JSON body required)</li>
+      <li><b>GET /consistency-check</b> - Check for data consistency</li>
+    </ul>
+    <p>See the frontend UI for a friendly interface.</p>
+    '''
 
 @app.route('/servers', methods=['GET'])
 def get_servers():
