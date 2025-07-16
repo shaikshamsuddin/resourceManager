@@ -1,63 +1,121 @@
+<!-- Consistency/Error Message Area -->
+<div *ngIf="consistencyMessage" class="consistency-message">{{ consistencyMessage }}</div>
+
+<!-- Header with big title and right-aligned search bar -->
 <div class="dashboard-header">
-  <div class="dashboard-title">Resource Manager</div>
-  <input class="dashboard-search" type="text" placeholder="Search servers, pods...">
+  <span class="dashboard-title">Resource Manager</span>
+  <mat-form-field appearance="outline" class="dashboard-search">
+    <mat-label>Search servers, pods...</mat-label>
+    <input matInput [(ngModel)]="searchTerm" (input)="onSearch()">
+  </mat-form-field>
 </div>
 
-<div class="dashboard-summary">
-  <div class="summary-card">
-    <div class="summary-title">Total Servers</div>
-    <div class="summary-value">{{ servers.length }}</div>
-    <div class="summary-desc">online</div>
-  </div>
-  <div class="summary-card">
-    <div class="summary-title">Total Pods</div>
-    <div class="summary-value">{{ servers.reduce((acc, s) => acc + (s.pods?.length || 0), 0) }}</div>
-    <div class="summary-desc">Currently running</div>
-  </div>
-  <div class="summary-card">
-    <div class="summary-title">Allocated CPU</div>
-    <div class="summary-value">-</div>
-    <div class="summary-desc">Cores available</div>
-  </div>
-  <div class="summary-card">
-    <div class="summary-title">Allocated Memory</div>
-    <div class="summary-value">-</div>
-    <div class="summary-desc">GB available</div>
-  </div>
-</div>
-
-<div class="app-container">
-  <h2>Resource Manager</h2>
-  <div *ngIf="servers.length">
-    <label>Server:
-      <select [(ngModel)]="selectedServer" [compareWith]="compareServers">
-        <option *ngFor="let s of servers" [ngValue]="s">{{s.name}}</option>
-      </select>
-    </label>
-  </div>
-
-  <h3>Pods</h3>
-  <div *ngIf="selectedServer">
-    <div *ngFor="let pod of selectedServer.pods" class="pod-card">
-      <b>{{pod.pod_id}}</b> ({{pod.status}})
-      <div>Owner: {{pod.owner}}</div>
-      <div>GPUs: {{pod.requested.gpus}}, RAM: {{pod.requested.ram_gb}} GB, Storage: {{pod.requested.storage_gb}} GB</div>
-      <button (click)="deletePod(pod)">Delete</button>
+<!-- 1. Resource Information Card (Ribbon) -->
+<mat-card class="resource-info-ribbon">
+  <div class="resource-info-title">Resource Information</div>
+  <div class="ribbon-row">
+    <div class="ribbon-stat">
+      <div class="ribbon-label">Total Servers</div>
+      <div class="ribbon-value">{{ totalServers }}</div>
+    </div>
+    <div class="ribbon-stat">
+      <div class="ribbon-label">Total Pods</div>
+      <div class="ribbon-value">{{ totalPods }}</div>
+    </div>
+    <div class="ribbon-stat">
+      <div class="ribbon-label">Allocated CPUs</div>
+      <div class="ribbon-value">{{ allocatedCPUs }} / {{ totalCPUs }}</div>
+    </div>
+    <div class="ribbon-stat">
+      <div class="ribbon-label">Allocated GPUs</div>
+      <div class="ribbon-value">{{ allocatedGPUs }} / {{ totalGPUs }}</div>
+    </div>
+    <div class="ribbon-stat">
+      <div class="ribbon-label">Available RAM</div>
+      <div class="ribbon-value">{{ availableRAM }} / {{ totalRAM }} GB</div>
     </div>
   </div>
+</mat-card>
 
-  <h3>Add Pod</h3>
-  <form (ngSubmit)="createPod()">
-    <input placeholder="Pod Name" [(ngModel)]="newPod.PodName" name="PodName" required>
-    <input placeholder="GPUs" type="number" [(ngModel)]="newPod.Resources.gpus" name="gpus" required>
-    <input placeholder="RAM (GB)" type="number" [(ngModel)]="newPod.Resources.ram_gb" name="ram_gb" required>
-    <input placeholder="Storage (GB)" type="number" [(ngModel)]="newPod.Resources.storage_gb" name="storage_gb" required>
-    <input placeholder="Image URL" [(ngModel)]="newPod.image_url" name="image_url" required>
-    <input placeholder="K8s Machine IP" [(ngModel)]="newPod.machine_ip" name="machine_ip" required>
-    <input placeholder="K8s Username" [(ngModel)]="newPod.username" name="username" required>
-    <input placeholder="K8s Password" [(ngModel)]="newPod.password" name="password" required>
-    <button type="submit">Create Pod</button>
-  </form>
+<!-- 2. Choose a Server Card -->
+<mat-card class="choose-server-card">
+  <div class="choose-server-title">Choose a Server to Deploy Pod</div>
+  <div class="choose-server-row">
+    <mat-card *ngFor="let server of filteredServers" class="server-sub-card" [class.selected]="server === selectedServer" (click)="selectServer(server)">
+      <div class="server-name">{{ server.name }}</div>
+      <div class="server-ip">{{ server.ip || 'N/A' }}</div>
+      <div class="server-status" [class.online]="server.status === 'Online'" [class.offline]="server.status === 'Offline'">{{ server.status || 'Online' }}</div>
+    </mat-card>
+  </div>
+</mat-card>
 
-  <div *ngIf="message" class="message">{{message}}</div>
-</div>
+<!-- 3. Server Overview Card -->
+<mat-card class="overview-card">
+  <div class="overview-title">Server Overview</div>
+  <div class="overview-desc">Detailed status and resource utilization of all Kubernetes servers.</div>
+  <table mat-table [dataSource]="filteredServers" class="mat-elevation-z1">
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Server Name</th>
+      <td mat-cell *matCellDef="let s">{{ s.name }}</td>
+    </ng-container>
+    <ng-container matColumnDef="ip">
+      <th mat-header-cell *matHeaderCellDef>IP Address</th>
+      <td mat-cell *matCellDef="let s">{{ s.ip || 'N/A' }}</td>
+    </ng-container>
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell *matCellDef="let s"><span [class.online]="s.status === 'Online'" [class.offline]="s.status === 'Offline'">{{ s.status || 'Online' }}</span></td>
+    </ng-container>
+    <ng-container matColumnDef="pods">
+      <th mat-header-cell *matHeaderCellDef>Pods</th>
+      <td mat-cell *matCellDef="let s">{{ s.pods?.length || 0 }}</td>
+    </ng-container>
+    <ng-container matColumnDef="ram">
+      <th mat-header-cell *matHeaderCellDef>RAM</th>
+      <td mat-cell *matCellDef="let s">{{ s.resources?.total?.ram_gb || 0 }} GB</td>
+    </ng-container>
+    <ng-container matColumnDef="gpus">
+      <th mat-header-cell *matHeaderCellDef>GPUs</th>
+      <td mat-cell *matCellDef="let s">{{ s.resources?.total?.gpus || 0 }}</td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="['name', 'ip', 'status', 'pods', 'ram', 'gpus']"></tr>
+    <tr mat-row *matRowDef="let row; columns: ['name', 'ip', 'status', 'pods', 'ram', 'gpus'];"></tr>
+  </table>
+</mat-card>
+
+<!-- 4. Pod Overview Card -->
+<mat-card class="overview-card">
+  <div class="overview-title">Pod Overview</div>
+  <div class="overview-desc">Detailed status and resource utilization of all Kubernetes servers.</div>
+  <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
+    <button mat-raised-button color="accent" (click)="openAddPodDialog()">Deploy New Pod</button>
+  </div>
+  <table mat-table [dataSource]="filteredPods" class="mat-elevation-z1">
+    <ng-container matColumnDef="pod_id">
+      <th mat-header-cell *matHeaderCellDef>Pod Name</th>
+      <td mat-cell *matCellDef="let p">{{ p.pod_id }}</td>
+    </ng-container>
+    <ng-container matColumnDef="server_name">
+      <th mat-header-cell *matHeaderCellDef>Server Name</th>
+      <td mat-cell *matCellDef="let p">{{ p.serverName }}</td>
+    </ng-container>
+    <ng-container matColumnDef="ram">
+      <th mat-header-cell *matHeaderCellDef>RAM</th>
+      <td mat-cell *matCellDef="let p">{{ p.requested?.ram_gb || 0 }} GB</td>
+    </ng-container>
+    <ng-container matColumnDef="gpus">
+      <th mat-header-cell *matHeaderCellDef>GPUs</th>
+      <td mat-cell *matCellDef="let p">{{ p.requested?.gpus || 0 }}</td>
+    </ng-container>
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell *matCellDef="let p">{{ p.status }}</td>
+    </ng-container>
+    <ng-container matColumnDef="endpoint">
+      <th mat-header-cell *matHeaderCellDef>Endpoint</th>
+      <td mat-cell *matCellDef="let p">{{ p.endpoint || '-' }}</td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="['pod_id', 'server_name', 'ram', 'gpus', 'status', 'endpoint']"></tr>
+    <tr mat-row *matRowDef="let row; columns: ['pod_id', 'server_name', 'ram', 'gpus', 'status', 'endpoint'];"></tr>
+  </table>
+</mat-card>

@@ -1,0 +1,51 @@
+<div class="dialog-title">Deploy New Pod</div>
+<div class="server-info-box">
+  <div class="server-info-title">Deploying to:</div>
+  <div class="server-info-name">{{ data.selectedServer.name }}</div>
+  <div class="server-info-ip">{{ data.selectedServer.ip || 'N/A' }}</div>
+</div>
+<form class="add-pod-form" (ngSubmit)="createPod()">
+  <div class="form-section-title">Pod Details</div>
+  <mat-form-field appearance="fill" style="width: 100%">
+    <mat-label>Pod Name</mat-label>
+    <input matInput [(ngModel)]="newPod.PodName" name="PodName" required>
+  </mat-form-field>
+  <div class="form-section-title">Resources</div>
+  <div class="resource-grid">
+    <mat-form-field appearance="fill">
+      <mat-label>GPUs</mat-label>
+      <input matInput type="number" [(ngModel)]="newPod.Resources.gpus" name="gpus" required>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>RAM (GB)</mat-label>
+      <input matInput type="number" [(ngModel)]="newPod.Resources.ram_gb" name="ram_gb" required>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>Storage (GB)</mat-label>
+      <input matInput type="number" [(ngModel)]="newPod.Resources.storage_gb" name="storage_gb" required>
+    </mat-form-field>
+  </div>
+  <div class="form-section-title">Image & K8s Details</div>
+  <mat-form-field appearance="fill" style="width: 100%">
+    <mat-label>Image URL</mat-label>
+    <input matInput [(ngModel)]="newPod.image_url" name="image_url" required>
+  </mat-form-field>
+  <mat-form-field appearance="fill" style="width: 100%">
+    <mat-label>K8s Machine IP</mat-label>
+    <input matInput [(ngModel)]="newPod.machine_ip" name="machine_ip" required>
+  </mat-form-field>
+  <div class="resource-grid">
+    <mat-form-field appearance="fill">
+      <mat-label>K8s Username</mat-label>
+      <input matInput [(ngModel)]="newPod.username" name="username" required>
+    </mat-form-field>
+    <mat-form-field appearance="fill">
+      <mat-label>K8s Password</mat-label>
+      <input matInput [(ngModel)]="newPod.password" name="password" required type="password">
+    </mat-form-field>
+  </div>
+  <div class="dialog-actions">
+    <button mat-button type="button" (click)="close()">Cancel</button>
+    <button mat-raised-button color="accent" type="submit">Create Pod</button>
+  </div>
+</form>

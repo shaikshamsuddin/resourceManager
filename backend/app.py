@@ -151,21 +151,19 @@ def delete_k8s_resources(kubeconfig_path, pod_data):
 
 # --- API Endpoints ---
 @app.route('/')
-def home():
-    return (
-        """
-        <h2>🎉 Resource Manager Backend is Running! 🎉</h2>
-        <p>Welcome! Available API endpoints:</p>
-        <ul>
-            <li><b>GET /servers</b> - List all servers and pods</li>
-            <li><b>POST /create</b> - Create a new pod (JSON body required)</li>
-            <li><b>POST /delete</b> - Delete a pod (JSON body required)</li>
-        </ul>
-        <p>See the frontend UI for a friendly interface.</p>
-        """,
-        200,
-        {"Content-Type": "text/html"}
-    )
+def index():
+    return '''
+    <h1>ðŸŽ‰ Resource Manager Backend is Running! ðŸŽ‰</h1>
+    <p>Welcome! Available API endpoints:</p>
+    <ul>
+      <li><b>GET /servers</b> - List all servers and pods</li>
+      <li><b>POST /create</b> - Create a new pod (JSON body required)</li>
+      <li><b>POST /delete</b> - Delete a pod (JSON body required)</li>
+      <li><b>POST /update</b> - Update a pod (JSON body required)</li>
+      <li><b>GET /consistency-check</b> - Check for data consistency</li>
+    </ul>
+    <p>See the frontend UI for a friendly interface.</p>
+    '''
 
 @app.route('/servers', methods=['GET'])
 def get_servers():
@@ -280,6 +278,31 @@ def update_pod():
             pod[field] = req[field]
     save_data(data)
     return jsonify({'message': 'Pod updated', 'pod': pod})
+
+@app.route('/consistency-check', methods=['GET'])
+def consistency_check():
+    with open('master.json') as f:
+        servers = json.load(f)
+    errors = []
+    for server in servers:
+        total = server['resources']['total']
+        available = server['resources']['available']
+        # Check available <= total for each resource
+        for key in total:
+            if available.get(key, 0) > total.get(key, 0):
+                errors.append(f"Server {server['name']}: available {key} > total {key}")
+        # Check sum of pod resources <= total for each resource
+        pod_sums = {}
+        for pod in server.get('pods', []):
+            for k, v in pod.get('requested', {}).items():
+                pod_sums[k] = pod_sums.get(k, 0) + v
+        for key in total:
+            if pod_sums.get(key, 0) > total.get(key, 0):
+                errors.append(f"Server {server['name']}: sum of pod {key} > total {key}")
+    if errors:
+        return jsonify({"status": "error", "message": "data inconsistency error", "details": errors}), 400
+    else:
+        return jsonify({"status": "ok", "message": "all data seems consistent"})
 
 if __name__ == '__main__':
     app.run(debug=True)
