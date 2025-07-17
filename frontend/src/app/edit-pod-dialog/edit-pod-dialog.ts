@@ -6,6 +6,7 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { PodDialogBase, PodDialogData } from '../shared/pod-dialog.base';
 
 @Component({
   selector: 'app-edit-pod-dialog',
@@ -40,37 +41,53 @@ import { MatIconModule } from '@angular/material/icon';
 
         <div class="form-section-title">Resources</div>
 
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" [class.error-field]="resourceErrors['gpus']">
           <mat-label>GPUs</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.requested.gpus" name="gpus" required>
+          <input matInput type="number" [(ngModel)]="pod.requested.gpus" 
+                 name="gpus" required (ngModelChange)="onResourceChange('gpus')"
+                 min="0" [max]="getMaxAvailable('gpus')">
+          <mat-hint>Available: {{ getMaxAvailable('gpus') }} GPUs</mat-hint>
+          <mat-error *ngIf="resourceErrors['gpus']">{{ resourceErrors['gpus'] }}</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" [class.error-field]="resourceErrors['ram_gb']">
           <mat-label>RAM (GB)</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.requested.ram_gb" name="ram" required>
+          <input matInput type="number" [(ngModel)]="pod.requested.ram_gb" 
+                 name="ram" required (ngModelChange)="onResourceChange('ram_gb')"
+                 min="0" [max]="getMaxAvailable('ram_gb')">
+          <mat-hint>Available: {{ getMaxAvailable('ram_gb') }} GB</mat-hint>
+          <mat-error *ngIf="resourceErrors['ram_gb']">{{ resourceErrors['ram_gb'] }}</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" [class.error-field]="resourceErrors['storage_gb']">
           <mat-label>Storage (GB)</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.requested.storage_gb" name="storage" required>
+          <input matInput type="number" [(ngModel)]="pod.requested.storage_gb" 
+                 name="storage" required (ngModelChange)="onResourceChange('storage_gb')"
+                 min="0" [max]="getMaxAvailable('storage_gb')">
+          <mat-hint>Available: {{ getMaxAvailable('storage_gb') }} GB</mat-hint>
+          <mat-error *ngIf="resourceErrors['storage_gb']">{{ resourceErrors['storage_gb'] }}</mat-error>
         </mat-form-field>
 
         <div class="form-section-title">Connection Details</div>
 
         <mat-form-field appearance="outline">
           <mat-label>Image URL</mat-label>
-          <input matInput [(ngModel)]="pod.image_url" name="imageUrl" required>
+          <input matInput [(ngModel)]="pod.image_url" name="imageUrl" required
+                 (ngModelChange)="onFieldChange()">
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Machine IP</mat-label>
-          <input matInput [(ngModel)]="pod.machine_ip" name="machineIp" required>
+          <input matInput [(ngModel)]="pod.machine_ip" name="machineIp" required
+                 (ngModelChange)="onFieldChange()">
         </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button (click)="onCancel()">Cancel</button>
-      <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="!podForm.form.valid">
+      <button mat-raised-button color="primary" 
+              (click)="onSubmit()" 
+              [disabled]="!podForm.form.valid || hasResourceErrors() || !hasChanges">
         Update Pod
       </button>
     </mat-dialog-actions>
@@ -98,42 +115,64 @@ import { MatIconModule } from '@angular/material/icon';
       padding-top: 8px;
       border-top: 1px solid #eee;
     }
+    .error-field {
+      ::ng-deep .mat-form-field-outline {
+        border-color: #f44336;
+      }
+    }
+    mat-error {
+      font-size: 0.85rem;
+      padding-top: 4px;
+      color: #f44336;
+    }
+    mat-hint {
+      font-size: 0.85rem;
+      color: #666;
+    }
   `]
 })
-export class EditPodDialogComponent {
+export class EditPodDialogComponent extends PodDialogBase {
   @Output() podUpdated = new EventEmitter<any>();
 
   pod: any;
+  originalPod: any;
+  hasChanges = false;
 
   constructor(
-    public dialogRef: MatDialogRef<EditPodDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    dialogRef: MatDialogRef<EditPodDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) data: PodDialogData
   ) {
-    // Clone the pod data to avoid modifying the original directly
-    this.pod = {
-      ...data.pod,
-      requested: { ...data.pod.requested }  // Ensure we clone the nested requested object
-    };
+    super(dialogRef, data);
+    this.pod = JSON.parse(JSON.stringify(data.pod)); // Deep clone
+    this.originalPod = JSON.parse(JSON.stringify(data.pod)); // Deep clone
+    this.validateAllResources(this.pod.requested);
   }
 
-  onCancel(): void {
-    this.dialogRef.close();
+  onResourceChange(resource: string) {
+    this.validateResources(resource, this.pod.requested);
+    this.checkChanges();
   }
 
-  onSubmit(): void {
-    const updatedPod = {
-      pod_id: this.pod.pod_id,
-      serverName: this.pod.serverName,
-      owner: this.pod.owner,
-      requested: {
-        gpus: this.pod.requested.gpus,
-        ram_gb: this.pod.requested.ram_gb,
-        storage_gb: this.pod.requested.storage_gb
-      },
-      image_url: this.pod.image_url,
-      machine_ip: this.pod.machine_ip
-    };
-    this.podUpdated.emit(updatedPod);
+  onFieldChange() {
+    this.checkChanges();
+  }
+
+  checkChanges() {
+    // Compare each field individually
+    this.hasChanges = 
+      this.pod.image_url !== this.originalPod.image_url ||
+      this.pod.machine_ip !== this.originalPod.machine_ip ||
+      this.pod.requested.gpus !== this.originalPod.requested.gpus ||
+      this.pod.requested.ram_gb !== this.originalPod.requested.ram_gb ||
+      this.pod.requested.storage_gb !== this.originalPod.requested.storage_gb;
+  }
+
+  onSubmit() {
+    this.validateAllResources(this.pod.requested);
+    if (this.hasResourceErrors()) {
+      return;
+    }
+    this.podUpdated.emit(this.pod);
     this.dialogRef.close();
   }
 }
