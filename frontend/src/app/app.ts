@@ -11,17 +11,34 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddPodDialogComponent } from './add-pod-dialog/add-pod-dialog';
+import { EditPodDialogComponent } from './edit-pod-dialog/edit-pod-dialog';
 import { MatTableModule } from '@angular/material/table';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-root',
   imports: [
-    CommonModule, FormsModule, HttpClientModule, RouterOutlet,
-    MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatDividerModule,
-    MatDialogModule, MatTableModule, AddPodDialogComponent
+    CommonModule,
+    FormsModule,
+    HttpClientModule,
+    RouterOutlet,
+    MatCardModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatDividerModule,
+    MatDialogModule,
+    MatTableModule,
+    MatIconModule,
+    MatSnackBarModule,
+    AddPodDialogComponent,
+    EditPodDialogComponent
   ],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
+  standalone: true
 })
 export class App {
   protected readonly title = signal('frontend');
@@ -46,8 +63,10 @@ export class App {
   filteredPods: any[] = [];
   consistencyMessage: string = '';
   consistencyCheckInterval: any;
+  podMessage: string = '';
+  podMessageType: 'success' | 'error' | '' = '';
 
-  constructor(private http: HttpClient, private dialog: MatDialog) {
+  constructor(private http: HttpClient, private dialog: MatDialog, private snackBar: MatSnackBar) {
     this.fetchServers();
   }
 
@@ -160,45 +179,73 @@ export class App {
     // Use selectedServer if not already set in podData
     const serverId = podData.ServerName || (this.selectedServer && this.selectedServer.id);
     if (!serverId) {
-      this.message = 'Please select a server to deploy the pod.';
+      this.snackBar.open('Please select a server to deploy the pod.', 'Close', { duration: 4000, panelClass: ['pod-snackbar-error'] });
       return;
     }
     const payload = { ...podData, ServerName: serverId };
     this.http.post('http://127.0.0.1:5000/create', payload).subscribe({
       next: () => {
-        this.message = `Pod ${payload.PodName} created.`;
+        this.snackBar.open(`Pod ${payload.PodName} created successfully.`, 'Close', { duration: 4000, panelClass: ['pod-snackbar-success'] });
         this.fetchServers();
-        setTimeout(() => this.message = '', 3000);
       },
       error: (err) => {
-        this.message = err?.error?.error || 'Failed to create pod.';
+        this.snackBar.open(err?.error?.error || 'Failed to create pod.', 'Close', { duration: 4000, panelClass: ['pod-snackbar-error'] });
+      }
+    });
+  }
+
+  openEditPodDialog(pod: any): void {
+    const dialogRef = this.dialog.open(EditPodDialogComponent, {
+      width: '480px',
+      data: { pod }
+    });
+
+    dialogRef.componentInstance.podUpdated.subscribe((updatedPod: any) => {
+      this.updatePod(updatedPod);
+    });
+  }
+
+  updatePod(pod: any) {
+    const server = this.servers.find((s: any) => s.name === pod.serverName);
+    if (!server) {
+      this.snackBar.open('Server not found.', 'Close', { 
+        duration: 4000, 
+        panelClass: ['pod-snackbar-error'] 
+      });
+      return;
+    }
+
+    const payload = {
+      ServerName: server.id,
+      PodName: pod.pod_id,
+      Resources: {
+        gpus: pod.requested.gpus,
+        ram_gb: pod.requested.ram_gb,
+        storage_gb: pod.requested.storage_gb
+      },
+      image_url: pod.image_url,
+      machine_ip: pod.machine_ip,
+      Owner: pod.owner
+    };
+
+    this.http.post('http://127.0.0.1:5000/update', payload).subscribe({
+      next: () => {
+        this.snackBar.open(`Pod ${pod.pod_id} updated successfully.`, 'Close', { 
+          duration: 4000, 
+          panelClass: ['pod-snackbar-success'] 
+        });
+        this.fetchServers();
+      },
+      error: (err) => {
+        this.snackBar.open(err?.error?.error || 'Failed to update pod.', 'Close', { 
+          duration: 4000, 
+          panelClass: ['pod-snackbar-error'] 
+        });
       }
     });
   }
 
   compareServers = (a: any, b: any) => a && b && a.id === b.id;
-
-  updatePod(pod: any, updatedFields: any) {
-    if (!this.selectedServer) return;
-    const payload = {
-      ServerName: this.selectedServer.id,
-      PodName: pod.pod_id,
-      ...updatedFields,
-      machine_ip: this.newPod.machine_ip,
-      username: this.newPod.username,
-      password: this.newPod.password
-    };
-    this.http.post('http://127.0.0.1:5000/update', payload).subscribe({
-      next: () => {
-        this.message = `Pod ${pod.pod_id} updated.`;
-        this.fetchServers();
-        setTimeout(() => this.message = '', 3000);
-      },
-      error: () => {
-        this.message = 'Failed to update pod.';
-      }
-    });
-  }
 
   get totalServers() {
     return this.servers.length;

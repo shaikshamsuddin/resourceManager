@@ -8,11 +8,12 @@ import tempfile
 import paramiko
 import yaml
 import uuid
+from kubernetes.client.rest import ApiException
 
 app = Flask(__name__)
 CORS(app)
 
-MASTER_JSON = os.path.join(os.path.dirname(__file__), 'master.json')
+MASTER_JSON = os.path.join(os.path.dirname(__file__), 'mock_db.json')
 
 # --- Utility Functions ---
 def load_data():
@@ -71,7 +72,7 @@ def create_k8s_resources(kubeconfig_path, pod_data):
     ns_body = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace))
     try:
         core_v1.create_namespace(ns_body)
-    except client.exceptions.ApiException as e:
+    except ApiException as e:
         if e.status != 409:
             raise
     # 2. Create Deployment
@@ -106,7 +107,7 @@ def create_k8s_resources(kubeconfig_path, pod_data):
     )
     try:
         apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment)
-    except client.exceptions.ApiException as e:
+    except ApiException as e:
         if e.status != 409:
             raise
     # 3. Create Service
@@ -120,7 +121,7 @@ def create_k8s_resources(kubeconfig_path, pod_data):
     )
     try:
         core_v1.create_namespaced_service(namespace=namespace, body=service)
-    except client.exceptions.ApiException as e:
+    except ApiException as e:
         if e.status != 409:
             raise
 
@@ -133,19 +134,19 @@ def delete_k8s_resources(kubeconfig_path, pod_data):
     # 1. Delete Service
     try:
         core_v1.delete_namespaced_service(name=namespace, namespace=namespace)
-    except client.exceptions.ApiException as e:
+    except ApiException as e:
         if e.status != 404:
             raise
     # 2. Delete Deployment
     try:
         apps_v1.delete_namespaced_deployment(name=namespace, namespace=namespace)
-    except client.exceptions.ApiException as e:
+    except ApiException as e:
         if e.status != 404:
             raise
     # 3. Delete Namespace
     try:
         core_v1.delete_namespace(name=namespace)
-    except client.exceptions.ApiException as e:
+    except ApiException as e:
         if e.status != 404:
             raise
 
@@ -174,41 +175,55 @@ def get_servers():
 def create_pod():
     req = request.json
     required_fields = ["ServerName", "PodName", "Resources", "image_url", "machine_ip", "username", "password"]
-    missing = [f for f in required_fields if f not in req]
+    errors = []
+    missing = [f for f in required_fields if f not in req or not req[f]]
     if missing:
-        return jsonify({'error': f'Missing fields: {", ".join(missing)}'}), 400
-    server_id = req['ServerName']
-    pod_name = req['PodName']
-    resources = req['Resources']
-    image_url = req['image_url']
-    machine_ip = req['machine_ip']
-    username = req['username']
-    password = req['password']
-    owner = req.get('Owner', 'unknown')
-    # Validate pod name (lowercase, no underscores)
-    if not isinstance(pod_name, str) or not pod_name.islower() or "_" in pod_name:
-        return jsonify({'error': 'Invalid pod name format. Must be lowercase and no underscores.'}), 400
-    # Validate image_url
+        errors.append(f"Missing or empty fields: {', '.join(missing)}")
+    pod_name = req.get('PodName', '')
+    image_url = req.get('image_url', '')
+    # Pod name checks
+    if not isinstance(pod_name, str) or not pod_name:
+        errors.append("Pod name is required.")
+    else:
+        if not pod_name.islower():
+            errors.append("Pod name must be lowercase.")
+        if "_" in pod_name:
+            errors.append("Pod name must not contain underscores.")
+    # Image URL checks
     if not (isinstance(image_url, str) and image_url.startswith("https://") and ":" in image_url):
-        return jsonify({'error': 'Invalid image URL format. Must start with https:// and contain a version tag.'}), 400
+        errors.append("Image URL must start with https:// and contain a version tag (e.g., :latest).")
     # Parse image_url
-    try:
-        image_url_no_proto = image_url[len("https://"):] if image_url.startswith("https://") else image_url
-        registry_and_image, image_tag = image_url_no_proto.rsplit(":", 1)
-        registry_url, image_name = registry_and_image.split("/", 1)
-    except Exception as e:
-        return jsonify({'error': f'Failed to parse image_url: {str(e)}'}), 400
+    registry_url = image_name = image_tag = None
+    if isinstance(image_url, str) and image_url.startswith("https://") and ":" in image_url:
+        try:
+            image_url_no_proto = image_url[len("https://"):]
+            registry_and_image, image_tag = image_url_no_proto.rsplit(":", 1)
+            registry_url, image_name = registry_and_image.split("/", 1)
+        except Exception as e:
+            errors.append(f'Failed to parse image_url: {str(e)}')
+    server_id = req.get('ServerName')
+    resources = req.get('Resources')
+    machine_ip = req.get('machine_ip')
+    username = req.get('username')
+    password = req.get('password')
+    owner = req.get('Owner', 'unknown')
     data = load_data()
     server = next((s for s in data if s['id'] == server_id), None)
     if not server:
-        return jsonify({'error': 'Server not found'}), 404
-    # Validate resources
-    ok, err = validate_resource_request(server, resources)
-    if not ok:
-        return jsonify({'error': err}), 400
+        errors.append('Server not found')
+    # Validate resources only if server exists and resources is a dict
+    if server and isinstance(resources, dict):
+        ok, err = validate_resource_request(server, resources)
+        if not ok:
+            errors.append(err)
+    elif server and not isinstance(resources, dict):
+        errors.append('Resources must be a dictionary/object')
+    if errors:
+        return jsonify({'error': " | ".join(errors)}), 400
     # Deduct resources
-    for key in ['gpus', 'ram_gb', 'storage_gb']:
-        server['resources']['available'][key] -= resources.get(key, 0)
+    if server and isinstance(resources, dict) and isinstance(server['resources']['available'], dict):
+        for key in ['gpus', 'ram_gb', 'storage_gb']:
+            server['resources']['available'][key] -= resources.get(key, 0)
     # Add pod
     pod = {
         'pod_id': pod_name,
@@ -281,7 +296,7 @@ def update_pod():
 
 @app.route('/consistency-check', methods=['GET'])
 def consistency_check():
-    with open('master.json') as f:
+    with open(MASTER_JSON) as f:
         servers = json.load(f)
     errors = []
     for server in servers:
@@ -294,8 +309,10 @@ def consistency_check():
         # Check sum of pod resources <= total for each resource
         pod_sums = {}
         for pod in server.get('pods', []):
-            for k, v in pod.get('requested', {}).items():
-                pod_sums[k] = pod_sums.get(k, 0) + v
+            requested = pod.get('requested') if isinstance(pod, dict) else None
+            if isinstance(requested, dict):
+                for k, v in requested.items():
+                    pod_sums[k] = pod_sums.get(k, 0) + v
         for key in total:
             if pod_sums.get(key, 0) > total.get(key, 0):
                 errors.append(f"Server {server['name']}: sum of pod {key} > total {key}")

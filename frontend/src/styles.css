@@ -5,7 +5,7 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
 /* Pastel background and dialog overrides */
 body, .mat-app-background {
-  background: #faf7ff !important;
+  background: white !important;
 }
 .mat-dialog-container {
   background: #fff !important;

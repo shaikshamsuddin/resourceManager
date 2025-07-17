@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-add-pod-dialog',
+  selector: 'app-edit-pod-dialog',
   standalone: true,
   imports: [
     CommonModule,
@@ -20,27 +20,37 @@ import { MatIconModule } from '@angular/material/icon';
     MatIconModule
   ],
   template: `
-    <h2 mat-dialog-title>Deploy New Pod</h2>
+    <h2 mat-dialog-title>Edit Pod</h2>
     <mat-dialog-content>
       <form #podForm="ngForm" class="pod-form">
         <mat-form-field appearance="outline">
           <mat-label>Pod Name</mat-label>
-          <input matInput [(ngModel)]="pod.PodName" name="podName" required>
+          <input matInput [(ngModel)]="pod.pod_id" name="podName" readonly>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Server Name</mat-label>
+          <input matInput [(ngModel)]="pod.serverName" name="serverName" readonly>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Username</mat-label>
+          <input matInput [(ngModel)]="pod.owner" name="username" readonly>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>GPUs</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.Resources.gpus" name="gpus" required>
+          <input matInput type="number" [(ngModel)]="pod.requested.gpus" name="gpus" required>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>RAM (GB)</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.Resources.ram_gb" name="ram" required>
+          <input matInput type="number" [(ngModel)]="pod.requested.ram_gb" name="ram" required>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Storage (GB)</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.Resources.storage_gb" name="storage" required>
+          <input matInput type="number" [(ngModel)]="pod.requested.storage_gb" name="storage" required>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -52,22 +62,12 @@ import { MatIconModule } from '@angular/material/icon';
           <mat-label>Machine IP</mat-label>
           <input matInput [(ngModel)]="pod.machine_ip" name="machineIp" required>
         </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Username</mat-label>
-          <input matInput [(ngModel)]="pod.username" name="username" required>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
-          <input matInput type="password" [(ngModel)]="pod.password" name="password" required>
-        </mat-form-field>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button (click)="onCancel()">Cancel</button>
       <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="!podForm.form.valid">
-        Deploy Pod
+        Update Pod
       </button>
     </mat-dialog-actions>
   `,
@@ -83,33 +83,25 @@ import { MatIconModule } from '@angular/material/icon';
     mat-form-field {
       width: 100%;
     }
+    :host ::ng-deep .mat-form-field-appearance-outline.readonly .mat-form-field-outline {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
   `]
 })
-export class AddPodDialogComponent {
-  @Output() podCreated = new EventEmitter<any>();
+export class EditPodDialogComponent {
+  @Output() podUpdated = new EventEmitter<any>();
 
-  pod = {
-    PodName: '',
-    Resources: {
-      gpus: 0,
-      ram_gb: 0,
-      storage_gb: 0
-    },
-    image_url: '',
-    machine_ip: '',
-    username: '',
-    password: '',
-    ServerName: ''
-  };
+  pod: any;
 
   constructor(
-    public dialogRef: MatDialogRef<AddPodDialogComponent>,
+    public dialogRef: MatDialogRef<EditPodDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {
-    if (data?.selectedServer) {
-      this.pod.ServerName = data.selectedServer.id;
-      this.pod.machine_ip = data.selectedServer.ip || '';
-    }
+    // Clone the pod data to avoid modifying the original directly
+    this.pod = {
+      ...data.pod,
+      requested: { ...data.pod.requested }  // Ensure we clone the nested requested object
+    };
   }
 
   onCancel(): void {
@@ -117,7 +109,19 @@ export class AddPodDialogComponent {
   }
 
   onSubmit(): void {
-    this.podCreated.emit(this.pod);
+    const updatedPod = {
+      pod_id: this.pod.pod_id,
+      serverName: this.pod.serverName,
+      owner: this.pod.owner,
+      requested: {
+        gpus: this.pod.requested.gpus,
+        ram_gb: this.pod.requested.ram_gb,
+        storage_gb: this.pod.requested.storage_gb
+      },
+      image_url: this.pod.image_url,
+      machine_ip: this.pod.machine_ip
+    };
+    this.podUpdated.emit(updatedPod);
     this.dialogRef.close();
   }
 }
