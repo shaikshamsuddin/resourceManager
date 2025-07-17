@@ -1,11 +1,14 @@
 <!-- Consistency/Error Message Area -->
-<div *ngIf="consistencyMessage" class="consistency-message">{{ consistencyMessage }}</div>
+<!-- (Removed old consistencyMessage text display) -->
 <!-- Pod Creation Message Area -->
 <div *ngIf="podMessage" [ngClass]="{'pod-message-success': podMessageType === 'success', 'pod-message-error': podMessageType === 'error'}" class="pod-message">{{ podMessage }}</div>
 
 <!-- Header with big title and right-aligned search bar -->
 <div class="dashboard-header">
-  <span class="dashboard-title">Resource Manager</span>
+  <span class="dashboard-title">
+    Resource Manager
+    <span *ngIf="consistencyMessage" class="consistency-led" [ngClass]="{'led-green': consistencyMessage === 'all data seems consistent', 'led-red': consistencyMessage !== 'all data seems consistent'}" [title]="consistencyMessage" (click)="onConsistencyLedClick()"></span>
+  </span>
   <mat-form-field appearance="outline" class="dashboard-search">
     <mat-label>Search servers, pods...</mat-label>
     <input matInput [(ngModel)]="searchTerm" (input)="onSearch()">

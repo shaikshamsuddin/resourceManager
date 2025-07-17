@@ -312,4 +312,11 @@ export class App {
   selectServer(server: any) {
     this.selectedServer = server;
   }
+
+  onConsistencyLedClick() {
+    // Show the consistency message in a snackbar
+    this.snackBar.open(this.consistencyMessage || 'No consistency status', 'Close', { duration: 4000 });
+    // Trigger a new consistency check immediately
+    this.checkConsistency();
+  }
 }
