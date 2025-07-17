@@ -20,7 +20,7 @@ import { MatIconModule } from '@angular/material/icon';
     MatIconModule
   ],
   template: `
-    <h2 mat-dialog-title>Edit Pod</h2>
+    <h2 mat-dialog-title>Update Pod</h2>
     <mat-dialog-content>
       <form #podForm="ngForm" class="pod-form">
         <mat-form-field appearance="outline">
