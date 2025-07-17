@@ -72,12 +72,14 @@ import { PodDialogBase, PodDialogData } from '../shared/pod-dialog.base';
 
         <mat-form-field appearance="outline">
           <mat-label>Image URL</mat-label>
-          <input matInput [(ngModel)]="pod.image_url" name="imageUrl" required>
+          <input matInput [(ngModel)]="pod.image_url" name="imageUrl" required
+                 (ngModelChange)="onFieldChange()">
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Machine IP</mat-label>
-          <input matInput [(ngModel)]="pod.machine_ip" name="machineIp" required>
+          <input matInput [(ngModel)]="pod.machine_ip" name="machineIp" required
+                 (ngModelChange)="onFieldChange()">
         </mat-form-field>
       </form>
     </mat-dialog-content>
@@ -141,8 +143,8 @@ export class EditPodDialogComponent extends PodDialogBase {
     @Inject(MAT_DIALOG_DATA) data: PodDialogData
   ) {
     super(dialogRef, data);
-    this.pod = { ...data.pod };
-    this.originalPod = { ...data.pod };
+    this.pod = JSON.parse(JSON.stringify(data.pod)); // Deep clone
+    this.originalPod = JSON.parse(JSON.stringify(data.pod)); // Deep clone
     this.validateAllResources(this.pod.requested);
   }
 
@@ -151,8 +153,18 @@ export class EditPodDialogComponent extends PodDialogBase {
     this.checkChanges();
   }
 
+  onFieldChange() {
+    this.checkChanges();
+  }
+
   checkChanges() {
-    this.hasChanges = JSON.stringify(this.pod) !== JSON.stringify(this.originalPod);
+    // Compare each field individually
+    this.hasChanges = 
+      this.pod.image_url !== this.originalPod.image_url ||
+      this.pod.machine_ip !== this.originalPod.machine_ip ||
+      this.pod.requested.gpus !== this.originalPod.requested.gpus ||
+      this.pod.requested.ram_gb !== this.originalPod.requested.ram_gb ||
+      this.pod.requested.storage_gb !== this.originalPod.requested.storage_gb;
   }
 
   onSubmit() {

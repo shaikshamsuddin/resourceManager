@@ -10,62 +10,13 @@
         "cpus": 64
       },
       "available": {
-        "gpus": 0,
-        "ram_gb": 45,
-        "storage_gb": 1382,
+        "gpus": 5,
+        "ram_gb": 369,
+        "storage_gb": 1812,
         "cpus": 64
       }
     },
     "pods": [
-      {
-        "pod_id": "testpod1233233",
-        "owner": "test-team",
-        "status": "running",
-        "timestamp": "2025-07-17T14:36:46.993189Z",
-        "requested": {
-          "gpus": 1,
-          "ram_gb": 230,
-          "storage_gb": 234
-        },
-        "image_url": "https://docker.io/library/nginx:latest",
-        "registery_url": "docker.io",
-        "image_name": "library/nginx",
-        "image_tag": "latest",
-        "machine_ip": "12t757575"
-      },
-      {
-        "pod_id": "testpod12323444",
-        "owner": "test-team",
-        "status": "running",
-        "timestamp": "2025-07-17T10:31:13.996770Z",
-        "requested": {
-          "gpus": 3,
-          "ram_gb": 32,
-          "storage_gb": 100,
-          "cpus": 0
-        },
-        "image_url": "https://docker.io/library/nginx:latest",
-        "registery_url": "docker.io",
-        "image_name": "library/nginx",
-        "image_tag": "latest",
-        "machine_ip": "192.168.1.100"
-      },
-      {
-        "pod_id": "testpod12323444",
-        "owner": "test-team",
-        "status": "running",
-        "timestamp": "2025-07-17T10:25:40.534578Z",
-        "requested": {
-          "gpus": 1,
-          "ram_gb": 64,
-          "storage_gb": 100,
-          "cpus": 0
-        },
-        "image_url": "https://docker.io/library/nginx:latest",
-        "registery_url": "docker.io",
-        "image_name": "library/nginx",
-        "image_tag": "latest"
-      },
       {
         "pod_id": "testpod12323444",
         "owner": "test-team",
@@ -168,6 +119,21 @@
           "gpus": 0,
           "ram_gb": 2,
           "storage_gb": 22
+        },
+        "image_url": "https://nodejs.org/en/download",
+        "registery_url": null,
+        "image_name": null,
+        "image_tag": null
+      },
+      {
+        "pod_id": "newpod",
+        "owner": "unknown",
+        "status": "running",
+        "timestamp": "2025-07-17T15:37:05.835784Z",
+        "requested": {
+          "gpus": 0,
+          "ram_gb": 2,
+          "storage_gb": 4
         },
         "image_url": "https://nodejs.org/en/download",
         "registery_url": null,
