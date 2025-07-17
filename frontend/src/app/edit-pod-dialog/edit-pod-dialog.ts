@@ -24,19 +24,21 @@ import { MatIconModule } from '@angular/material/icon';
     <mat-dialog-content>
       <form #podForm="ngForm" class="pod-form">
         <mat-form-field appearance="outline">
-          <mat-label>Pod Name</mat-label>
-          <input matInput [(ngModel)]="pod.pod_id" name="podName" readonly>
+          <mat-label>Server Name</mat-label>
+          <input matInput [(ngModel)]="pod.serverName" name="serverName" readonly>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Server Name</mat-label>
-          <input matInput [(ngModel)]="pod.serverName" name="serverName" readonly>
+          <mat-label>Pod Name</mat-label>
+          <input matInput [(ngModel)]="pod.pod_id" name="podName" readonly>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Username</mat-label>
           <input matInput [(ngModel)]="pod.owner" name="username" readonly>
         </mat-form-field>
+
+        <div class="form-section-title">Resources</div>
 
         <mat-form-field appearance="outline">
           <mat-label>GPUs</mat-label>
@@ -52,6 +54,8 @@ import { MatIconModule } from '@angular/material/icon';
           <mat-label>Storage (GB)</mat-label>
           <input matInput type="number" [(ngModel)]="pod.requested.storage_gb" name="storage" required>
         </mat-form-field>
+
+        <div class="form-section-title">Connection Details</div>
 
         <mat-form-field appearance="outline">
           <mat-label>Image URL</mat-label>
@@ -85,6 +89,14 @@ import { MatIconModule } from '@angular/material/icon';
     }
     :host ::ng-deep .mat-form-field-appearance-outline.readonly .mat-form-field-outline {
       background-color: rgba(0, 0, 0, 0.04);
+    }
+    .form-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+      margin: 8px 0 4px 0;
+      padding-top: 8px;
+      border-top: 1px solid #eee;
     }
   `]
 })
