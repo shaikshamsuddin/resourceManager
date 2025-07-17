@@ -58,38 +58,40 @@
 <mat-card class="overview-card">
   <div class="overview-title">Server Overview</div>
   <div class="overview-desc">Detailed status and resource utilization of all Kubernetes servers.</div>
-  <table mat-table [dataSource]="filteredServers" class="mat-elevation-z1">
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Server Name</th>
-      <td mat-cell *matCellDef="let s">{{ s.name }}</td>
-    </ng-container>
-    <ng-container matColumnDef="ip">
-      <th mat-header-cell *matHeaderCellDef>IP Address</th>
-      <td mat-cell *matCellDef="let s">{{ s.ip || 'N/A' }}</td>
-    </ng-container>
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let s"><span [class.online]="s.status === 'Online'" [class.offline]="s.status === 'Offline'">{{ s.status || 'Online' }}</span></td>
-    </ng-container>
-    <ng-container matColumnDef="pods">
-      <th mat-header-cell *matHeaderCellDef>Pods</th>
-      <td mat-cell *matCellDef="let s">{{ s.pods?.length || 0 }}</td>
-    </ng-container>
-    <ng-container matColumnDef="ram">
-      <th mat-header-cell *matHeaderCellDef>RAM</th>
-      <td mat-cell *matCellDef="let s">{{ s.resources?.total?.ram_gb || 0 }} GB</td>
-    </ng-container>
-    <ng-container matColumnDef="gpus">
-      <th mat-header-cell *matHeaderCellDef>GPUs</th>
-      <td mat-cell *matCellDef="let s">{{ s.resources?.total?.gpus || 0 }}</td>
-    </ng-container>
-    <ng-container matColumnDef="cpus">
-      <th mat-header-cell *matHeaderCellDef>CPUs</th>
-      <td mat-cell *matCellDef="let s">{{ s.resources?.total?.cpus || 0 }}</td>
-    </ng-container>
-    <tr mat-header-row *matHeaderRowDef="['name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus']"></tr>
-    <tr mat-row *matRowDef="let row; columns: ['name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus'];"></tr>
-  </table>
+  <div style="max-height: 400px; overflow: auto;">
+    <table mat-table [dataSource]="filteredServers" class="mat-elevation-z1">
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef> Server Name </th>
+        <td mat-cell *matCellDef="let s">{{ s.name }}</td>
+      </ng-container>
+      <ng-container matColumnDef="ip">
+        <th mat-header-cell *matHeaderCellDef> IP Address </th>
+        <td mat-cell *matCellDef="let s">{{ s.ip || 'N/A' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef> Status </th>
+        <td mat-cell *matCellDef="let s"><span [class.online]="s.status === 'Online'" [class.offline]="s.status === 'Offline'">{{ s.status || 'Online' }}</span></td>
+      </ng-container>
+      <ng-container matColumnDef="pods">
+        <th mat-header-cell *matHeaderCellDef> Pods </th>
+        <td mat-cell *matCellDef="let s">{{ s.pods?.length || 0 }}</td>
+      </ng-container>
+      <ng-container matColumnDef="ram">
+        <th mat-header-cell *matHeaderCellDef> RAM </th>
+        <td mat-cell *matCellDef="let s">{{ s.resources?.total?.ram_gb || 0 }} GB</td>
+      </ng-container>
+      <ng-container matColumnDef="gpus">
+        <th mat-header-cell *matHeaderCellDef> GPUs </th>
+        <td mat-cell *matCellDef="let s">{{ s.resources?.total?.gpus || 0 }}</td>
+      </ng-container>
+      <ng-container matColumnDef="cpus">
+        <th mat-header-cell *matHeaderCellDef> CPUs </th>
+        <td mat-cell *matCellDef="let s">{{ s.resources?.total?.cpus || 0 }}</td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="['name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus']; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: ['name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus'];"></tr>
+    </table>
+  </div>
 </mat-card>
 
 <!-- 4. Pod Overview Card -->
@@ -101,45 +103,43 @@
     </div>
     <button mat-raised-button color="accent" (click)="openAddPodDialog()">Deploy New Pod</button>
   </div>
-  <table mat-table [dataSource]="filteredPods" class="mat-elevation-z1">
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let p">
-        <div class="action-buttons">
-          <button mat-icon-button (click)="openEditPodDialog(p)" class="small-icon-button">
-            <mat-icon>edit</mat-icon>
-          </button>
-          <button mat-icon-button color="warn" (click)="deletePod(p)" class="small-icon-button">
-            <mat-icon>delete</mat-icon>
-          </button>
-        </div>
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="pod_id">
-      <th mat-header-cell *matHeaderCellDef>Pod Name</th>
-      <td mat-cell *matCellDef="let p">{{ p.pod_id }}</td>
-    </ng-container>
-    <ng-container matColumnDef="server_name">
-      <th mat-header-cell *matHeaderCellDef>Server Name</th>
-      <td mat-cell *matCellDef="let p">{{ p.serverName }}</td>
-    </ng-container>
-    <ng-container matColumnDef="ram">
-      <th mat-header-cell *matHeaderCellDef>RAM</th>
-      <td mat-cell *matCellDef="let p">{{ p.requested?.ram_gb || 0 }} GB</td>
-    </ng-container>
-    <ng-container matColumnDef="gpus">
-      <th mat-header-cell *matHeaderCellDef>GPUs</th>
-      <td mat-cell *matCellDef="let p">{{ p.requested?.gpus || 0 }}</td>
-    </ng-container>
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let p">{{ p.status }}</td>
-    </ng-container>
-    <ng-container matColumnDef="endpoint">
-      <th mat-header-cell *matHeaderCellDef>Endpoint</th>
-      <td mat-cell *matCellDef="let p">{{ p.endpoint || '-' }}</td>
-    </ng-container>
-    <tr mat-header-row *matHeaderRowDef="['actions', 'pod_id', 'server_name', 'ram', 'gpus', 'status', 'endpoint']"></tr>
-    <tr mat-row *matRowDef="let row; columns: ['actions', 'pod_id', 'server_name', 'ram', 'gpus', 'status', 'endpoint'];"></tr>
-  </table>
+  <div style="max-height: 400px; overflow: auto;">
+    <table mat-table [dataSource]="filteredPods" class="mat-elevation-z1">
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef> Actions </th>
+        <td mat-cell *matCellDef="let p">
+          <div class="action-buttons">
+            <button mat-icon-button (click)="openEditPodDialog(p)" class="small-icon-button">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="deletePod(p)" class="small-icon-button">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="pod_id">
+        <th mat-header-cell *matHeaderCellDef> Pod Name </th>
+        <td mat-cell *matCellDef="let p">{{ p.pod_id }}</td>
+      </ng-container>
+      <ng-container matColumnDef="server_name">
+        <th mat-header-cell *matHeaderCellDef> Server Name </th>
+        <td mat-cell *matCellDef="let p">{{ p.serverName }}</td>
+      </ng-container>
+      <ng-container matColumnDef="ram">
+        <th mat-header-cell *matHeaderCellDef> RAM </th>
+        <td mat-cell *matCellDef="let p">{{ p.requested?.ram_gb || 0 }} GB</td>
+      </ng-container>
+      <ng-container matColumnDef="gpus">
+        <th mat-header-cell *matHeaderCellDef> GPUs </th>
+        <td mat-cell *matCellDef="let p">{{ p.requested?.gpus || 0 }}</td>
+      </ng-container>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef> Status </th>
+        <td mat-cell *matCellDef="let p">{{ p.status }}</td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="['actions', 'pod_id', 'server_name', 'ram', 'gpus', 'status']; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: ['actions', 'pod_id', 'server_name', 'ram', 'gpus', 'status'];"></tr>
+    </table>
+  </div>
 </mat-card>

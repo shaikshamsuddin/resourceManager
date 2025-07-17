@@ -9,11 +9,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogConfig } from '@angular/material/dialog';
 import { AddPodDialogComponent } from './add-pod-dialog/add-pod-dialog';
 import { EditPodDialogComponent } from './edit-pod-dialog/edit-pod-dialog';
+import { AlertDialogComponent } from './alert-dialog/alert-dialog';
 import { MatTableModule } from '@angular/material/table';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
@@ -32,7 +32,6 @@ import { MatIconModule } from '@angular/material/icon';
     MatDialogModule,
     MatTableModule,
     MatIconModule,
-    MatSnackBarModule,
     AddPodDialogComponent,
     EditPodDialogComponent
   ],
@@ -66,7 +65,7 @@ export class App {
   podMessage: string = '';
   podMessageType: 'success' | 'error' | '' = '';
 
-  constructor(private http: HttpClient, private dialog: MatDialog, private snackBar: MatSnackBar) {
+  constructor(private http: HttpClient, private dialog: MatDialog) {
     this.fetchServers();
   }
 
@@ -123,12 +122,20 @@ export class App {
     };
     this.http.post('http://127.0.0.1:5000/delete', payload).subscribe({
       next: () => {
-        this.message = `Pod ${pod.pod_id} deleted.`;
+        this.showAlert(
+          'success',
+          'Pod Decommissioned',
+          `Pod "${pod.pod_id}" has been successfully decommissioned.`
+        );
         this.fetchServers();
-        setTimeout(() => this.message = '', 3000);
       },
-      error: () => {
-        this.message = 'Failed to delete pod.';
+      error: (err) => {
+        const errorMsg = err?.error?.error || 'An error occurred while decommissioning the pod.';
+        this.showAlert(
+          'error',
+          'Decommission Failed',
+          `${errorMsg} Please try again or contact support if the issue persists.`
+        );
       }
     });
   }
@@ -166,38 +173,69 @@ export class App {
   }
 
   openAddPodDialog() {
+    if (!this.selectedServer) {
+      this.showAlert(
+        'error',
+        'No Server Selected',
+        'Please select a server before deploying a pod.'
+      );
+      return;
+    }
+
     const dialogRef = this.dialog.open(AddPodDialogComponent, {
       width: '480px',
-      data: { selectedServer: this.selectedServer }
+      data: {
+        serverId: this.selectedServer.id,
+        serverName: this.selectedServer.name,
+        serverResources: this.selectedServer.resources,
+        existingPods: this.selectedServer.pods || []
+      }
     });
-    dialogRef.componentInstance.podCreated.subscribe((podData: any) => {
-      this.createPodFromDialog(podData);
+
+    dialogRef.componentInstance.podCreated.subscribe((pod: any) => {
+      this.deployPod(pod, this.selectedServer.id);
     });
   }
 
-  createPodFromDialog(podData: any) {
-    // Use selectedServer if not already set in podData
-    const serverId = podData.ServerName || (this.selectedServer && this.selectedServer.id);
-    if (!serverId) {
-      this.snackBar.open('Please select a server to deploy the pod.', 'Close', { duration: 4000, panelClass: ['pod-snackbar-error'] });
-      return;
-    }
+  deployPod(podData: any, serverId: string) {
     const payload = { ...podData, ServerName: serverId };
     this.http.post('http://127.0.0.1:5000/create', payload).subscribe({
       next: () => {
-        this.snackBar.open(`Pod ${payload.PodName} created successfully.`, 'Close', { duration: 4000, panelClass: ['pod-snackbar-success'] });
+        this.showAlert(
+          'success',
+          'Deployment Successful',
+          `Pod "${payload.PodName}" has been successfully deployed.`
+        );
         this.fetchServers();
       },
       error: (err) => {
-        this.snackBar.open(err?.error?.error || 'Failed to create pod.', 'Close', { duration: 4000, panelClass: ['pod-snackbar-error'] });
+        const errorMsg = err?.error?.error || 'Failed to deploy pod.';
+        this.showAlert(
+          'error',
+          'Deployment Failed',
+          `${errorMsg} Please verify the configuration and try again.`
+        );
       }
     });
   }
 
   openEditPodDialog(pod: any): void {
+    const server = this.servers.find((s: any) => s.name === pod.serverName);
+    if (!server) {
+      this.showAlert(
+        'error',
+        'Server Not Found',
+        'Server not found.'
+      );
+      return;
+    }
+
     const dialogRef = this.dialog.open(EditPodDialogComponent, {
       width: '480px',
-      data: { pod }
+      data: { 
+        pod,
+        serverResources: server.resources
+      }
     });
 
     dialogRef.componentInstance.podUpdated.subscribe((updatedPod: any) => {
@@ -208,10 +246,11 @@ export class App {
   updatePod(pod: any) {
     const server = this.servers.find((s: any) => s.name === pod.serverName);
     if (!server) {
-      this.snackBar.open('Server not found.', 'Close', { 
-        duration: 4000, 
-        panelClass: ['pod-snackbar-error'] 
-      });
+      this.showAlert(
+        'error',
+        'Server Not Found',
+        'Unable to locate the specified server. Please refresh and try again.'
+      );
       return;
     }
 
@@ -230,17 +269,20 @@ export class App {
 
     this.http.post('http://127.0.0.1:5000/update', payload).subscribe({
       next: () => {
-        this.snackBar.open(`Pod ${pod.pod_id} updated successfully.`, 'Close', { 
-          duration: 4000, 
-          panelClass: ['pod-snackbar-success'] 
-        });
+        this.showAlert(
+          'success',
+          'Update Successful',
+          `Resource allocation successfully updated for pod "${pod.pod_id}"`
+        );
         this.fetchServers();
       },
       error: (err) => {
-        this.snackBar.open(err?.error?.error || 'Failed to update pod.', 'Close', { 
-          duration: 4000, 
-          panelClass: ['pod-snackbar-error'] 
-        });
+        const errorMsg = err?.error?.error || 'An error occurred while updating the resource allocation.';
+        this.showAlert(
+          'error',
+          'Update Failed',
+          `${errorMsg} Please try again or contact support if the issue persists.`
+        );
       }
     });
   }
@@ -315,8 +357,21 @@ export class App {
 
   onConsistencyLedClick() {
     // Show the consistency message in a snackbar
-    this.snackBar.open(this.consistencyMessage || 'No consistency status', 'Close', { duration: 4000 });
+    this.showAlert(
+      'info',
+      'Consistency Status',
+      this.consistencyMessage || 'No consistency status'
+    );
     // Trigger a new consistency check immediately
     this.checkConsistency();
+  }
+
+  showAlert(type: 'success' | 'error' | 'info', title: string, message: string) {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.position = { top: '20px' };
+    dialogConfig.data = { type, title, message };
+    dialogConfig.maxWidth = '600px';
+    dialogConfig.minWidth = '400px';
+    this.dialog.open(AlertDialogComponent, dialogConfig);
   }
 }

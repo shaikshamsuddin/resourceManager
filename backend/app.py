@@ -27,12 +27,18 @@ def save_data(data):
         json.dump(data, f, indent=2)
 
 def get_available_resources(server):
-    total = server['resources']['total']
-    available = server['resources']['available']
+    if not server:
+        return {
+            'gpus': 0,
+            'ram_gb': 0,
+            'storage_gb': 0
+        }
+    total = server.get('resources', {}).get('total', {})
+    available = server.get('resources', {}).get('available', {})
     return {
-        'gpus': available['gpus'],
-        'ram_gb': available['ram_gb'],
-        'storage_gb': available['storage_gb']
+        'gpus': available.get('gpus', 0),
+        'ram_gb': available.get('ram_gb', 0),
+        'storage_gb': available.get('storage_gb', 0)
     }
 
 def validate_resource_request(server, requested):
@@ -205,78 +211,10 @@ def get_servers():
 
 @app.route('/create', methods=['POST'])
 def create_pod():
-    """
-    Create a new pod
-    ---
-    tags:
-      - Pods
-    parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          type: object
-          properties:
-            ServerName:
-              type: string
-            PodName:
-              type: string
-            Resources:
-              type: object
-              properties:
-                gpus:
-                  type: integer
-                ram_gb:
-                  type: integer
-                storage_gb:
-                  type: integer
-            image_url:
-              type: string
-            machine_ip:
-              type: string
-            username:
-              type: string
-            password:
-              type: string
-            Owner:
-              type: string
-    responses:
-      200:
-        description: Pod created
-        examples:
-          application/json:
-            message: Pod created
-            pod:
-              pod_id: testpod123
-              owner: test-team
-              status: running
-              timestamp: 2024-07-01T12:00:00Z
-              requested:
-                gpus: 1
-                ram_gb: 64
-                storage_gb: 100
-              image_url: https://docker.io/library/nginx:latest
-              registery_url: docker.io
-              image_name: library/nginx
-              image_tag: latest
-      400:
-        description: Validation error
-        examples:
-          application/json:
-            error: "Missing required field: PodName"
-      404:
-        description: Not found
-        examples:
-          application/json:
-            error: "Server 'server-01' not found."
-      500:
-        description: Kubernetes error
-        examples:
-          application/json:
-            error: "Kubernetes error: <details>"
-    """
     try:
         req = request.json
+        if req is None:
+            return jsonify({'error': 'Invalid JSON data'}), 400
         required_fields = ["ServerName", "PodName", "Resources", "image_url", "machine_ip", "username", "password"]
         errors = []
         missing = [f for f in required_fields if f not in req or not req[f]]
@@ -293,30 +231,43 @@ def create_pod():
                 errors.append("Pod name must not contain underscores.")
         if not (isinstance(image_url, str) and image_url.strip()):
             errors.append("Image URL must be a non-empty string.")
-        # Remove all image_url parsing and related error handling
-        registry_url = image_name = image_tag = None
-        # Do not attempt to parse image_url or set registry_url, image_name, image_tag
+        
         server_id = req.get('ServerName')
-        resources = req.get('Resources')
+        resources = req.get('Resources', {})
         machine_ip = req.get('machine_ip')
         username = req.get('username')
         password = req.get('password')
         owner = req.get('Owner', 'unknown')
+        
         data = load_data()
         server = next((s for s in data if s['id'] == server_id), None)
         if not server:
             errors.append(f"Server '{server_id}' not found.")
-        if server and isinstance(resources, dict):
-            ok, err = validate_resource_request(server, resources)
-            if not ok:
-                errors.append(err)
-        elif server and not isinstance(resources, dict):
+            return jsonify({'error': " | ".join(errors)}), 404
+            
+        if not isinstance(resources, dict):
             errors.append('Resources must be a dictionary/object')
-        if errors:
             return jsonify({'error': " | ".join(errors)}), 400
-        if server and isinstance(resources, dict) and isinstance(server['resources']['available'], dict):
-            for key in ['gpus', 'ram_gb', 'storage_gb']:
-                server['resources']['available'][key] -= resources.get(key, 0)
+            
+        ok, err = validate_resource_request(server, resources)
+        if not ok:
+            errors.append(err)
+            return jsonify({'error': " | ".join(errors)}), 400
+            
+        # Initialize server resources structure if needed
+        if not isinstance(server.get('resources'), dict):
+            server['resources'] = {'total': {}, 'available': {}}
+        if not isinstance(server['resources'].get('available'), dict):
+            server['resources']['available'] = {}
+            
+        # Update available resources
+        for key in ['gpus', 'ram_gb', 'storage_gb']:
+            current_available = server['resources']['available'].get(key, 0)
+            current_total = server['resources'].get('total', {}).get(key, 0)
+            if key not in server['resources']['available']:
+                server['resources']['available'][key] = current_total
+            server['resources']['available'][key] = current_available - resources.get(key, 0)
+            
         pod = {
             'pod_id': pod_name,
             'owner': owner,
@@ -324,17 +275,23 @@ def create_pod():
             'timestamp': datetime.utcnow().isoformat() + 'Z',
             'requested': resources,
             'image_url': image_url,
-            'registery_url': registry_url,
-            'image_name': image_name,
-            'image_tag': image_tag
+            'registery_url': None,
+            'image_name': None,
+            'image_tag': None
         }
+        
+        # Initialize pods list if needed
+        if not isinstance(server.get('pods'), list):
+            server['pods'] = []
         server['pods'].append(pod)
         save_data(data)
+        
         try:
             kubeconfig_path = fetch_kubeconfig(machine_ip, username, password)
             create_k8s_resources(kubeconfig_path, pod)
         except Exception as e:
             return jsonify({'error': f'Kubernetes error: {str(e)}'}), 500
+            
         return jsonify({'message': 'Pod created', 'pod': pod}), 200
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
@@ -380,6 +337,8 @@ def delete_pod():
     """
     try:
         req = request.json
+        if req is None:
+            return jsonify({'error': 'Invalid JSON data'}), 400
         required_fields = ["PodName"]
         missing = [f for f in required_fields if f not in req or not req[f]]
         if missing:
@@ -473,6 +432,8 @@ def update_pod():
     """
     try:
         req = request.json
+        if req is None:
+            return jsonify({'error': 'Invalid JSON data'}), 400
         required_fields = ["ServerName", "PodName"]
         missing = [f for f in required_fields if f not in req or not req[f]]
         if missing:

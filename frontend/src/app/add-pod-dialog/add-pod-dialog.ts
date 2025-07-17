@@ -6,6 +6,7 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { PodDialogBase, PodDialogData, PodResources } from '../shared/pod-dialog.base';
 
 @Component({
   selector: 'app-add-pod-dialog',
@@ -28,22 +29,36 @@ import { MatIconModule } from '@angular/material/icon';
           <input matInput [(ngModel)]="pod.ServerDisplayName" name="ServerDisplayName" readonly>
         </mat-form-field>
         <div class="form-section-title">Pod Details</div>
-        <mat-form-field appearance="outline" style="width: 100%">
+        <mat-form-field appearance="outline" style="width: 100%" [class.error-field]="nameError">
           <mat-label>Pod Name</mat-label>
-          <input matInput [(ngModel)]="pod.PodName" name="PodName" required>
+          <input matInput [(ngModel)]="pod.PodName" name="PodName" required
+                 (ngModelChange)="onPodNameChange($event)">
+          <mat-error *ngIf="nameError">{{ nameError }}</mat-error>
         </mat-form-field>
         <div class="form-section-title">Resources</div>
-        <mat-form-field appearance="outline" >
+        <mat-form-field appearance="outline" [class.error-field]="resourceErrors['gpus']">
           <mat-label>GPUs</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.Resources.gpus" name="gpus" required>
+          <input matInput type="number" [(ngModel)]="pod.Resources.gpus" 
+                 name="gpus" required (ngModelChange)="onResourceChange('gpus')"
+                 min="0" [max]="getMaxAvailable('gpus')">
+          <mat-hint>Available: {{ getMaxAvailable('gpus') }} GPUs</mat-hint>
+          <mat-error *ngIf="resourceErrors['gpus']">{{ resourceErrors['gpus'] }}</mat-error>
         </mat-form-field>
-        <mat-form-field appearance="outline" >
+        <mat-form-field appearance="outline" [class.error-field]="resourceErrors['ram_gb']">
           <mat-label>RAM (GB)</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.Resources.ram_gb" name="ram_gb" required>
+          <input matInput type="number" [(ngModel)]="pod.Resources.ram_gb" 
+                 name="ram_gb" required (ngModelChange)="onResourceChange('ram_gb')"
+                 min="0" [max]="getMaxAvailable('ram_gb')">
+          <mat-hint>Available: {{ getMaxAvailable('ram_gb') }} GB</mat-hint>
+          <mat-error *ngIf="resourceErrors['ram_gb']">{{ resourceErrors['ram_gb'] }}</mat-error>
         </mat-form-field>
-        <mat-form-field appearance="outline" >
+        <mat-form-field appearance="outline" [class.error-field]="resourceErrors['storage_gb']">
           <mat-label>Storage (GB)</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.Resources.storage_gb" name="storage_gb" required>
+          <input matInput type="number" [(ngModel)]="pod.Resources.storage_gb" 
+                 name="storage_gb" required (ngModelChange)="onResourceChange('storage_gb')"
+                 min="0" [max]="getMaxAvailable('storage_gb')">
+          <mat-hint>Available: {{ getMaxAvailable('storage_gb') }} GB</mat-hint>
+          <mat-error *ngIf="resourceErrors['storage_gb']">{{ resourceErrors['storage_gb'] }}</mat-error>
         </mat-form-field>
         <div class="form-section-title">Image & K8s Details</div>
         <mat-form-field appearance="outline" style="width: 100%">
@@ -64,7 +79,8 @@ import { MatIconModule } from '@angular/material/icon';
         </mat-form-field>
         <mat-dialog-actions align="end">
           <button mat-button type="button" (click)="onCancel()">Cancel</button>
-          <button mat-raised-button color="primary" type="submit" [disabled]="!podForm.form.valid">Deploy Pod</button>
+          <button mat-raised-button color="primary" type="submit" 
+                  [disabled]="!podForm.form.valid || hasErrors()">Deploy Pod</button>
         </mat-dialog-actions>
       </form>
     </mat-dialog-content>
@@ -89,11 +105,19 @@ import { MatIconModule } from '@angular/material/icon';
       padding-top: 8px;
       border-top: 1px solid #eee;
     }
-    .dialog-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin: 12px 12px 10px 12px;
+    .error-field {
+      ::ng-deep .mat-form-field-outline {
+        border-color: #f44336;
+      }
+    }
+    mat-error {
+      font-size: 0.85rem;
+      padding-top: 4px;
+      color: #f44336;
+    }
+    mat-hint {
+      font-size: 0.85rem;
+      color: #666;
     }
     @media (max-width: 900px) {
       .pod-form {
@@ -105,7 +129,7 @@ import { MatIconModule } from '@angular/material/icon';
     }
   `]
 })
-export class AddPodDialogComponent {
+export class AddPodDialogComponent extends PodDialogBase {
   @Output() podCreated = new EventEmitter<any>();
 
   pod = {
@@ -114,31 +138,37 @@ export class AddPodDialogComponent {
       gpus: 0,
       ram_gb: 0,
       storage_gb: 0
-    },
+    } as PodResources,
     image_url: '',
     machine_ip: '',
     username: '',
     password: '',
-    ServerName: '', // for backend
-    ServerDisplayName: '' // for UI
+    ServerName: '',
+    ServerDisplayName: ''
   };
 
   constructor(
-    public dialogRef: MatDialogRef<AddPodDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    dialogRef: MatDialogRef<AddPodDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) data: PodDialogData
   ) {
-    if (data?.selectedServer) {
-      this.pod.ServerName = data.selectedServer.id;
-      this.pod.ServerDisplayName = data.selectedServer.name;
-      this.pod.machine_ip = data.selectedServer.ip || '';
+    super(dialogRef, data);
+    this.pod.ServerName = data.serverId;
+    this.pod.ServerDisplayName = data.serverName;
+  }
+
+  onResourceChange(resource: string) {
+    this.validateResources(resource, this.pod.Resources);
+  }
+
+  onPodNameChange(podName: string) {
+    this.validatePodName(podName);
+  }
+
+  onSubmit() {
+    this.validateAllResources(this.pod.Resources);
+    if (!this.validatePodName(this.pod.PodName) || this.hasResourceErrors()) {
+      return;
     }
-  }
-
-  onCancel(): void {
-    this.dialogRef.close();
-  }
-
-  onSubmit(): void {
     this.podCreated.emit(this.pod);
     this.dialogRef.close();
   }
