@@ -38,11 +38,12 @@ body {
   min-width: 320px;
   max-width: 400px;
   margin-left: auto;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  padding: 2px 8px 2px 8px;
-  border: 1px solid #ddd;
+  /* Remove card-like background and border */
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  border: none;
   display: flex;
   align-items: center;
 }
@@ -76,11 +77,12 @@ body {
   flex: 1;
   min-width: 170px;
   text-align: center;
-  background: #fff;
+  background: linear-gradient(135deg, #f5f6fa 60%, #e9ecef 100%);
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   padding: 18px 0 12px 0;
   margin: 0 6px;
+  border: 1px solid #ddd;
 }
 
 .ribbon-label {
@@ -123,28 +125,20 @@ body {
 }
 
 .server-sub-card {
-  flex: none;
-  width: 200px;
-  height: 90px;
-  background: #fff;
+  background: linear-gradient(135deg, #f5f6fa 60%, #e9ecef 100%);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   border: 1px solid #ddd;
-  padding: 12px 10px;
-  cursor: pointer;
-  transition: border 0.2s, box-shadow 0.2s, background 0.2s;
-  color: #333;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  padding: 18px 0 12px 0;
+  margin: 0 6px 12px 6px;
+  min-width: 200px;
   text-align: center;
+  cursor: pointer;
+  transition: box-shadow 0.2s, border 0.2s;
 }
-
 .server-sub-card.selected {
-  border: 1.5px solid #333;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  background: #fff;
+  border: 2px solid #222b45;
+  box-shadow: 0 2px 8px rgba(34,43,69,0.10);
 }
 
 .server-sub-card:hover {
@@ -401,4 +395,38 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
     max-height: 180px;
     gap: 10px;
   }
+}
+
+.consistency-led {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-left: 12px;
+  vertical-align: middle;
+  box-shadow: 0 0 4px rgba(0,0,0,0.12);
+  cursor: pointer;
+  border: 2px solid #fff;
+  transition: background 0.2s;
+  position: relative;
+}
+.consistency-led::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 32px;
+  height: 32px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: transparent;
+  pointer-events: auto;
+}
+.led-green {
+  background: linear-gradient(135deg, #4ade80 60%, #22c55e 100%);
+  border-color: #22c55e;
+}
+.led-red {
+  background: linear-gradient(135deg, #f87171 60%, #dc2626 100%);
+  border-color: #dc2626;
 }
