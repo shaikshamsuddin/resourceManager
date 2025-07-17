@@ -11,18 +11,34 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddPodDialogComponent } from './add-pod-dialog/add-pod-dialog';
+import { EditPodDialogComponent } from './edit-pod-dialog/edit-pod-dialog';
 import { MatTableModule } from '@angular/material/table';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-root',
   imports: [
-    CommonModule, FormsModule, HttpClientModule, RouterOutlet,
-    MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatDividerModule,
-    MatDialogModule, MatTableModule, AddPodDialogComponent
+    CommonModule,
+    FormsModule,
+    HttpClientModule,
+    RouterOutlet,
+    MatCardModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatDividerModule,
+    MatDialogModule,
+    MatTableModule,
+    MatIconModule,
+    MatSnackBarModule,
+    AddPodDialogComponent,
+    EditPodDialogComponent
   ],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
+  standalone: true
 })
 export class App {
   protected readonly title = signal('frontend');
@@ -178,29 +194,58 @@ export class App {
     });
   }
 
-  compareServers = (a: any, b: any) => a && b && a.id === b.id;
+  openEditPodDialog(pod: any): void {
+    const dialogRef = this.dialog.open(EditPodDialogComponent, {
+      width: '480px',
+      data: { pod }
+    });
 
-  updatePod(pod: any, updatedFields: any) {
-    if (!this.selectedServer) return;
+    dialogRef.componentInstance.podUpdated.subscribe((updatedPod: any) => {
+      this.updatePod(updatedPod);
+    });
+  }
+
+  updatePod(pod: any) {
+    const server = this.servers.find((s: any) => s.name === pod.serverName);
+    if (!server) {
+      this.snackBar.open('Server not found.', 'Close', { 
+        duration: 4000, 
+        panelClass: ['pod-snackbar-error'] 
+      });
+      return;
+    }
+
     const payload = {
-      ServerName: this.selectedServer.id,
+      ServerName: server.id,
       PodName: pod.pod_id,
-      ...updatedFields,
-      machine_ip: this.newPod.machine_ip,
-      username: this.newPod.username,
-      password: this.newPod.password
+      Resources: {
+        gpus: pod.requested.gpus,
+        ram_gb: pod.requested.ram_gb,
+        storage_gb: pod.requested.storage_gb
+      },
+      image_url: pod.image_url,
+      machine_ip: pod.machine_ip,
+      Owner: pod.owner
     };
+
     this.http.post('http://127.0.0.1:5000/update', payload).subscribe({
       next: () => {
-        this.message = `Pod ${pod.pod_id} updated.`;
+        this.snackBar.open(`Pod ${pod.pod_id} updated successfully.`, 'Close', { 
+          duration: 4000, 
+          panelClass: ['pod-snackbar-success'] 
+        });
         this.fetchServers();
-        setTimeout(() => this.message = '', 3000);
       },
-      error: () => {
-        this.message = 'Failed to update pod.';
+      error: (err) => {
+        this.snackBar.open(err?.error?.error || 'Failed to update pod.', 'Close', { 
+          duration: 4000, 
+          panelClass: ['pod-snackbar-error'] 
+        });
       }
     });
   }
+
+  compareServers = (a: any, b: any) => a && b && a.id === b.id;
 
   get totalServers() {
     return this.servers.length;
