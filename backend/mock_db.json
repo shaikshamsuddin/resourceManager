@@ -9,12 +9,105 @@
         "storage_gb": 2048
       },
       "available": {
-        "gpus": 8,
-        "ram_gb": 512,
-        "storage_gb": 2048
+        "gpus": 0,
+        "ram_gb": 163,
+        "storage_gb": 1448
       }
     },
-    "pods": []
+    "pods": [
+      {
+        "pod_id": "testpod1233233",
+        "owner": "test-team",
+        "status": "running",
+        "timestamp": "2025-07-17T10:49:00.849821Z",
+        "requested": {
+          "gpus": 1,
+          "ram_gb": 61,
+          "storage_gb": 100
+        },
+        "image_url": "https://docker.io/library/nginx:latest",
+        "registery_url": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "latest",
+        "machine_ip": "12t7575757"
+      },
+      {
+        "pod_id": "testpod1233233",
+        "owner": "test-team",
+        "status": "running",
+        "timestamp": "2025-07-17T10:23:50.997614Z",
+        "requested": {
+          "gpus": 1,
+          "ram_gb": 64,
+          "storage_gb": 100
+        },
+        "image_url": "https://docker.io/library/nginx:latest",
+        "registery_url": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "latest"
+      },
+      {
+        "pod_id": "testpod12323444",
+        "owner": "test-team",
+        "status": "running",
+        "timestamp": "2025-07-17T10:31:13.996770Z",
+        "requested": {
+          "gpus": 3,
+          "ram_gb": 32,
+          "storage_gb": 100
+        },
+        "image_url": "https://docker.io/library/nginx:latest",
+        "registery_url": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "latest",
+        "machine_ip": "192.168.1.100"
+      },
+      {
+        "pod_id": "testpod12323444",
+        "owner": "test-team",
+        "status": "running",
+        "timestamp": "2025-07-17T10:25:40.534578Z",
+        "requested": {
+          "gpus": 1,
+          "ram_gb": 64,
+          "storage_gb": 100
+        },
+        "image_url": "https://docker.io/library/nginx:latest",
+        "registery_url": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "latest"
+      },
+      {
+        "pod_id": "testpod12323444",
+        "owner": "test-team",
+        "status": "running",
+        "timestamp": "2025-07-17T10:25:53.397718Z",
+        "requested": {
+          "gpus": 1,
+          "ram_gb": 64,
+          "storage_gb": 100
+        },
+        "image_url": "https://docker.io/library/nginx:latest",
+        "registery_url": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "latest"
+      },
+      {
+        "pod_id": "testpod12323444",
+        "owner": "test-team",
+        "status": "running",
+        "timestamp": "2025-07-17T10:29:47.988609Z",
+        "requested": {
+          "gpus": 1,
+          "ram_gb": 64,
+          "storage_gb": 100
+        },
+        "image_url": "https://docker.io/library/nginx:latest",
+        "registery_url": "docker.io",
+        "image_name": "library/nginx",
+        "image_tag": "latest"
+      }
+    ]
   },
   {
     "id": "server-02",

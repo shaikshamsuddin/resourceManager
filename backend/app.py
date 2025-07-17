@@ -425,13 +425,20 @@ def update_pod():
               type: string
             PodName:
               type: string
-            owner:
-              type: string
-            status:
-              type: string
-            requested:
+            Resources:
               type: object
+              properties:
+                gpus:
+                  type: integer
+                ram_gb:
+                  type: integer
+                storage_gb:
+                  type: integer
             image_url:
+              type: string
+            machine_ip:
+              type: string
+            Owner:
               type: string
     responses:
       200:
@@ -453,7 +460,7 @@ def update_pod():
               image_name: library/nginx
               image_tag: latest
       400:
-        description: Missing fields
+        description: Missing fields or validation error
         examples:
           application/json:
             error: "Missing required field: PodName"
@@ -475,21 +482,71 @@ def update_pod():
         missing = [f for f in required_fields if f not in req or not req[f]]
         if missing:
             return jsonify({'error': f"Missing required field: {', '.join(missing)}"}), 400
+
         server_id = req['ServerName']
         pod_name = req['PodName']
         data = load_data()
+        
+        # Find server and pod
         server = next((s for s in data if s['id'] == server_id), None)
         if not server:
             return jsonify({'error': f"Server '{server_id}' not found."}), 404
+        
         pod = next((p for p in server['pods'] if p['pod_id'] == pod_name), None)
         if not pod:
             return jsonify({'error': f"Pod '{pod_name}' not found on server '{server_id}'."}), 404
-        updatable_fields = ["owner", "status", "requested", "image_url"]
-        for field in updatable_fields:
-            if field in req:
-                pod[field] = req[field]
+
+        # Handle resource updates
+        if 'Resources' in req and isinstance(req['Resources'], dict):
+            old_resources = pod.get('requested', {})
+            new_resources = req['Resources']
+            
+            # Return old resources to available pool
+            for key in ['gpus', 'ram_gb', 'storage_gb']:
+                server['resources']['available'][key] += old_resources.get(key, 0)
+            
+            # Validate new resource request
+            ok, err = validate_resource_request(server, new_resources)
+            if not ok:
+                # Restore old resources if validation fails
+                for key in ['gpus', 'ram_gb', 'storage_gb']:
+                    server['resources']['available'][key] -= old_resources.get(key, 0)
+                return jsonify({'error': err}), 400
+            
+            # Allocate new resources
+            for key in ['gpus', 'ram_gb', 'storage_gb']:
+                server['resources']['available'][key] -= new_resources.get(key, 0)
+            
+            # Update pod's requested resources
+            pod['requested'] = new_resources
+
+        # Update other fields
+        if 'Owner' in req:
+            pod['owner'] = req['Owner']
+        
+        if 'image_url' in req:
+            pod['image_url'] = req['image_url']
+            # Parse and update image details
+            if req['image_url'].startswith('https://') and ':' in req['image_url']:
+                try:
+                    image_url_no_proto = req['image_url'][len('https://'):]
+                    registry_and_image, image_tag = image_url_no_proto.rsplit(':', 1)
+                    registry_url, image_name = registry_and_image.split('/', 1)
+                    pod['registery_url'] = registry_url
+                    pod['image_name'] = image_name
+                    pod['image_tag'] = image_tag
+                except Exception as e:
+                    return jsonify({'error': f'Failed to parse image_url: {str(e)}'}), 400
+
+        if 'machine_ip' in req:
+            pod['machine_ip'] = req['machine_ip']
+
+        # Update timestamp
+        pod['timestamp'] = datetime.utcnow().isoformat() + 'Z'
+
         save_data(data)
         return jsonify({'message': 'Pod updated', 'pod': pod}), 200
+
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
