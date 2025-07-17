@@ -291,16 +291,11 @@ def create_pod():
                 errors.append("Pod name must be lowercase.")
             if "_" in pod_name:
                 errors.append("Pod name must not contain underscores.")
-        if not (isinstance(image_url, str) and image_url.startswith("https://") and ":" in image_url):
-            errors.append("Image URL must start with https:// and contain a version tag (e.g., :latest).")
+        if not (isinstance(image_url, str) and image_url.strip()):
+            errors.append("Image URL must be a non-empty string.")
+        # Remove all image_url parsing and related error handling
         registry_url = image_name = image_tag = None
-        if isinstance(image_url, str) and image_url.startswith("https://") and ":" in image_url:
-            try:
-                image_url_no_proto = image_url[len("https://"):]
-                registry_and_image, image_tag = image_url_no_proto.rsplit(":", 1)
-                registry_url, image_name = registry_and_image.split("/", 1)
-            except Exception as e:
-                errors.append(f'Failed to parse image_url: {str(e)}')
+        # Do not attempt to parse image_url or set registry_url, image_name, image_tag
         server_id = req.get('ServerName')
         resources = req.get('Resources')
         machine_ip = req.get('machine_ip')

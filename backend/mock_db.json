@@ -6,31 +6,17 @@
       "total": {
         "gpus": 8,
         "ram_gb": 512,
-        "storage_gb": 2048
+        "storage_gb": 2048,
+        "cpus": 64
       },
       "available": {
         "gpus": 0,
-        "ram_gb": 163,
-        "storage_gb": 1448
+        "ram_gb": 223,
+        "storage_gb": 1547,
+        "cpus": 64
       }
     },
     "pods": [
-      {
-        "pod_id": "testpod1233233",
-        "owner": "test-team",
-        "status": "running",
-        "timestamp": "2025-07-17T10:49:00.849821Z",
-        "requested": {
-          "gpus": 1,
-          "ram_gb": 61,
-          "storage_gb": 100
-        },
-        "image_url": "https://docker.io/library/nginx:latest",
-        "registery_url": "docker.io",
-        "image_name": "library/nginx",
-        "image_tag": "latest",
-        "machine_ip": "12t7575757"
-      },
       {
         "pod_id": "testpod1233233",
         "owner": "test-team",
@@ -39,7 +25,8 @@
         "requested": {
           "gpus": 1,
           "ram_gb": 64,
-          "storage_gb": 100
+          "storage_gb": 100,
+          "cpus": 0
         },
         "image_url": "https://docker.io/library/nginx:latest",
         "registery_url": "docker.io",
@@ -54,7 +41,8 @@
         "requested": {
           "gpus": 3,
           "ram_gb": 32,
-          "storage_gb": 100
+          "storage_gb": 100,
+          "cpus": 0
         },
         "image_url": "https://docker.io/library/nginx:latest",
         "registery_url": "docker.io",
@@ -70,7 +58,8 @@
         "requested": {
           "gpus": 1,
           "ram_gb": 64,
-          "storage_gb": 100
+          "storage_gb": 100,
+          "cpus": 0
         },
         "image_url": "https://docker.io/library/nginx:latest",
         "registery_url": "docker.io",
@@ -85,7 +74,8 @@
         "requested": {
           "gpus": 1,
           "ram_gb": 64,
-          "storage_gb": 100
+          "storage_gb": 100,
+          "cpus": 0
         },
         "image_url": "https://docker.io/library/nginx:latest",
         "registery_url": "docker.io",
@@ -100,12 +90,29 @@
         "requested": {
           "gpus": 1,
           "ram_gb": 64,
-          "storage_gb": 100
+          "storage_gb": 100,
+          "cpus": 0
         },
         "image_url": "https://docker.io/library/nginx:latest",
         "registery_url": "docker.io",
         "image_name": "library/nginx",
         "image_tag": "latest"
+      },
+      {
+        "pod_id": "mypod123",
+        "owner": "unknown",
+        "status": "running",
+        "timestamp": "2025-07-17T11:42:21.061564Z",
+        "requested": {
+          "gpus": 1,
+          "ram_gb": 1,
+          "storage_gb": 1,
+          "cpus": 0
+        },
+        "image_url": "alhjsbdf",
+        "registery_url": null,
+        "image_name": null,
+        "image_tag": null
       }
     ]
   },
@@ -116,15 +123,50 @@
       "total": {
         "gpus": 8,
         "ram_gb": 1024,
-        "storage_gb": 4096
+        "storage_gb": 4096,
+        "cpus": 64
       },
       "available": {
-        "gpus": 8,
-        "ram_gb": 1024,
-        "storage_gb": 4096
+        "gpus": 6,
+        "ram_gb": 1022,
+        "storage_gb": 4094,
+        "cpus": 64
       }
     },
-    "pods": []
+    "pods": [
+      {
+        "pod_id": "pod1234",
+        "owner": "unknown",
+        "status": "running",
+        "timestamp": "2025-07-17T11:46:25.109753Z",
+        "requested": {
+          "gpus": 1,
+          "ram_gb": 1,
+          "storage_gb": 1,
+          "cpus": 0
+        },
+        "image_url": "asdfasd",
+        "registery_url": null,
+        "image_name": null,
+        "image_tag": null
+      },
+      {
+        "pod_id": "pod1234",
+        "owner": "unknown",
+        "status": "running",
+        "timestamp": "2025-07-17T11:47:21.234819Z",
+        "requested": {
+          "gpus": 1,
+          "ram_gb": 1,
+          "storage_gb": 1,
+          "cpus": 0
+        },
+        "image_url": "ljhasdf",
+        "registery_url": null,
+        "image_name": null,
+        "image_tag": null
+      }
+    ]
   },
   {
     "id": "server-03",
@@ -133,12 +175,14 @@
       "total": {
         "gpus": 4,
         "ram_gb": 256,
-        "storage_gb": 2048
+        "storage_gb": 2048,
+        "cpus": 64
       },
       "available": {
         "gpus": 2,
         "ram_gb": 156,
-        "storage_gb": 1048
+        "storage_gb": 1048,
+        "cpus": 64
       }
     },
     "pods": [
@@ -150,7 +194,8 @@
         "requested": {
           "gpus": 1,
           "ram_gb": 50,
-          "storage_gb": 500
+          "storage_gb": 500,
+          "cpus": 0
         },
         "image_url": "sdsd"
       },
@@ -162,7 +207,8 @@
         "requested": {
           "gpus": 1,
           "ram_gb": 50,
-          "storage_gb": 500
+          "storage_gb": 500,
+          "cpus": 0
         }
       }
     ]
@@ -174,12 +220,14 @@
       "total": {
         "gpus": 8,
         "ram_gb": 512,
-        "storage_gb": 4096
+        "storage_gb": 4096,
+        "cpus": 64
       },
       "available": {
         "gpus": 2,
         "ram_gb": 112,
-        "storage_gb": 1096
+        "storage_gb": 1096,
+        "cpus": 64
       }
     },
     "pods": [
@@ -191,7 +239,8 @@
         "requested": {
           "gpus": 2,
           "ram_gb": 100,
-          "storage_gb": 1000
+          "storage_gb": 1000,
+          "cpus": 0
         }
       },
       {
@@ -202,7 +251,8 @@
         "requested": {
           "gpus": 2,
           "ram_gb": 150,
-          "storage_gb": 1000
+          "storage_gb": 1000,
+          "cpus": 0
         }
       },
       {
@@ -213,7 +263,8 @@
         "requested": {
           "gpus": 2,
           "ram_gb": 150,
-          "storage_gb": 1000
+          "storage_gb": 1000,
+          "cpus": 0
         }
       }
     ]
@@ -225,12 +276,14 @@
       "total": {
         "gpus": 8,
         "ram_gb": 1024,
-        "storage_gb": 8192
+        "storage_gb": 8192,
+        "cpus": 64
       },
       "available": {
         "gpus": 2,
         "ram_gb": 224,
-        "storage_gb": 3192
+        "storage_gb": 3192,
+        "cpus": 64
       }
     },
     "pods": [
@@ -242,7 +295,8 @@
         "requested": {
           "gpus": 2,
           "ram_gb": 200,
-          "storage_gb": 1500
+          "storage_gb": 1500,
+          "cpus": 0
         }
       },
       {
@@ -253,7 +307,8 @@
         "requested": {
           "gpus": 2,
           "ram_gb": 300,
-          "storage_gb": 1500
+          "storage_gb": 1500,
+          "cpus": 0
         }
       },
       {
@@ -264,7 +319,8 @@
         "requested": {
           "gpus": 2,
           "ram_gb": 300,
-          "storage_gb": 1500
+          "storage_gb": 1500,
+          "cpus": 0
         }
       }
     ]
@@ -276,12 +332,14 @@
       "total": {
         "gpus": 4,
         "ram_gb": 256,
-        "storage_gb": 2048
+        "storage_gb": 2048,
+        "cpus": 64
       },
       "available": {
         "gpus": 1,
         "ram_gb": 56,
-        "storage_gb": 548
+        "storage_gb": 548,
+        "cpus": 64
       }
     },
     "pods": [
@@ -293,7 +351,8 @@
         "requested": {
           "gpus": 1,
           "ram_gb": 100,
-          "storage_gb": 500
+          "storage_gb": 500,
+          "cpus": 0
         }
       },
       {
@@ -304,7 +363,8 @@
         "requested": {
           "gpus": 1,
           "ram_gb": 50,
-          "storage_gb": 500
+          "storage_gb": 500,
+          "cpus": 0
         }
       },
       {
@@ -315,7 +375,8 @@
         "requested": {
           "gpus": 1,
           "ram_gb": 50,
-          "storage_gb": 500
+          "storage_gb": 500,
+          "cpus": 0
         }
       }
     ]
@@ -328,7 +389,7 @@
         "gpus": 0,
         "ram_gb": 192,
         "storage_gb": 2000,
-        "cpus": 72
+        "cpus": 96
       },
       "available": {
         "gpus": 0,
@@ -344,7 +405,7 @@
         "status": "running",
         "timestamp": "2025-06-28T10:00:00Z",
         "requested": {
-          "cpus": 20,
+          "cpus": 0,
           "ram_gb": 60,
           "storage_gb": 500
         }
@@ -355,7 +416,7 @@
         "status": "running",
         "timestamp": "2025-06-28T11:00:00Z",
         "requested": {
-          "cpus": 20,
+          "cpus": 0,
           "ram_gb": 60,
           "storage_gb": 500
         }
@@ -366,7 +427,7 @@
         "status": "running",
         "timestamp": "2025-06-28T12:00:00Z",
         "requested": {
-          "cpus": 20,
+          "cpus": 0,
           "ram_gb": 60,
           "storage_gb": 500
         }
@@ -397,7 +458,7 @@
         "status": "running",
         "timestamp": "2025-06-29T10:00:00Z",
         "requested": {
-          "cpus": 10,
+          "cpus": 0,
           "ram_gb": 40,
           "storage_gb": 300
         },
@@ -409,7 +470,7 @@
         "status": "running",
         "timestamp": "2025-06-29T11:00:00Z",
         "requested": {
-          "cpus": 10,
+          "cpus": 0,
           "ram_gb": 40,
           "storage_gb": 300
         }
@@ -420,7 +481,7 @@
         "status": "running",
         "timestamp": "2025-06-29T12:00:00Z",
         "requested": {
-          "cpus": 10,
+          "cpus": 0,
           "ram_gb": 40,
           "storage_gb": 300
         }
@@ -451,7 +512,7 @@
         "status": "running",
         "timestamp": "2025-06-30T10:00:00Z",
         "requested": {
-          "cpus": 10,
+          "cpus": 0,
           "ram_gb": 40,
           "storage_gb": 300
         }
@@ -462,7 +523,7 @@
         "status": "running",
         "timestamp": "2025-06-30T11:00:00Z",
         "requested": {
-          "cpus": 10,
+          "cpus": 0,
           "ram_gb": 40,
           "storage_gb": 300
         }
@@ -473,7 +534,7 @@
         "status": "running",
         "timestamp": "2025-06-30T12:00:00Z",
         "requested": {
-          "cpus": 10,
+          "cpus": 0,
           "ram_gb": 40,
           "storage_gb": 300
         }
@@ -492,8 +553,8 @@
       },
       "available": {
         "gpus": 0,
-        "ram_gb": 4,
-        "storage_gb": 50,
+        "ram_gb": 24,
+        "storage_gb": 200,
         "cpus": 1
       }
     },
@@ -504,7 +565,7 @@
         "status": "running",
         "timestamp": "2025-07-01T10:00:00Z",
         "requested": {
-          "cpus": 5,
+          "cpus": 0,
           "ram_gb": 20,
           "storage_gb": 150
         },
@@ -516,18 +577,7 @@
         "status": "running",
         "timestamp": "2025-07-01T11:00:00Z",
         "requested": {
-          "cpus": 5,
-          "ram_gb": 20,
-          "storage_gb": 150
-        }
-      },
-      {
-        "pod_id": "pod-1003",
-        "owner": "team-ad",
-        "status": "running",
-        "timestamp": "2025-07-01T12:00:00Z",
-        "requested": {
-          "cpus": 5,
+          "cpus": 0,
           "ram_gb": 20,
           "storage_gb": 150
         }

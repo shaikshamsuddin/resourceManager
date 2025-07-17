@@ -22,54 +22,52 @@ import { MatIconModule } from '@angular/material/icon';
   template: `
     <h2 mat-dialog-title>Deploy New Pod</h2>
     <mat-dialog-content>
-      <form #podForm="ngForm" class="pod-form">
-        <mat-form-field appearance="outline">
-          <mat-label>Pod Name</mat-label>
-          <input matInput [(ngModel)]="pod.PodName" name="podName" required>
+      <form #podForm="ngForm" class="pod-form" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" >
+          <mat-label>Server Name</mat-label>
+          <input matInput [(ngModel)]="pod.ServerDisplayName" name="ServerDisplayName" readonly>
         </mat-form-field>
-
-        <mat-form-field appearance="outline">
+        <div class="form-section-title">Pod Details</div>
+        <mat-form-field appearance="outline" style="width: 100%">
+          <mat-label>Pod Name</mat-label>
+          <input matInput [(ngModel)]="pod.PodName" name="PodName" required>
+        </mat-form-field>
+        <div class="form-section-title">Resources</div>
+        <mat-form-field appearance="outline" >
           <mat-label>GPUs</mat-label>
           <input matInput type="number" [(ngModel)]="pod.Resources.gpus" name="gpus" required>
         </mat-form-field>
-
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" >
           <mat-label>RAM (GB)</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.Resources.ram_gb" name="ram" required>
+          <input matInput type="number" [(ngModel)]="pod.Resources.ram_gb" name="ram_gb" required>
         </mat-form-field>
-
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" >
           <mat-label>Storage (GB)</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.Resources.storage_gb" name="storage" required>
+          <input matInput type="number" [(ngModel)]="pod.Resources.storage_gb" name="storage_gb" required>
         </mat-form-field>
-
-        <mat-form-field appearance="outline">
+        <div class="form-section-title">Image & K8s Details</div>
+        <mat-form-field appearance="outline" style="width: 100%">
           <mat-label>Image URL</mat-label>
-          <input matInput [(ngModel)]="pod.image_url" name="imageUrl" required>
+          <input matInput [(ngModel)]="pod.image_url" name="image_url" required>
         </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Machine IP</mat-label>
-          <input matInput [(ngModel)]="pod.machine_ip" name="machineIp" required>
+        <mat-form-field appearance="outline" style="width: 100%">
+          <mat-label>K8s Machine IP</mat-label>
+          <input matInput [(ngModel)]="pod.machine_ip" name="machine_ip" required>
         </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Username</mat-label>
+        <mat-form-field appearance="outline" >
+          <mat-label>K8s Username</mat-label>
           <input matInput [(ngModel)]="pod.username" name="username" required>
         </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
-          <input matInput type="password" [(ngModel)]="pod.password" name="password" required>
+        <mat-form-field appearance="outline" >
+          <mat-label>K8s Password</mat-label>
+          <input matInput [(ngModel)]="pod.password" name="password" required type="password">
         </mat-form-field>
+        <mat-dialog-actions align="end">
+          <button mat-button type="button" (click)="onCancel()">Cancel</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="!podForm.form.valid">Deploy Pod</button>
+        </mat-dialog-actions>
       </form>
     </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="onCancel()">Cancel</button>
-      <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="!podForm.form.valid">
-        Deploy Pod
-      </button>
-    </mat-dialog-actions>
   `,
   styles: [`
     .pod-form {
@@ -82,6 +80,28 @@ import { MatIconModule } from '@angular/material/icon';
     }
     mat-form-field {
       width: 100%;
+    }
+    .form-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+      margin: 8px 0 4px 0;
+      padding-top: 8px;
+      border-top: 1px solid #eee;
+    }
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin: 12px 12px 10px 12px;
+    }
+    @media (max-width: 900px) {
+      .pod-form {
+        padding: 8px 2px 4px 2px;
+      }
+      .dialog-actions {
+        margin: 6px 2px 6px 2px;
+      }
     }
   `]
 })
@@ -99,7 +119,8 @@ export class AddPodDialogComponent {
     machine_ip: '',
     username: '',
     password: '',
-    ServerName: ''
+    ServerName: '', // for backend
+    ServerDisplayName: '' // for UI
   };
 
   constructor(
@@ -108,6 +129,7 @@ export class AddPodDialogComponent {
   ) {
     if (data?.selectedServer) {
       this.pod.ServerName = data.selectedServer.id;
+      this.pod.ServerDisplayName = data.selectedServer.name;
       this.pod.machine_ip = data.selectedServer.ip || '';
     }
   }
