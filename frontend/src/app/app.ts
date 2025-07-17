@@ -12,6 +12,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { AddPodDialogComponent } from './add-pod-dialog/add-pod-dialog';
 import { MatTableModule } from '@angular/material/table';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-root',
@@ -46,8 +47,10 @@ export class App {
   filteredPods: any[] = [];
   consistencyMessage: string = '';
   consistencyCheckInterval: any;
+  podMessage: string = '';
+  podMessageType: 'success' | 'error' | '' = '';
 
-  constructor(private http: HttpClient, private dialog: MatDialog) {
+  constructor(private http: HttpClient, private dialog: MatDialog, private snackBar: MatSnackBar) {
     this.fetchServers();
   }
 
@@ -160,18 +163,17 @@ export class App {
     // Use selectedServer if not already set in podData
     const serverId = podData.ServerName || (this.selectedServer && this.selectedServer.id);
     if (!serverId) {
-      this.message = 'Please select a server to deploy the pod.';
+      this.snackBar.open('Please select a server to deploy the pod.', 'Close', { duration: 4000, panelClass: ['pod-snackbar-error'] });
       return;
     }
     const payload = { ...podData, ServerName: serverId };
     this.http.post('http://127.0.0.1:5000/create', payload).subscribe({
       next: () => {
-        this.message = `Pod ${payload.PodName} created.`;
+        this.snackBar.open(`Pod ${payload.PodName} created successfully.`, 'Close', { duration: 4000, panelClass: ['pod-snackbar-success'] });
         this.fetchServers();
-        setTimeout(() => this.message = '', 3000);
       },
       error: (err) => {
-        this.message = err?.error?.error || 'Failed to create pod.';
+        this.snackBar.open(err?.error?.error || 'Failed to create pod.', 'Close', { duration: 4000, panelClass: ['pod-snackbar-error'] });
       }
     });
   }

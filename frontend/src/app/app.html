@@ -1,5 +1,7 @@
 <!-- Consistency/Error Message Area -->
 <div *ngIf="consistencyMessage" class="consistency-message">{{ consistencyMessage }}</div>
+<!-- Pod Creation Message Area -->
+<div *ngIf="podMessage" [ngClass]="{'pod-message-success': podMessageType === 'success', 'pod-message-error': podMessageType === 'error'}" class="pod-message">{{ podMessage }}</div>
 
 <!-- Header with big title and right-aligned search bar -->
 <div class="dashboard-header">
@@ -85,9 +87,11 @@
 
 <!-- 4. Pod Overview Card -->
 <mat-card class="overview-card">
-  <div class="overview-title">Pod Overview</div>
-  <div class="overview-desc">Detailed status and resource utilization of all Kubernetes servers.</div>
-  <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
+  <div class="overview-header-row">
+    <div>
+      <div class="overview-title">Pod Overview</div>
+      <div class="overview-desc">Detailed status and resource utilization of all Kubernetes servers.</div>
+    </div>
     <button mat-raised-button color="accent" (click)="openAddPodDialog()">Deploy New Pod</button>
   </div>
   <table mat-table [dataSource]="filteredPods" class="mat-elevation-z1">

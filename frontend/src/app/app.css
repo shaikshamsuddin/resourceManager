@@ -83,11 +83,11 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 32px;
+  gap: 44px; /* increased gap for more space between cards */
 }
 .ribbon-stat {
   flex: 1;
-  min-width: 120px;
+  min-width: 170px; /* increased min-width for better text fit */
   text-align: center;
   background: #fff;
   border-radius: 12px;
@@ -194,6 +194,24 @@ body {
   margin-bottom: 12px;
 }
 
+.overview-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.overview-header-row .overview-title {
+  margin-bottom: 0;
+}
+@media (max-width: 700px) {
+  .overview-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
 .mat-table {
   width: 100%;
   background: #f5f0ff;
@@ -251,6 +269,39 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
   font-size: 1rem;
   text-align: center;
   box-shadow: 0 1px 6px rgba(109,40,217,0.04);
+}
+
+.pod-message {
+  margin: 8px auto 0 auto;
+  max-width: 600px;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  text-align: center;
+  box-shadow: 0 1px 6px rgba(109,40,217,0.04);
+}
+.pod-message-success {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1.5px solid #bbf7d0;
+}
+.pod-message-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1.5px solid #fecaca;
+}
+
+.pod-snackbar-success {
+  background: #f0fdf4 !important;
+  color: #15803d !important;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.pod-snackbar-error {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  font-weight: 600;
+  font-size: 1.05rem;
 }
 
 @media (max-width: 700px) {
