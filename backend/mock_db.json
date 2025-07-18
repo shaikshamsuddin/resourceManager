@@ -11,8 +11,8 @@
       },
       "available": {
         "gpus": 5,
-        "ram_gb": 369,
-        "storage_gb": 1812,
+        "ram_gb": 366,
+        "storage_gb": 1802,
         "cpus": 64
       }
     },
@@ -139,6 +139,22 @@
         "registery_url": null,
         "image_name": null,
         "image_tag": null
+      },
+      {
+        "pod_id": "fcd1",
+        "owner": "unknown",
+        "status": "registered",
+        "timestamp": "2025-07-18T06:54:58.692960Z",
+        "requested": {
+          "gpus": 0,
+          "ram_gb": 3,
+          "storage_gb": 10
+        },
+        "image_url": "https://nodejs.org/en/download",
+        "registery_url": null,
+        "image_name": null,
+        "image_tag": null,
+        "machine_ip": "147.0.90.0"
       }
     ]
   },
