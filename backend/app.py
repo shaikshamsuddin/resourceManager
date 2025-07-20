@@ -1,15 +1,23 @@
+"""
+Resource Manager Backend API
+This module contains the Flask application and API endpoints for managing Kubernetes resources.
+"""
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 import os
-from datetime import datetime
-from kubernetes import client, config as k8s_config
-import tempfile
-import paramiko
-import yaml
-import uuid
-from kubernetes.client.rest import ApiException
 from flasgger import Swagger
+
+# Import utility functions from utils module
+from utils import (
+    get_available_resources,
+    validate_resource_request,
+    create_k8s_resources_simple,
+    delete_k8s_resources_simple,
+    create_pod_object,
+    update_pod_object
+)
 
 app = Flask(__name__)
 CORS(app)
@@ -17,146 +25,17 @@ swagger = Swagger(app)
 
 MOCK_DB_JSON = os.path.join(os.path.dirname(__file__), 'mock_db.json')
 
-# --- Utility Functions ---
+
 def load_data():
+    """Load data from mock database JSON file."""
     with open(MOCK_DB_JSON, 'r') as f:
         return json.load(f)
 
+
 def save_data(data):
+    """Save data to mock database JSON file."""
     with open(MOCK_DB_JSON, 'w') as f:
         json.dump(data, f, indent=2)
-
-def get_available_resources(server):
-    if not server:
-        return {
-            'gpus': 0,
-            'ram_gb': 0,
-            'storage_gb': 0
-        }
-    total = server.get('resources', {}).get('total', {})
-    available = server.get('resources', {}).get('available', {})
-    return {
-        'gpus': available.get('gpus', 0),
-        'ram_gb': available.get('ram_gb', 0),
-        'storage_gb': available.get('storage_gb', 0)
-    }
-
-def validate_resource_request(server, requested):
-    available = get_available_resources(server)
-    for key in ['gpus', 'ram_gb', 'storage_gb']:
-        if requested.get(key, 0) > available.get(key, 0):
-            return False, f"Not enough {key} available. Requested: {requested.get(key, 0)}, Available: {available.get(key, 0)}"
-    return True, None
-
-def fetch_kubeconfig(machine_ip, username, password):
-    # SSH to VM and fetch kubeconfig (as in reference)
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostname=machine_ip, username=username, password=password, timeout=60)
-    stdin, stdout, _ = ssh.exec_command("sudo microk8s config")
-    config_data = stdout.read().decode()
-    ssh.close()
-    config_dict = yaml.safe_load(config_data)
-    public_ip = machine_ip
-    for cluster in config_dict.get("clusters", []):
-        server_url = cluster["cluster"]["server"]
-        cluster["cluster"]["server"] = server_url.replace("127.0.0.1", public_ip)
-        cluster["cluster"]["insecure-skip-tls-verify"] = True
-        cluster["cluster"].pop("certificate-authority-data", None)
-    config_data_modified = yaml.dump(config_dict)
-    kubeconfig_path = os.path.join(tempfile.gettempdir(), f"kubeconfig_{uuid.uuid4()}.yaml")
-    with open(kubeconfig_path, "w") as f:
-        f.write(config_data_modified)
-    return kubeconfig_path
-
-def create_k8s_resources(kubeconfig_path, pod_data):
-    k8s_config.load_kube_config(config_file=kubeconfig_path)
-    core_v1 = client.CoreV1Api()
-    apps_v1 = client.AppsV1Api()
-    namespace = pod_data['pod_id']
-    image_url = pod_data['image_url']
-    resources = pod_data['requested']
-    # 1. Create Namespace
-    ns_body = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace))
-    try:
-        core_v1.create_namespace(ns_body)
-    except ApiException as e:
-        if e.status != 409:
-            raise
-    # 2. Create Deployment
-    container = client.V1Container(
-        name=namespace,
-        image=image_url,
-        resources=client.V1ResourceRequirements(
-            requests={
-                'cpu': str(resources.get('ram_gb', 1)),
-                'memory': f"{resources.get('ram_gb', 1)}Gi",
-                'nvidia.com/gpu': str(resources.get('gpus', 0))
-            },
-            limits={
-                'cpu': str(resources.get('ram_gb', 1)),
-                'memory': f"{resources.get('ram_gb', 1)}Gi",
-                'nvidia.com/gpu': str(resources.get('gpus', 0))
-            }
-        )
-    )
-    template = client.V1PodTemplateSpec(
-        metadata=client.V1ObjectMeta(labels={"app": namespace}),
-        spec=client.V1PodSpec(containers=[container])
-    )
-    spec = client.V1DeploymentSpec(
-        replicas=1,
-        selector=client.V1LabelSelector(match_labels={"app": namespace}),
-        template=template
-    )
-    deployment = client.V1Deployment(
-        metadata=client.V1ObjectMeta(name=namespace, namespace=namespace),
-        spec=spec
-    )
-    try:
-        apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment)
-    except ApiException as e:
-        if e.status != 409:
-            raise
-    # 3. Create Service
-    service = client.V1Service(
-        metadata=client.V1ObjectMeta(name=namespace, namespace=namespace),
-        spec=client.V1ServiceSpec(
-            selector={"app": namespace},
-            ports=[client.V1ServicePort(port=80, target_port=80)],
-            type="ClusterIP"
-        )
-    )
-    try:
-        core_v1.create_namespaced_service(namespace=namespace, body=service)
-    except ApiException as e:
-        if e.status != 409:
-            raise
-
-
-def delete_k8s_resources(kubeconfig_path, pod_data):
-    k8s_config.load_kube_config(config_file=kubeconfig_path)
-    core_v1 = client.CoreV1Api()
-    apps_v1 = client.AppsV1Api()
-    namespace = pod_data['pod_id']
-    # 1. Delete Service
-    try:
-        core_v1.delete_namespaced_service(name=namespace, namespace=namespace)
-    except ApiException as e:
-        if e.status != 404:
-            raise
-    # 2. Delete Deployment
-    try:
-        apps_v1.delete_namespaced_deployment(name=namespace, namespace=namespace)
-    except ApiException as e:
-        if e.status != 404:
-            raise
-    # 3. Delete Namespace
-    try:
-        core_v1.delete_namespace(name=namespace)
-    except ApiException as e:
-        if e.status != 404:
-            raise
 
 # --- API Endpoints ---
 @app.route('/')
@@ -215,7 +94,7 @@ def create_pod():
         req = request.json
         if req is None:
             return jsonify({'error': 'Invalid JSON data'}), 400
-        required_fields = ["ServerName", "PodName", "Resources", "image_url", "machine_ip", "username", "password"]
+        required_fields = ["ServerName", "PodName", "Resources", "image_url"]
         errors = []
         missing = [f for f in required_fields if f not in req or not req[f]]
         if missing:
@@ -234,9 +113,6 @@ def create_pod():
         
         server_id = req.get('ServerName')
         resources = req.get('Resources', {})
-        machine_ip = req.get('machine_ip')
-        username = req.get('username')
-        password = req.get('password')
         owner = req.get('Owner', 'unknown')
         
         data = load_data()
@@ -268,17 +144,12 @@ def create_pod():
                 server['resources']['available'][key] = current_total
             server['resources']['available'][key] = current_available - resources.get(key, 0)
             
-        pod = {
-            'pod_id': pod_name,
-            'owner': owner,
-            'status': 'running',
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
-            'requested': resources,
+        pod = create_pod_object({
+            'PodName': pod_name,
+            'Resources': resources,
             'image_url': image_url,
-            'registery_url': None,
-            'image_name': None,
-            'image_tag': None
-        }
+            'Owner': owner
+        }, server_id)
         
         # Initialize pods list if needed
         if not isinstance(server.get('pods'), list):
@@ -287,8 +158,7 @@ def create_pod():
         save_data(data)
         
         try:
-            kubeconfig_path = fetch_kubeconfig(machine_ip, username, password)
-            create_k8s_resources(kubeconfig_path, pod)
+            create_k8s_resources_simple(pod)
         except Exception as e:
             return jsonify({'error': f'Kubernetes error: {str(e)}'}), 500
             
@@ -356,6 +226,13 @@ def delete_pod():
                 break
         if not found:
             return jsonify({'error': f"Pod '{pod_name}' not found on any server."}), 404
+        
+        # Delete from Kubernetes if pod was found
+        try:
+            delete_k8s_resources_simple({'pod_id': pod_name})
+        except Exception as e:
+            return jsonify({'error': f'Kubernetes deletion error: {str(e)}'}), 500
+        
         save_data(data)
         return jsonify({'message': 'Pod deleted'}), 200
     except Exception as e:
@@ -494,11 +371,14 @@ def update_pod():
                 except Exception as e:
                     return jsonify({'error': f'Failed to parse image_url: {str(e)}'}), 400
 
-        if 'machine_ip' in req:
-            pod['machine_ip'] = req['machine_ip']
-
-        # Update timestamp
-        pod['timestamp'] = datetime.utcnow().isoformat() + 'Z'
+        # Update timestamp using utility function
+        updated_pod = update_pod_object({
+            'PodName': pod_name,
+            'Resources': pod['requested'],
+            'image_url': pod['image_url'],
+            'Owner': pod['owner']
+        }, server_id)
+        pod['timestamp'] = updated_pod['timestamp']
 
         save_data(data)
         return jsonify({'message': 'Pod updated', 'pod': pod}), 200

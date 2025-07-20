@@ -60,22 +60,10 @@ import { PodDialogBase, PodDialogData, PodResources } from '../shared/pod-dialog
           <mat-hint>Available: {{ getMaxAvailable('storage_gb') }} GB</mat-hint>
           <mat-error *ngIf="resourceErrors['storage_gb']">{{ resourceErrors['storage_gb'] }}</mat-error>
         </mat-form-field>
-        <div class="form-section-title">Image & K8s Details</div>
+        <div class="form-section-title">Image Details</div>
         <mat-form-field appearance="outline" style="width: 100%">
           <mat-label>Image URL</mat-label>
           <input matInput [(ngModel)]="pod.image_url" name="image_url" required>
-        </mat-form-field>
-        <mat-form-field appearance="outline" style="width: 100%">
-          <mat-label>K8s Machine IP</mat-label>
-          <input matInput [(ngModel)]="pod.machine_ip" name="machine_ip" required>
-        </mat-form-field>
-        <mat-form-field appearance="outline" >
-          <mat-label>K8s Username</mat-label>
-          <input matInput [(ngModel)]="pod.username" name="username" required>
-        </mat-form-field>
-        <mat-form-field appearance="outline" >
-          <mat-label>K8s Password</mat-label>
-          <input matInput [(ngModel)]="pod.password" name="password" required type="password">
         </mat-form-field>
         <mat-dialog-actions align="end">
           <button mat-button type="button" (click)="onCancel()">Cancel</button>
@@ -140,9 +128,6 @@ export class AddPodDialogComponent extends PodDialogBase {
       storage_gb: 0
     } as PodResources,
     image_url: '',
-    machine_ip: '',
-    username: '',
-    password: '',
     ServerName: '',
     ServerDisplayName: ''
   };

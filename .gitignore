@@ -1,0 +1,3 @@
+# Root-level files that need to be ignored
+.DS_Store
+.venv/ 

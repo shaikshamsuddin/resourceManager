@@ -34,19 +34,7 @@ body {
   line-height: 1.1;
 }
 
-.dashboard-search {
-  min-width: 320px;
-  max-width: 400px;
-  margin-left: auto;
-  /* Remove card-like background and border */
-  background: transparent;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0;
-  border: none;
-  display: flex;
-  align-items: center;
-}
+
 
 .resource-info-ribbon {
   width: 100%;
@@ -405,11 +393,7 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
     font-size: 2rem;
     margin-bottom: 12px;
   }
-  .dashboard-search {
-    min-width: 180px;
-    max-width: 100%;
-    margin-left: 0;
-  }
+
   .resource-info-ribbon, .choose-server-card, .overview-card {
     padding: 10px 4px 8px 4px;
   }

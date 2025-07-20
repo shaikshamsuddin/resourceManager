@@ -44,22 +44,6 @@ export class App {
 
   servers: any[] = [];
   selectedServer: any = null;
-  newPod = {
-    PodName: '',
-    Resources: {
-      gpus: 0,
-      ram_gb: 0,
-      storage_gb: 0
-    },
-    image_url: '',
-    machine_ip: '',
-    username: '',
-    password: ''
-  };
-  message = '';
-  searchTerm: string = '';
-  filteredServers: any[] = [];
-  filteredPods: any[] = [];
   consistencyMessage: string = '';
   consistencyCheckInterval: any;
   podMessage: string = '';
@@ -70,7 +54,6 @@ export class App {
   }
 
   ngOnInit() {
-    this.onSearch();
     this.startConsistencyPolling();
   }
 
@@ -103,10 +86,9 @@ export class App {
         if (this.servers.length > 0 && !this.selectedServer) {
           this.selectedServer = this.servers[0];
         }
-        this.onSearch();
       },
       error: () => {
-        this.message = 'Failed to load servers from backend.';
+        // Handle error silently or show alert
       }
     });
   }
@@ -115,10 +97,7 @@ export class App {
     if (!this.selectedServer) return;
     const payload = {
       ServerName: this.selectedServer.id,
-      PodName: pod.pod_id,
-      machine_ip: this.newPod.machine_ip,
-      username: this.newPod.username,
-      password: this.newPod.password
+      PodName: pod.pod_id
     };
     this.http.post('http://127.0.0.1:5000/delete', payload).subscribe({
       next: () => {
@@ -140,37 +119,7 @@ export class App {
     });
   }
 
-  createPod() {
-    if (!this.selectedServer) return;
-    const payload = {
-      ServerName: this.selectedServer.id,
-      PodName: this.newPod.PodName,
-      Resources: this.newPod.Resources,
-      image_url: this.newPod.image_url,
-      machine_ip: this.newPod.machine_ip,
-      username: this.newPod.username,
-      password: this.newPod.password,
-      Owner: this.newPod.username
-    };
-    this.http.post('http://127.0.0.1:5000/create', payload).subscribe({
-      next: () => {
-        this.message = `Pod ${this.newPod.PodName} created.`;
-        this.fetchServers();
-        this.newPod = {
-          PodName: '',
-          Resources: { gpus: 0, ram_gb: 0, storage_gb: 0 },
-          image_url: '',
-          machine_ip: '',
-          username: '',
-          password: ''
-        };
-        setTimeout(() => this.message = '', 3000);
-      },
-      error: (err) => {
-        this.message = err?.error?.error || 'Failed to create pod.';
-      }
-    });
-  }
+
 
   openAddPodDialog() {
     if (!this.selectedServer) {
@@ -332,24 +281,7 @@ export class App {
     return this.servers.flatMap((s: any) => (s.pods || []).map((p: any) => ({ ...p, serverName: s.name })));
   }
 
-  onSearch() {
-    const term = this.searchTerm.trim().toLowerCase();
-    if (!term) {
-      this.filteredServers = this.servers;
-      this.filteredPods = this.allPods;
-      return;
-    }
-    this.filteredServers = this.servers.filter((s: any) =>
-      s.name?.toLowerCase().includes(term) ||
-      s.ip?.toLowerCase().includes(term) ||
-      (s.status || '').toLowerCase().includes(term)
-    );
-    this.filteredPods = this.allPods.filter((p: any) =>
-      p.pod_id?.toLowerCase().includes(term) ||
-      p.serverName?.toLowerCase().includes(term) ||
-      (p.status || '').toLowerCase().includes(term)
-    );
-  }
+
 
   selectServer(server: any) {
     this.selectedServer = server;
