@@ -16,8 +16,20 @@ class Config:
     """Base configuration class."""
     
     # Environment detection - default to local mock demo mode
-    ENVIRONMENT = Environment(os.getenv(ConfigKeys.ENVIRONMENT, Environment.LOCAL_MOCK_DB.value))
-    DEBUG = ENVIRONMENT == Environment.DEVELOPMENT
+    @classmethod
+    def get_environment(cls):
+        """Get current environment dynamically."""
+        return Environment(os.getenv(ConfigKeys.ENVIRONMENT, Environment.LOCAL_MOCK_DB.value))
+    
+    @classmethod
+    def get_environment_value(cls):
+        """Get current environment value dynamically."""
+        return cls.get_environment().value
+    
+    @classmethod
+    def is_debug(cls):
+        """Check if in debug mode dynamically."""
+        return cls.get_environment() == Environment.DEVELOPMENT
     
     # Kubernetes configuration
     KUBERNETES_CONFIG = {
@@ -71,12 +83,12 @@ class Config:
     @classmethod
     def get_kubernetes_config(cls) -> Dict[str, Any]:
         """Get Kubernetes configuration for current environment."""
-        return cls.KUBERNETES_CONFIG.get(cls.ENVIRONMENT.value, cls.KUBERNETES_CONFIG[Environment.DEVELOPMENT.value])
+        return cls.KUBERNETES_CONFIG.get(cls.get_environment_value(), cls.KUBERNETES_CONFIG[Environment.DEVELOPMENT.value])
     
     @classmethod
     def get_api_config(cls) -> Dict[str, Any]:
         """Get API configuration for current environment."""
-        return cls.API_CONFIG.get(cls.ENVIRONMENT.value, cls.API_CONFIG[Environment.DEVELOPMENT.value])
+        return cls.API_CONFIG.get(cls.get_environment_value(), cls.API_CONFIG[Environment.DEVELOPMENT.value])
     
     @classmethod
     def get_azure_config(cls) -> Dict[str, Any]:
@@ -86,17 +98,17 @@ class Config:
     @classmethod
     def is_production(cls) -> bool:
         """Check if running in production environment."""
-        return cls.ENVIRONMENT == Environment.PRODUCTION
+        return cls.get_environment() == Environment.PRODUCTION
     
     @classmethod
     def is_development(cls) -> bool:
         """Check if running in development environment."""
-        return cls.ENVIRONMENT == Environment.DEVELOPMENT
+        return cls.get_environment() == Environment.DEVELOPMENT
     
     @classmethod
     def is_mock_demo(cls) -> bool:
         """Check if running in local mock demo environment."""
-        return cls.ENVIRONMENT == Environment.LOCAL_MOCK_DB
+        return cls.get_environment() == Environment.LOCAL_MOCK_DB
     
     @classmethod
     def get_default_image(cls) -> str:

@@ -24,7 +24,7 @@ from providers.mock_data_provider import mock_data_provider
 from providers.kubernetes_provider import local_kubernetes_provider
 from providers.cloud_kubernetes_provider import cloud_kubernetes_provider
 from health_monitor import health_monitor
-from constants import Ports, PodStatus, Environment, Mode, ModeConfig
+from constants import Ports, PodStatus, Environment, Mode, ModeConfig, ConfigKeys
 
 app = Flask(__name__)
 
@@ -99,18 +99,23 @@ def get_servers_mdem():
             details: "<details>"
     """
     try:
+        # Debug: Print current environment
+        current_env = Config.get_environment_value()
+        print(f"DEBUG: Current environment: {current_env}")
+        print(f"DEBUG: Expected for local-k8s: {Environment.DEVELOPMENT.value}")
+        
         # Use appropriate provider based on environment
-        if Config.ENVIRONMENT.value == Environment.LOCAL_MOCK_DB.value:
-            # Use mock data provider for demo mode
+        if current_env == Environment.LOCAL_MOCK_DB.value:
+            print("DEBUG: Using mock data provider")
             servers = mock_data_provider.get_servers_with_pods_mdem()
-        elif Config.ENVIRONMENT.value == Environment.DEVELOPMENT.value:
-            # Use local Kubernetes provider
+        elif current_env == Environment.DEVELOPMENT.value:
+            print("DEBUG: Using local Kubernetes provider")
             servers = local_kubernetes_provider.get_servers_with_pods()
-        elif Config.ENVIRONMENT.value == Environment.PRODUCTION.value:
-            # Use cloud Kubernetes provider
+        elif current_env == Environment.PRODUCTION.value:
+            print("DEBUG: Using cloud Kubernetes provider")
             servers = cloud_kubernetes_provider.get_servers_with_pods()
         else:
-            # Fallback to mock data
+            print(f"DEBUG: Fallback to mock data (unexpected env: {current_env})")
             servers = mock_data_provider.get_servers_with_pods_mdem()
         
         return jsonify(servers), 200
@@ -146,11 +151,11 @@ def create_pod_mdem():
         owner = req.get('Owner', 'unknown')
         
         # Get data based on environment
-        if Config.ENVIRONMENT.value == Environment.LOCAL_MOCK_DB.value:
+        if Config.get_environment_value() == Environment.LOCAL_MOCK_DB.value:
             servers = mock_data_provider.get_servers_with_pods_mdem()
-        elif Config.ENVIRONMENT.value == Environment.DEVELOPMENT.value:
+        elif Config.get_environment_value() == Environment.DEVELOPMENT.value:
             servers = local_kubernetes_provider.get_servers_with_pods()
-        elif Config.ENVIRONMENT.value == Environment.PRODUCTION.value:
+        elif Config.get_environment_value() == Environment.PRODUCTION.value:
             servers = cloud_kubernetes_provider.get_servers_with_pods()
         else:
             servers = mock_data_provider.get_servers_with_pods_mdem()
@@ -190,7 +195,7 @@ def create_pod_mdem():
         }, server_id)
         
         try:
-            if Config.ENVIRONMENT.value == Environment.LOCAL_MOCK_DB.value:
+            if Config.get_environment_value() == Environment.LOCAL_MOCK_DB.value:
                 # Add to mock data
                 if mock_data_provider.add_pod_mdem(server_id, pod):
                     return jsonify({'message': 'Pod created', 'pod': pod}), 200
@@ -257,9 +262,9 @@ def delete_pod_mdem():
         pod_name = req['PodName']
         
         # Handle deletion based on environment
-        if Config.ENVIRONMENT.value == Environment.LOCAL_MOCK_DB.value:
+        if Config.get_environment_value() == Environment.LOCAL_MOCK_DB.value:
             # Delete from mock data
-            if mock_data_provider.remove_pod(pod_name):
+            if mock_data_provider.remove_pod_mdem(pod_name):
                 return jsonify({'message': 'Pod deleted'}), 200
             else:
                 return jsonify({'error': f"Pod '{pod_name}' not found on any server."}), 404
@@ -440,13 +445,13 @@ def consistency_check_mdem():
     """
     try:
         # Use appropriate provider based on environment
-        if Config.ENVIRONMENT.value == Environment.LOCAL_MOCK_DB.value:
+        if Config.get_environment_value() == Environment.LOCAL_MOCK_DB.value:
             # Use mock data for demo mode
             servers = mock_data_provider.get_servers_with_pods_mdem()
-        elif Config.ENVIRONMENT.value == Environment.DEVELOPMENT.value:
+        elif Config.get_environment_value() == Environment.DEVELOPMENT.value:
             # Use local Kubernetes provider
             servers = local_kubernetes_provider.get_servers_with_pods()
-        elif Config.ENVIRONMENT.value == Environment.PRODUCTION.value:
+        elif Config.get_environment_value() == Environment.PRODUCTION.value:
             # Use cloud Kubernetes provider
             servers = cloud_kubernetes_provider.get_servers_with_pods()
         else:
@@ -627,6 +632,7 @@ def mode_management_mdem():
             importlib.reload(config)
             # Re-import Config after reload
             from config import Config
+            # Environment variable is already set, Config will pick it up dynamically
             
             return jsonify({
                 'current_mode': new_mode,
@@ -642,8 +648,8 @@ def mode_management_mdem():
             import config
             importlib.reload(config)
             from config import Config
-            
-            current_env = Config.ENVIRONMENT.value
+            # Get current environment dynamically
+            current_env = Config.get_environment_value()
             current_mode = ModeConfig.get_mode_for_environment(current_env)
             
             return jsonify({
