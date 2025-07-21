@@ -76,14 +76,24 @@ export class App {
         // Refresh data when mode changes
         this.fetchServers();
         this.checkConsistency();
-        this.checkClusterStatus();
+        
+        // Handle cluster status polling based on new mode
+        if (this.isRealKubernetesMode()) {
+          this.startClusterStatusPolling();
+        } else {
+          // Stop cluster status polling if switching to demo mode
+          if (this.clusterStatusInterval) {
+            clearInterval(this.clusterStatusInterval);
+            this.clusterStatusInterval = null;
+          }
+          this.clusterStatus = 'unknown';
+        }
       },
       error: (error) => {
         console.error('Failed to change mode:', error);
         // Still refresh data even if mode change failed
         this.fetchServers();
         this.checkConsistency();
-        this.checkClusterStatus();
       }
     });
   }
@@ -115,7 +125,10 @@ export class App {
 
   ngOnInit() {
     this.startConsistencyPolling();
-    this.startClusterStatusPolling();
+    // Only start cluster status polling if in real Kubernetes mode
+    if (this.isRealKubernetesMode()) {
+      this.startClusterStatusPolling();
+    }
   }
 
   ngOnDestroy() {

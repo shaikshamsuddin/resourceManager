@@ -144,8 +144,8 @@ class LocalKubernetesProvider:
             Pod information dictionary or None if invalid
         """
         try:
-            # Skip system pods
-            if pod.metadata.namespace in ['kube-system', 'default']:
+            # Skip only system pods, but include default namespace pods
+            if pod.metadata.namespace in ['kube-system']:
                 return None
             
             # Extract resources

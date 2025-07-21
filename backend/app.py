@@ -15,10 +15,10 @@ from config import Config
 from utils import (
     get_available_resources,
     validate_resource_request,
-    create_k8s_resources_simple,
-    delete_k8s_resources_simple,
-    create_pod_object,
-    update_pod_object
+    create_pod_k8s,
+    delete_pod_k8s,
+    create_pod_mdem,
+    update_pod_mdem
 )
 from providers.mock_data_provider import mock_data_provider
 from providers.kubernetes_provider import local_kubernetes_provider
@@ -41,6 +41,10 @@ if Config.get_api_config()['enable_swagger']:
 
 MOCK_DB_JSON = os.path.join(os.path.dirname(__file__), 'data', 'mock_db.json')
 
+# Add at module level
+BACKEND_VERSION = "1.0.0"
+BACKEND_START_TIME = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 
 def load_data():
     """Load data from mock database JSON file."""
@@ -56,21 +60,94 @@ def save_data(data):
 # --- API Endpoints ---
 @app.route('/')
 def index():
-    return '''
-    <h1>🎉 Resource Manager Backend is Running! 🎉</h1>
-    <p>Welcome! Available API endpoints:</p>
-    <ul>
-      <li><b>GET /servers</b> - List all servers and pods</li>
-      <li><b>POST /create</b> - Create a new pod (JSON body required)</li>
-      <li><b>POST /delete</b> - Delete a pod (JSON body required)</li>
-      <li><b>POST /update</b> - Update a pod (JSON body required)</li>
-      <li><b>GET /consistency-check</b> - Check for data consistency</li>
-    </ul>
-    <p><b>API Testing & Documentation:</b></p>
-    <p>Access <a href="http://127.0.0.1:5000/apidocs/" target="_blank">Swagger UI</a> to view, send, and test API calls interactively.</p>
-    <p>Swagger provides a user-friendly interface for exploring and trying out all backend endpoints.</p>
-    <p><b>Frontend UI:</b></p>
-    <p>Access the <a href="http://127.0.0.1:4200/" target="_blank">Resource Manager Frontend</a> for a modern, user-friendly web interface.</p>
+    # Get current mode and environment
+    from constants import ModeConfig
+    mode = ModeConfig.get_mode_for_environment(Config.get_environment_value())
+    env = Config.get_environment_value()
+    display_name = ModeConfig.get_display_name(mode)
+    description = ModeConfig.get_description(mode)
+    capabilities = ModeConfig.get_capabilities(mode)
+    # Try to get a quick cluster/server summary
+    try:
+        if env == 'local-mock-db':
+            servers = mock_data_provider.get_servers_with_pods_mdem()
+        elif env == 'development':
+            servers = local_kubernetes_provider.get_servers_with_pods()
+        elif env == 'production':
+            servers = cloud_kubernetes_provider.get_servers_with_pods()
+        else:
+            servers = []
+        total_servers = len(servers)
+        total_pods = sum(len(s.get('pods', [])) for s in servers)
+    except Exception:
+        total_servers = 'N/A'
+        total_pods = 'N/A'
+    # Capabilities as badges
+    cap_html = ''.join([
+        f'<span style="display:inline-block;background:#eef;border-radius:8px;padding:2px 8px;margin:2px 4px;font-size:0.95em;">{k.replace('_',' ').title()}: <b>{"Yes" if v else "No"}</b></span>'
+        for k,v in capabilities.items()
+    ])
+    return f'''
+    <html>
+    <head>
+        <title>Resource Manager Backend</title>
+        <style>
+            body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #222; margin: 0; padding: 0; }}
+            .container {{ max-width: 800px; margin: 32px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px #0001; padding: 32px; }}
+            h1 {{ font-size: 2.2rem; margin-bottom: 0.5em; }}
+            .info-row {{ margin-bottom: 1.2em; }}
+            .badge {{ display: inline-block; background: #e0e7ff; color: #3730a3; border-radius: 8px; padding: 2px 10px; margin: 0 4px; font-size: 0.95em; }}
+            .section-title {{ font-size: 1.2rem; margin-top: 2em; margin-bottom: 0.5em; color: #2563eb; }}
+            ul {{ margin-top: 0.2em; }}
+            .capabilities {{ margin: 0.5em 0 1em 0; }}
+            .summary-table td {{ padding: 4px 12px; }}
+            a {{ color: #2563eb; text-decoration: none; }}
+            a:hover {{ text-decoration: underline; }}
+        </style>
+    </head>
+    <body>
+    <div class="container">
+        <h1>🎉 Resource Manager Backend is Running! 🎉</h1>
+        <div class="info-row">
+            <b>Backend Version:</b> <span class="badge">{BACKEND_VERSION}</span>
+            <b>Started:</b> <span class="badge">{BACKEND_START_TIME}</span>
+        </div>
+        <div class="info-row">
+            <b>Current Mode:</b> <span class="badge">{display_name}</span>
+            <b>Environment:</b> <span class="badge">{env}</span>
+        </div>
+        <div class="info-row">
+            <b>Description:</b> {description}
+        </div>
+        <div class="capabilities">
+            <b>Capabilities:</b> {cap_html}
+        </div>
+        <div class="info-row">
+            <b>Cluster/Server Summary:</b>
+            <table class="summary-table">
+                <tr><td>Total Servers:</td><td><b>{total_servers}</b></td></tr>
+                <tr><td>Total Pods:</td><td><b>{total_pods}</b></td></tr>
+            </table>
+        </div>
+        <div class="section-title">API Endpoints</div>
+        <ul>
+            <li><b>GET /servers</b> - List all servers and pods</li>
+            <li><b>POST /create</b> - Create a new pod (JSON body required)</li>
+            <li><b>POST /delete</b> - Delete a pod (JSON body required)</li>
+            <li><b>POST /update</b> - Update a pod (JSON body required)</li>
+            <li><b>GET /consistency-check</b> - Check for data consistency</li>
+            <li><b>GET /mode</b> - Get or set backend mode</li>
+            <li><b>GET /health</b> - Basic health check</li>
+            <li><b>GET /health/detailed</b> - Detailed health check</li>
+            <li><b>GET /cluster-status</b> - Cluster status</li>
+        </ul>
+        <div class="section-title">API Testing &amp; Documentation</div>
+        <p>Access <a href="/apidocs/" target="_blank">Swagger UI</a> to view, send, and test API calls interactively.</p>
+        <div class="section-title">Frontend UI</div>
+        <p>Access the <a href="http://localhost:4200/" target="_blank">Resource Manager Frontend</a> for a modern, user-friendly web interface.</p>
+    </div>
+    </body>
+    </html>
     '''
 
 @app.route('/servers', methods=['GET'])
@@ -185,7 +262,7 @@ def create_pod_mdem():
                 return jsonify({'error': " | ".join(errors)}), 400
         
         # Create pod object with port configuration
-        pod = create_pod_object({
+        pod = create_pod_mdem({
             'PodName': pod_name,
             'Resources': resources,
             'Owner': owner,
@@ -203,7 +280,7 @@ def create_pod_mdem():
                     return jsonify({'error': 'Failed to add pod to mock data'}), 500
             else:
                 # Create real Kubernetes resources
-                create_k8s_resources_simple(pod)
+                create_pod_k8s(pod)
                 return jsonify({'message': 'Pod created', 'pod': pod}), 200
             
         except Exception as e:
@@ -271,10 +348,44 @@ def delete_pod_mdem():
         else:
             # Delete from real Kubernetes
             try:
-                delete_k8s_resources_simple({'pod_id': pod_name})
-                return jsonify({'message': 'Pod deleted'}), 200
+                # Try to find the pod in the cluster to get its namespace
+                current_env = Config.get_environment_value()
+                if current_env == Environment.DEVELOPMENT.value:
+                    servers = local_kubernetes_provider.get_servers_with_pods()
+                elif current_env == Environment.PRODUCTION.value:
+                    servers = cloud_kubernetes_provider.get_servers_with_pods()
+                else:
+                    servers = []
+                
+                # Find the pod and its namespace
+                pod_found = False
+                pod_namespace = 'default'  # Default namespace
+                
+                for server in servers:
+                    for pod in server.get('pods', []):
+                        if pod.get('pod_id') == pod_name:
+                            pod_found = True
+                            # Extract namespace from pod name if it contains namespace info
+                            # For now, use default namespace
+                            break
+                    if pod_found:
+                        break
+                
+                if not pod_found:
+                    return jsonify({'error': f"Pod '{pod_name}' not found in cluster."}), 404
+                
+                # Delete the pod with the correct namespace
+                delete_pod_k8s({
+                    'pod_id': pod_name,
+                    'namespace': pod_namespace
+                })
+                return jsonify({'message': f'Pod {pod_name} deleted from namespace {pod_namespace}'}), 200
             except Exception as e:
-                return jsonify({'error': f'Kubernetes deletion error: {str(e)}'}), 500
+                error_msg = str(e)
+                if "not found" in error_msg.lower():
+                    return jsonify({'error': f"Pod '{pod_name}' not found in cluster."}), 404
+                else:
+                    return jsonify({'error': f'Kubernetes deletion error: {error_msg}'}), 500
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
@@ -400,7 +511,7 @@ def update_pod_mdem():
         # Image URL handling removed - using default nginx:latest
 
         # Update timestamp using utility function
-        updated_pod = update_pod_object({
+        updated_pod = update_pod_mdem({
             'PodName': pod_name,
             'Resources': pod['requested'],
             'image_url': pod['image_url'],
@@ -588,7 +699,7 @@ def cluster_status():
 
 
 @app.route('/mode', methods=['GET', 'POST'])
-def mode_management_mdem():
+def mode_management():
     """
     Get or set current mode
     ---
@@ -603,7 +714,7 @@ def mode_management_mdem():
           properties:
             mode:
               type: string
-              enum: [demo, local-k8s, cloud-k8s, dev]
+              enum: [demo, local-k8s, cloud-k8s]
     responses:
       200:
         description: Current mode information
