@@ -3,17 +3,51 @@
 <!-- Pod Creation Message Area -->
 <div *ngIf="podMessage" [ngClass]="{'pod-message-success': podMessageType === 'success', 'pod-message-error': podMessageType === 'error'}" class="pod-message">{{ podMessage }}</div>
 
-<!-- Header with big title and right-aligned search bar -->
+<!-- Header with title -->
 <div class="dashboard-header">
-  <span class="dashboard-title">
-    Resource Manager
-    <span *ngIf="consistencyMessage" class="consistency-led" [ngClass]="{'led-green': consistencyMessage === 'all data seems consistent', 'led-red': consistencyMessage !== 'all data seems consistent'}" [title]="consistencyMessage" (click)="onConsistencyLedClick()"></span>
-  </span>
-  <mat-form-field appearance="outline" class="dashboard-search">
-    <mat-label>Search servers, pods...</mat-label>
-    <input matInput [(ngModel)]="searchTerm" (input)="onSearch()">
-  </mat-form-field>
+  <div class="header-left">
+    <span class="dashboard-title">
+      Resource Manager
+    </span>
+  </div>
+  <div class="status-leds">
+    <!-- Data Consistency LED - Always show -->
+    <div class="led-container" (click)="onConsistencyLedClick()" [title]="consistencyMessage || 'Data consistency status unknown'">
+      <mat-icon class="led-icon">storage</mat-icon>
+      <span class="consistency-led" [ngClass]="{
+        'led-green': consistencyMessage === 'all data seems consistent', 
+        'led-red': consistencyMessage && consistencyMessage !== 'all data seems consistent',
+        'led-grey': !consistencyMessage
+      }"></span>
+    </div>
+    
+    <!-- Kubernetes Cluster LED - Only show for real K8s modes -->
+    <div class="led-container" 
+         *ngIf="isRealKubernetesMode()"
+         (click)="onClusterStatusClick()" 
+         [title]="'Kubernetes Cluster: ' + clusterStatus">
+      <mat-icon class="led-icon">hub</mat-icon>
+      <span class="cluster-status-led" [ngClass]="{
+        'led-green': clusterStatus === 'healthy', 
+        'led-red': clusterStatus === 'unhealthy' || clusterStatus === 'connection_failed' || clusterStatus === 'auth_failed' || clusterStatus === 'not_running',
+        'led-grey': clusterStatus === 'unknown' || !clusterStatus
+      }"></span>
+    </div>
+    
+    <!-- Mode Selector -->
+    <div class="mode-icon-container" (click)="toggleModeSelector()" matTooltip="Click to change mode">
+      <div class="mode-selector-icon">
+        <mat-icon>settings</mat-icon>
+      </div>
+      <div class="mode-icon" [style.background-color]="currentModeConfig?.color">
+        <mat-icon>{{ currentModeConfig?.icon }}</mat-icon>
+      </div>
+    </div>
+  </div>
 </div>
+
+<!-- Mode Selector -->
+<app-mode-selector *ngIf="showModeSelector" (modeChanged)="onModeChanged($event)"></app-mode-selector>
 
 <!-- 1. Resource Information Card (Ribbon) -->
 <mat-card class="resource-info-ribbon">
@@ -46,7 +80,7 @@
 <mat-card class="choose-server-card">
   <div class="choose-server-title">Choose a Server to Deploy Pod</div>
   <div class="choose-server-row">
-    <mat-card *ngFor="let server of filteredServers" class="server-sub-card" [class.selected]="server === selectedServer" (click)="selectServer(server)">
+    <mat-card *ngFor="let server of servers" class="server-sub-card" [class.selected]="server === selectedServer" (click)="selectServer(server)">
       <div class="server-name">{{ server.name }}</div>
       <div class="server-ip">{{ server.ip || 'N/A' }}</div>
       <div class="server-status" [class.online]="server.status === 'Online'" [class.offline]="server.status === 'Offline'">{{ server.status || 'Online' }}</div>
@@ -59,7 +93,7 @@
   <div class="overview-title">Server Overview</div>
   <div class="overview-desc">Detailed status and resource utilization of all Kubernetes servers.</div>
   <div style="max-height: 400px; overflow: auto;">
-    <table mat-table [dataSource]="filteredServers" class="mat-elevation-z1">
+    <table mat-table [dataSource]="servers" class="mat-elevation-z1">
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef> Server Name </th>
         <td mat-cell *matCellDef="let s">{{ s.name }}</td>
@@ -104,7 +138,7 @@
     <button mat-raised-button color="accent" (click)="openAddPodDialog()">Deploy New Pod</button>
   </div>
   <div style="max-height: 400px; overflow: auto;">
-    <table mat-table [dataSource]="filteredPods" class="mat-elevation-z1">
+    <table mat-table [dataSource]="allPods" class="mat-elevation-z1">
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef> Actions </th>
         <td mat-cell *matCellDef="let p">
@@ -136,7 +170,12 @@
       </ng-container>
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef> Status </th>
-        <td mat-cell *matCellDef="let p">{{ p.status }}</td>
+        <td mat-cell *matCellDef="let p">
+          <span class="status-badge" [ngClass]="getStatusColor(p.status)">
+            <mat-icon>{{ getStatusIcon(p.status) }}</mat-icon>
+            {{ getStatusDisplayName(p.status) }}
+          </span>
+        </td>
       </ng-container>
       <tr mat-header-row *matHeaderRowDef="['actions', 'pod_id', 'server_name', 'ram', 'gpus', 'status']; sticky: true"></tr>
       <tr mat-row *matRowDef="let row; columns: ['actions', 'pod_id', 'server_name', 'ram', 'gpus', 'status'];"></tr>

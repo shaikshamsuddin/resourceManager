@@ -1,5 +1,4 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -13,8 +12,11 @@ import { MatDialog, MatDialogModule, MatDialogConfig } from '@angular/material/d
 import { AddPodDialogComponent } from './add-pod-dialog/add-pod-dialog';
 import { EditPodDialogComponent } from './edit-pod-dialog/edit-pod-dialog';
 import { AlertDialogComponent } from './alert-dialog/alert-dialog';
+import { ModeSelectorComponent } from './mode-selector/mode-selector';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
+import { ApiConfig } from './config/api.config';
+import { ModeManager, ResourceManagerMode } from './config/mode.config';
 
 @Component({
   selector: 'app-root',
@@ -22,7 +24,6 @@ import { MatIconModule } from '@angular/material/icon';
     CommonModule,
     FormsModule,
     HttpClientModule,
-    RouterOutlet,
     MatCardModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -33,7 +34,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatTableModule,
     MatIconModule,
     AddPodDialogComponent,
-    EditPodDialogComponent
+    EditPodDialogComponent,
+    ModeSelectorComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -44,39 +46,84 @@ export class App {
 
   servers: any[] = [];
   selectedServer: any = null;
-  newPod = {
-    PodName: '',
-    Resources: {
-      gpus: 0,
-      ram_gb: 0,
-      storage_gb: 0
-    },
-    image_url: '',
-    machine_ip: '',
-    username: '',
-    password: ''
-  };
-  message = '';
-  searchTerm: string = '';
-  filteredServers: any[] = [];
-  filteredPods: any[] = [];
   consistencyMessage: string = '';
   consistencyCheckInterval: any;
   podMessage: string = '';
   podMessageType: 'success' | 'error' | '' = '';
+  clusterStatus: string = 'unknown';
+  clusterStatusInterval: any;
+  showModeSelector: boolean = false;
+  currentModeConfig: any = null;
 
   constructor(private http: HttpClient, private dialog: MatDialog) {
+    // Initialize mode manager
+    ModeManager.initialize();
+    
+    // Validate API configuration on startup
+    ApiConfig.validateConfig();
     this.fetchServers();
+    this.getCurrentMode();
+    this.updateCurrentModeDisplay();
+  }
+
+  onModeChanged(mode: any) {
+    // Send mode change to backend
+    this.http.post(ApiConfig.getModeUrl(), { mode: mode }).subscribe({
+      next: (response: any) => {
+        console.log('Mode changed successfully:', response);
+        // Update mode display
+        this.updateCurrentModeDisplay();
+        // Refresh data when mode changes
+        this.fetchServers();
+        this.checkConsistency();
+        this.checkClusterStatus();
+      },
+      error: (error) => {
+        console.error('Failed to change mode:', error);
+        // Still refresh data even if mode change failed
+        this.fetchServers();
+        this.checkConsistency();
+        this.checkClusterStatus();
+      }
+    });
+  }
+
+  updateCurrentModeDisplay() {
+    this.currentModeConfig = ModeManager.getCurrentModeConfig();
+  }
+
+  isRealKubernetesMode(): boolean {
+    return ModeManager.isRealKubernetesMode();
+  }
+
+  toggleModeSelector() {
+    this.showModeSelector = !this.showModeSelector;
+  }
+
+  getCurrentMode() {
+    // Get current mode from backend
+    this.http.get(ApiConfig.getModeUrl()).subscribe({
+      next: (response: any) => {
+        console.log('Current mode from backend:', response);
+        // The mode selector will handle the UI state
+      },
+      error: (error) => {
+        console.error('Failed to get current mode:', error);
+      }
+    });
   }
 
   ngOnInit() {
-    this.onSearch();
     this.startConsistencyPolling();
+    this.startClusterStatusPolling();
   }
 
   ngOnDestroy() {
     if (this.consistencyCheckInterval) {
       clearInterval(this.consistencyCheckInterval);
+    }
+    if (this.clusterStatusInterval) {
+      clearInterval(this.clusterStatusInterval);
     }
   }
 
@@ -86,7 +133,7 @@ export class App {
   }
 
   checkConsistency() {
-    this.http.get<any>('http://127.0.0.1:5000/consistency-check').subscribe({
+    this.http.get<any>(ApiConfig.getConsistencyCheckUrl()).subscribe({
       next: (res) => {
         this.consistencyMessage = res.message;
       },
@@ -96,17 +143,32 @@ export class App {
     });
   }
 
+  startClusterStatusPolling() {
+    this.checkClusterStatus();
+    this.clusterStatusInterval = setInterval(() => this.checkClusterStatus(), 30000);
+  }
+
+  checkClusterStatus() {
+    this.http.get<any>(ApiConfig.getClusterStatusUrl()).subscribe({
+      next: (res) => {
+        this.clusterStatus = res.status;
+      },
+      error: (err) => {
+        this.clusterStatus = 'connection_failed';
+      }
+    });
+  }
+
   fetchServers() {
-    this.http.get<any[]>('http://127.0.0.1:5000/servers').subscribe({
+    this.http.get<any[]>(ApiConfig.getServersUrl()).subscribe({
       next: (data) => {
         this.servers = data;
         if (this.servers.length > 0 && !this.selectedServer) {
           this.selectedServer = this.servers[0];
         }
-        this.onSearch();
       },
       error: () => {
-        this.message = 'Failed to load servers from backend.';
+        // Handle error silently or show alert
       }
     });
   }
@@ -115,12 +177,9 @@ export class App {
     if (!this.selectedServer) return;
     const payload = {
       ServerName: this.selectedServer.id,
-      PodName: pod.pod_id,
-      machine_ip: this.newPod.machine_ip,
-      username: this.newPod.username,
-      password: this.newPod.password
+      PodName: pod.pod_id
     };
-    this.http.post('http://127.0.0.1:5000/delete', payload).subscribe({
+    this.http.post(ApiConfig.getDeletePodUrl(), payload).subscribe({
       next: () => {
         this.showAlert(
           'success',
@@ -140,37 +199,7 @@ export class App {
     });
   }
 
-  createPod() {
-    if (!this.selectedServer) return;
-    const payload = {
-      ServerName: this.selectedServer.id,
-      PodName: this.newPod.PodName,
-      Resources: this.newPod.Resources,
-      image_url: this.newPod.image_url,
-      machine_ip: this.newPod.machine_ip,
-      username: this.newPod.username,
-      password: this.newPod.password,
-      Owner: this.newPod.username
-    };
-    this.http.post('http://127.0.0.1:5000/create', payload).subscribe({
-      next: () => {
-        this.message = `Pod ${this.newPod.PodName} created.`;
-        this.fetchServers();
-        this.newPod = {
-          PodName: '',
-          Resources: { gpus: 0, ram_gb: 0, storage_gb: 0 },
-          image_url: '',
-          machine_ip: '',
-          username: '',
-          password: ''
-        };
-        setTimeout(() => this.message = '', 3000);
-      },
-      error: (err) => {
-        this.message = err?.error?.error || 'Failed to create pod.';
-      }
-    });
-  }
+
 
   openAddPodDialog() {
     if (!this.selectedServer) {
@@ -199,7 +228,7 @@ export class App {
 
   deployPod(podData: any, serverId: string) {
     const payload = { ...podData, ServerName: serverId };
-    this.http.post('http://127.0.0.1:5000/create', payload).subscribe({
+    this.http.post(ApiConfig.getCreatePodUrl(), payload).subscribe({
       next: () => {
         this.showAlert(
           'success',
@@ -267,7 +296,7 @@ export class App {
       Owner: pod.owner
     };
 
-    this.http.post('http://127.0.0.1:5000/update', payload).subscribe({
+    this.http.post(ApiConfig.getUpdatePodUrl(), payload).subscribe({
       next: () => {
         this.showAlert(
           'success',
@@ -332,46 +361,129 @@ export class App {
     return this.servers.flatMap((s: any) => (s.pods || []).map((p: any) => ({ ...p, serverName: s.name })));
   }
 
-  onSearch() {
-    const term = this.searchTerm.trim().toLowerCase();
-    if (!term) {
-      this.filteredServers = this.servers;
-      this.filteredPods = this.allPods;
-      return;
-    }
-    this.filteredServers = this.servers.filter((s: any) =>
-      s.name?.toLowerCase().includes(term) ||
-      s.ip?.toLowerCase().includes(term) ||
-      (s.status || '').toLowerCase().includes(term)
-    );
-    this.filteredPods = this.allPods.filter((p: any) =>
-      p.pod_id?.toLowerCase().includes(term) ||
-      p.serverName?.toLowerCase().includes(term) ||
-      (p.status || '').toLowerCase().includes(term)
-    );
-  }
+
 
   selectServer(server: any) {
     this.selectedServer = server;
   }
 
   onConsistencyLedClick() {
+    // Handle unknown/empty consistency message
+    if (!this.consistencyMessage) {
+      this.showAlert(
+        'info',
+        'Consistency Status',
+        'Data consistency status is unknown. Checking now...'
+      );
+      this.checkConsistency();
+      return;
+    }
+    
+    // Determine alert type based on consistency message
+    const isError = this.consistencyMessage?.toLowerCase().includes('error') || 
+                   this.consistencyMessage?.toLowerCase().includes('inconsistency');
+    const alertType = isError ? 'error' : 'success';
+    
     // Show the consistency message in a snackbar
     this.showAlert(
-      'info',
+      alertType,
       'Consistency Status',
-      this.consistencyMessage || 'No consistency status'
+      this.consistencyMessage
     );
     // Trigger a new consistency check immediately
     this.checkConsistency();
   }
 
+  onClusterStatusClick() {
+    // Handle unknown cluster status
+    if (!this.clusterStatus || this.clusterStatus === 'unknown') {
+      this.showAlert(
+        'info',
+        'Cluster Status',
+        'Cluster status is unknown. Checking now...'
+      );
+      this.checkClusterStatus();
+      return;
+    }
+    
+    this.http.get<any>(ApiConfig.getHealthDetailedUrl()).subscribe({
+      next: (res) => {
+        const details = Object.entries(res.health_checks || {})
+          .map(([check, result]: [string, any]) => 
+            `${check.replace(/_/g, ' ').toUpperCase()}: ${result.status} - ${result.details}`
+          )
+          .join('\n');
+        
+        // Determine alert type based on cluster status
+        const clusterStatus = res.cluster_status?.status || 'unknown';
+        const isHealthy = clusterStatus === 'healthy';
+        const alertType = isHealthy ? 'success' : 'error';
+        
+        this.showAlert(
+          alertType,
+          'Kubernetes Cluster Health',
+          `Status: ${clusterStatus}\n\n${details}`
+        );
+      },
+      error: (err) => {
+        this.showAlert(
+          'error',
+          'Cluster Health Check Failed',
+          'Unable to retrieve detailed cluster health information.'
+        );
+      }
+    });
+  }
+
   showAlert(type: 'success' | 'error' | 'info', title: string, message: string) {
     const dialogConfig = new MatDialogConfig();
-    dialogConfig.position = { top: '20px' };
+    dialogConfig.position = { top: '40px' };
     dialogConfig.data = { type, title, message };
     dialogConfig.maxWidth = '600px';
     dialogConfig.minWidth = '400px';
     this.dialog.open(AlertDialogComponent, dialogConfig);
+  }
+
+  // Helper functions for pod status
+  getStatusColor(status: string): string {
+    const statusColors: { [key: string]: string } = {
+      'online': 'status-success',
+      'starting': 'status-success',
+      'in-progress': 'status-progress',
+      'updating': 'status-progress',
+      'failed': 'status-error',
+      'error': 'status-error',
+      'timeout': 'status-error',
+      'unknown': 'status-unknown'
+    };
+    return statusColors[status] || 'status-unknown';
+  }
+
+  getStatusIcon(status: string): string {
+    const statusIcons: { [key: string]: string } = {
+      'online': 'check_circle',
+      'starting': 'hourglass_empty',
+      'in-progress': 'sync',
+      'updating': 'update',
+      'failed': 'error',
+      'error': 'error_outline',
+      'timeout': 'schedule',
+      'unknown': 'help_outline'
+    };
+    return statusIcons[status] || 'help_outline';
+  }
+
+  getStatusDisplayName(status: string): string {
+    const statusNames: { [key: string]: string } = {
+      'online': 'Online',
+      'starting': 'Starting',
+      'in-progress': 'In Progress',
+      'updating': 'Updating',
+      'failed': 'Failed',
+      'error': 'Error',
+      'timeout': 'Timeout',
+      'unknown': 'Unknown'
+    };
+    return statusNames[status] || 'Unknown';
   }
 }

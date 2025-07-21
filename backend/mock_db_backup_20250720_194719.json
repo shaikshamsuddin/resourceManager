@@ -10,61 +10,13 @@
         "cpus": 64
       },
       "available": {
-        "gpus": 5,
-        "ram_gb": 366,
-        "storage_gb": 1802,
+        "gpus": 6,
+        "ram_gb": 490.5,
+        "storage_gb": 1987,
         "cpus": 64
       }
     },
     "pods": [
-      {
-        "pod_id": "testpod12323444",
-        "owner": "test-team",
-        "status": "running",
-        "timestamp": "2025-07-17T10:25:53.397718Z",
-        "requested": {
-          "gpus": 1,
-          "ram_gb": 64,
-          "storage_gb": 100,
-          "cpus": 0
-        },
-        "image_url": "https://docker.io/library/nginx:latest",
-        "registery_url": "docker.io",
-        "image_name": "library/nginx",
-        "image_tag": "latest"
-      },
-      {
-        "pod_id": "testpod12323444",
-        "owner": "test-team",
-        "status": "running",
-        "timestamp": "2025-07-17T10:29:47.988609Z",
-        "requested": {
-          "gpus": 1,
-          "ram_gb": 64,
-          "storage_gb": 100,
-          "cpus": 0
-        },
-        "image_url": "https://docker.io/library/nginx:latest",
-        "registery_url": "docker.io",
-        "image_name": "library/nginx",
-        "image_tag": "latest"
-      },
-      {
-        "pod_id": "mypod123",
-        "owner": "unknown",
-        "status": "running",
-        "timestamp": "2025-07-17T11:42:21.061564Z",
-        "requested": {
-          "gpus": 1,
-          "ram_gb": 1,
-          "storage_gb": 1,
-          "cpus": 0
-        },
-        "image_url": "alhjsbdf",
-        "registery_url": null,
-        "image_name": null,
-        "image_tag": null
-      },
       {
         "pod_id": "testpod1233233\t",
         "owner": "unknown",
@@ -141,20 +93,56 @@
         "image_tag": null
       },
       {
-        "pod_id": "fcd1",
-        "owner": "unknown",
-        "status": "registered",
-        "timestamp": "2025-07-18T06:54:58.692960Z",
+        "pod_id": "VikramPod123",
+        "server_id": "server-01",
+        "image_url": "http://127.0.0.1:5000/",
         "requested": {
-          "gpus": 0,
-          "ram_gb": 3,
+          "gpus": 1,
+          "ram_gb": 1,
           "storage_gb": 10
         },
-        "image_url": "https://nodejs.org/en/download",
-        "registery_url": null,
-        "image_name": null,
-        "image_tag": null,
-        "machine_ip": "147.0.90.0"
+        "owner": "unknown",
+        "status": "Running",
+        "timestamp": "2025-07-20T11:38:24.688170Z"
+      },
+      {
+        "pod_id": "test-deployment-pod",
+        "server_id": "server-01",
+        "image_url": "nginx:latest",
+        "requested": {
+          "gpus": 1,
+          "ram_gb": 4,
+          "storage_gb": 10
+        },
+        "owner": "test-user",
+        "status": "Running",
+        "timestamp": "2025-07-20T13:54:08Z"
+      },
+      {
+        "pod_id": "status-test-pod",
+        "server_id": "server-01",
+        "image_url": "nginx:latest",
+        "requested": {
+          "gpus": 0,
+          "ram_gb": 2,
+          "storage_gb": 5
+        },
+        "owner": "status-test",
+        "status": "online",
+        "timestamp": "2025-07-20T14:00:46Z"
+      },
+      {
+        "pod_id": "safe-test-pod",
+        "server_id": "server-01",
+        "image_url": "nginx:latest",
+        "requested": {
+          "gpus": 0,
+          "ram_gb": 0.5,
+          "storage_gb": 1
+        },
+        "owner": "safe-test",
+        "status": "online",
+        "timestamp": "2025-07-20T14:12:12Z"
       }
     ]
   },
@@ -169,9 +157,9 @@
         "cpus": 64
       },
       "available": {
-        "gpus": 6,
-        "ram_gb": 1022,
-        "storage_gb": 4094,
+        "gpus": 5,
+        "ram_gb": 1014,
+        "storage_gb": 4074,
         "cpus": 64
       }
     },
@@ -207,6 +195,19 @@
         "registery_url": null,
         "image_name": null,
         "image_tag": null
+      },
+      {
+        "pod_id": "status-demo-pod",
+        "server_id": "server-02",
+        "image_url": "nginx:latest",
+        "requested": {
+          "gpus": 1,
+          "ram_gb": 8,
+          "storage_gb": 20
+        },
+        "owner": "demo-user",
+        "status": "online",
+        "timestamp": "2025-07-20T14:01:45Z"
       }
     ]
   },
