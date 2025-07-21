@@ -597,6 +597,11 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
   border-color: #f59e0b;
 }
 
+.led-orange {
+  background: linear-gradient(135deg, #fb923c 60%, #ea580c 100%);
+  border-color: #ea580c;
+}
+
 .led-grey {
   background: linear-gradient(135deg, #9ca3af 60%, #6b7280 100%);
   border-color: #6b7280;
@@ -613,6 +618,12 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
   color: #1d4ed8;
   background-color: #dbeafe;
   border: 1px solid #3b82f6;
+}
+
+.status-pending {
+  color: #ff9800;
+  background-color: #fff3e0;
+  border: 1.5px solid #ffb74d;
 }
 
 .status-error {

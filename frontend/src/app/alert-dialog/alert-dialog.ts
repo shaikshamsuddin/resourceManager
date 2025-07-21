@@ -20,7 +20,7 @@ import { MatIconModule } from '@angular/material/icon';
       </mat-icon>
       <div class="alert-content">
         <h2 class="alert-title">{{ data.title }}</h2>
-        <p class="alert-message">{{ data.message }}</p>
+        <p class="alert-message" [innerHTML]="formatMessage(data.message)"></p>
         <ul *ngIf="data.details && data.details.length" class="alert-details">
           <li *ngFor="let detail of data.details">{{ detail }}</li>
         </ul>
@@ -119,5 +119,10 @@ export class AlertDialogComponent {
     if (data.type === 'success') {
       setTimeout(() => this.dialogRef.close(), 5000);
     }
+  }
+
+  formatMessage(message: string): string {
+    if (!message) return '';
+    return message.replace(/\n/g, '<br>').replace(/\t/g, '&nbsp;&nbsp;');
   }
 } 

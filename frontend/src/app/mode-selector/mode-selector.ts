@@ -25,7 +25,17 @@ import { ApiConfig } from '../config/api.config';
   template: `
     <mat-card class="mode-selector-card">
       <div class="mode-selector-header">
-        <h3>Resource Manager Mode</h3>
+        <div class="header-title-container">
+          <h3>Resource Manager Mode</h3>
+          <button
+            mat-icon-button
+            class="last-mode-reset-icon"
+            matTooltip="Reset last saved mode (clear mode persistence)"
+            (click)="resetLastSavedMode()"
+          >
+            <mat-icon>restart_alt</mat-icon>
+          </button>
+        </div>
         <p>Select the mode that best fits your needs</p>
       </div>
       
@@ -86,8 +96,16 @@ import { ApiConfig } from '../config/api.config';
       margin-bottom: 24px;
     }
     
+    .header-title-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
     .mode-selector-header h3 {
-      margin: 0 0 8px 0;
+      margin: 0;
       color: #333;
     }
     
@@ -225,6 +243,41 @@ import { ApiConfig } from '../config/api.config';
       border-radius: 50%;
       overflow: visible;
     }
+    
+    .last-mode-reset-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #e0e0e0;
+    }
+    
+    .last-mode-reset-row button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+    .last-mode-reset-icon {
+      color: #888;
+      background: #f3f4f6;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      transition: background 0.2s, color 0.2s;
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      min-height: 28px;
+    }
+    .last-mode-reset-icon mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+    .last-mode-reset-icon:hover {
+      background: #e0e7ef;
+      color: #333;
+    }
   `]
 })
 export class ModeSelectorComponent {
@@ -232,9 +285,9 @@ export class ModeSelectorComponent {
   @Output() resetResult = new EventEmitter<{ type: string; message: string }>();
   
   availableModes: ModeConfig[] = [];
-  selectedMode: ResourceManagerMode = ResourceManagerMode.DEMO;
+  selectedMode: ResourceManagerMode | undefined = undefined;
 
-    constructor(private http: HttpClient, private dialog: MatDialog) {
+  constructor(private http: HttpClient, private dialog: MatDialog) {
     this.availableModes = ModeManager.getAvailableModes();
     this.selectedMode = ModeManager.getCurrentMode();
     this.loadCurrentModeFromBackend();
@@ -248,6 +301,9 @@ export class ModeSelectorComponent {
         if (backendMode && Object.values(ResourceManagerMode).includes(backendMode as ResourceManagerMode)) {
           this.selectedMode = backendMode as ResourceManagerMode;
           ModeManager.setCurrentMode(this.selectedMode);
+        } else if (backendMode === null || backendMode === undefined) {
+          // Backend has no mode selected - keep frontend as undefined
+          this.selectedMode = undefined;
         }
       },
       error: (error) => {
@@ -294,5 +350,23 @@ export class ModeSelectorComponent {
         }
       });
     }
+  }
+
+  resetLastSavedMode(): void {
+    console.log('resetLastSavedMode called');
+    this.http.post(ApiConfig.getResetLastModeUrl(), {}).subscribe({
+      next: (res: any) => {
+        console.log('Reset response:', res);
+        // Clear frontend selection and update UI
+        this.selectedMode = undefined;
+        ModeManager.setCurrentMode(undefined as any);
+        localStorage.removeItem('resource-manager-mode');
+        this.resetResult.emit({ type: res.type || 'success', message: res.message || 'Last saved mode reset successfully.' });
+      },
+      error: (err) => {
+        console.error('Reset error:', err);
+        this.resetResult.emit({ type: 'error', message: err?.error?.message || err?.error?.error || 'Error: Failed to reset last saved mode.' });
+      }
+    });
   }
 } 

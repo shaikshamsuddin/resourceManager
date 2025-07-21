@@ -29,7 +29,8 @@
       <mat-icon class="led-icon">hub</mat-icon>
       <span class="cluster-status-led" [ngClass]="{
         'led-green': clusterStatus === 'healthy', 
-        'led-red': clusterStatus === 'unhealthy' || clusterStatus === 'connection_failed' || clusterStatus === 'auth_failed' || clusterStatus === 'not_running' || clusterStatus === 'degraded',
+        'led-yellow': clusterStatus === 'degraded',
+        'led-red': clusterStatus === 'unhealthy' || clusterStatus === 'connection_failed' || clusterStatus === 'auth_failed' || clusterStatus === 'not_running',
         'led-grey': clusterStatus === 'unknown' || !clusterStatus
       }"></span>
     </div>

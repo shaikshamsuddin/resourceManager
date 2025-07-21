@@ -63,9 +63,14 @@ class LocalKubernetesProvider:
                     # Find the node this pod is running on
                     node_name = pod.spec.node_name
                     if node_name:
+                        # Pod is assigned to a node
                         node_index = self._get_node_index(node_name, node_list)
                         if node_index is not None:
                             node_list[node_index]['pods'].append(pod_info)
+                    else:
+                        # Pod is pending (not assigned to a node yet) - assign to first node
+                        if node_list:
+                            node_list[0]['pods'].append(pod_info)
             
             # Update available resources for each node
             for node in node_list:
@@ -144,10 +149,7 @@ class LocalKubernetesProvider:
             Pod information dictionary or None if invalid
         """
         try:
-            # Skip only system pods, but include default namespace pods
-            if pod.metadata.namespace in ['kube-system']:
-                return None
-            
+            # Include ALL pods regardless of namespace or status
             # Extract resources
             resources = self._extract_pod_resources(pod)
             
@@ -156,7 +158,7 @@ class LocalKubernetesProvider:
             
             return {
                 "pod_id": pod.metadata.name,
-                "server_id": f"node-{(self._get_node_index(pod.spec.node_name, []) or 0) + 1:02d}" if pod.spec.node_name else "unknown",
+                "server_id": f"node-{(self._get_node_index(pod.spec.node_name, []) or 0) + 1:02d}" if pod.spec.node_name else "node-01",
                 "image_url": pod.spec.containers[0].image if pod.spec.containers else "unknown",
                 "requested": resources,
                 "owner": pod.metadata.labels.get("owner", "unknown"),
@@ -229,7 +231,7 @@ class LocalKubernetesProvider:
         if phase == "Running":
             return PodStatus.ONLINE.value
         elif phase == "Pending":
-            return PodStatus.STARTING.value
+            return PodStatus.PENDING.value
         elif phase == "Failed":
             return PodStatus.FAILED.value
         elif phase == "Succeeded":

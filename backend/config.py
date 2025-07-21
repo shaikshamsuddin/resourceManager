@@ -15,21 +15,32 @@ from constants import (
 class Config:
     """Base configuration class."""
     
-    # Environment detection - default to local mock demo mode
+    # Environment detection - no default mode
     @classmethod
     def get_environment(cls):
         """Get current environment dynamically."""
-        return Environment(os.getenv(ConfigKeys.ENVIRONMENT, Environment.LOCAL_MOCK_DB.value))
+        env_value = os.getenv(ConfigKeys.ENVIRONMENT)
+        if env_value is None:
+            # No environment set - return None to indicate no default
+            return None
+        return Environment(env_value)
     
     @classmethod
     def get_environment_value(cls):
         """Get current environment value dynamically."""
-        return cls.get_environment().value
+        env = cls.get_environment()
+        if env is None:
+            # No environment set - return None
+            return None
+        return env.value
     
     @classmethod
     def is_debug(cls):
         """Check if in debug mode dynamically."""
-        return cls.get_environment() == Environment.DEVELOPMENT
+        env = cls.get_environment()
+        if env is None:
+            return False
+        return env == Environment.DEVELOPMENT
     
     # Kubernetes configuration
     KUBERNETES_CONFIG = {
@@ -83,12 +94,20 @@ class Config:
     @classmethod
     def get_kubernetes_config(cls) -> Dict[str, Any]:
         """Get Kubernetes configuration for current environment."""
-        return cls.KUBERNETES_CONFIG.get(cls.get_environment_value(), cls.KUBERNETES_CONFIG[Environment.DEVELOPMENT.value])
+        env_value = cls.get_environment_value()
+        if env_value is None:
+            # No environment set - return development config as fallback
+            return cls.KUBERNETES_CONFIG[Environment.DEVELOPMENT.value]
+        return cls.KUBERNETES_CONFIG.get(env_value, cls.KUBERNETES_CONFIG[Environment.DEVELOPMENT.value])
     
     @classmethod
     def get_api_config(cls) -> Dict[str, Any]:
         """Get API configuration for current environment."""
-        return cls.API_CONFIG.get(cls.get_environment_value(), cls.API_CONFIG[Environment.DEVELOPMENT.value])
+        env_value = cls.get_environment_value()
+        if env_value is None:
+            # No environment set - return development config as fallback
+            return cls.API_CONFIG[Environment.DEVELOPMENT.value]
+        return cls.API_CONFIG.get(env_value, cls.API_CONFIG[Environment.DEVELOPMENT.value])
     
     @classmethod
     def get_azure_config(cls) -> Dict[str, Any]:
@@ -98,17 +117,26 @@ class Config:
     @classmethod
     def is_production(cls) -> bool:
         """Check if running in production environment."""
-        return cls.get_environment() == Environment.PRODUCTION
+        env = cls.get_environment()
+        if env is None:
+            return False
+        return env == Environment.PRODUCTION
     
     @classmethod
     def is_development(cls) -> bool:
         """Check if running in development environment."""
-        return cls.get_environment() == Environment.DEVELOPMENT
+        env = cls.get_environment()
+        if env is None:
+            return False
+        return env == Environment.DEVELOPMENT
     
     @classmethod
     def is_mock_demo(cls) -> bool:
         """Check if running in local mock demo environment."""
-        return cls.get_environment() == Environment.LOCAL_MOCK_DB
+        env = cls.get_environment()
+        if env is None:
+            return False
+        return env == Environment.LOCAL_MOCK_DB
     
     @classmethod
     def get_default_image(cls) -> str:

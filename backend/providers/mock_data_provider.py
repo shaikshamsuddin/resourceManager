@@ -149,7 +149,7 @@ class MockDataProvider:
                         "image_url": "ubuntu:22.04",
                         "requested": {"gpus": 1, "ram_gb": 8, "storage_gb": 20, "cpus": 2},
                         "owner": "qa-team",
-                        "status": "starting",
+                        "status": "pending",
                         "timestamp": datetime.utcnow().strftime(TimeFormats.ISO_FORMAT)
                     }
                 ]
@@ -251,6 +251,12 @@ class MockDataProvider:
                 return True
         
         return False
+
+    def reset_demo_data(self):
+        """
+        Reset the in-memory demo data to its initial state.
+        """
+        self.demo_data = self._generate_demo_data()
 
 
 # Global instance

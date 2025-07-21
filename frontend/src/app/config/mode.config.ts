@@ -66,12 +66,12 @@ export const MODE_CONFIGS: Record<ResourceManagerMode, ModeConfig> = {
 
 export class ModeManager {
   private static readonly STORAGE_KEY = 'resource-manager-mode';
-  private static currentMode: ResourceManagerMode = ResourceManagerMode.DEMO;
+  private static currentMode: ResourceManagerMode | undefined = undefined;
 
   /**
    * Get current mode
    */
-  static getCurrentMode(): ResourceManagerMode {
+  static getCurrentMode(): ResourceManagerMode | undefined {
     return this.currentMode;
   }
 
@@ -86,7 +86,10 @@ export class ModeManager {
   /**
    * Get current mode configuration
    */
-  static getCurrentModeConfig(): ModeConfig {
+  static getCurrentModeConfig(): ModeConfig | undefined {
+    if (!this.currentMode) {
+      return undefined;
+    }
     return MODE_CONFIGS[this.currentMode];
   }
 
@@ -98,9 +101,8 @@ export class ModeManager {
     if (stored && Object.values(ResourceManagerMode).includes(stored as ResourceManagerMode)) {
       this.currentMode = stored as ResourceManagerMode;
     } else {
-      // Default to demo mode
-      this.currentMode = ResourceManagerMode.DEMO;
-      localStorage.setItem(this.STORAGE_KEY, this.currentMode);
+      // No default mode; require user to pick on first launch
+      this.currentMode = undefined as any;
     }
   }
 
@@ -115,7 +117,7 @@ export class ModeManager {
    * Get backend environment for current mode
    */
   static getBackendEnvironment(): string {
-    return this.getCurrentModeConfig().backendEnv;
+    return this.getCurrentModeConfig()?.backendEnv || '';
   }
 
   /**

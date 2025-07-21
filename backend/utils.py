@@ -168,33 +168,54 @@ def delete_pod_k8s(pod_data):
         # Initialize the Kubernetes client
         k8s_client.initialize()
         
-        # First, try to delete the pod directly
+        # Extract deployment name from pod name (remove the random suffix)
+        # Example: resource-manager-backend-5775b89d4f-wrnkw -> resource-manager-backend
+        deployment_name = None
+        if '-' in pod_name:
+            # Split by '-' and remove the last part (random suffix)
+            parts = pod_name.split('-')
+            if len(parts) >= 3:
+                # Try to find the deployment name by removing the last 2 parts (hash and random suffix)
+                deployment_name = '-'.join(parts[:-2])
+        
+        # First, try to delete the deployment (if it exists) to prevent pod recreation
+        if deployment_name:
+            try:
+                k8s_client.apps_v1.delete_namespaced_deployment(name=deployment_name, namespace=namespace)
+                print(f"Successfully deleted deployment '{deployment_name}' from namespace '{namespace}'")
+            except ApiException as e:
+                if e.status != 404:  # Ignore if deployment doesn't exist
+                    print(f"Warning: Could not delete deployment '{deployment_name}': {e}")
+        
+        # Try to delete the replica set (if it exists)
+        try:
+            k8s_client.apps_v1.delete_namespaced_replica_set(name=pod_name, namespace=namespace)
+            print(f"Successfully deleted replica set '{pod_name}' from namespace '{namespace}'")
+        except ApiException as e:
+            if e.status != 404:  # Ignore if replica set doesn't exist
+                print(f"Warning: Could not delete replica set '{pod_name}': {e}")
+        
+        # Now try to delete the pod directly
         try:
             k8s_client.core_v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
             print(f"Successfully deleted pod '{pod_name}' from namespace '{namespace}'")
         except ApiException as e:
             if e.status == 404:
                 print(f"Pod '{pod_name}' not found in namespace '{namespace}'")
-                raise Exception(f"Pod '{pod_name}' not found in namespace '{namespace}'")
+                # If pod is not found, but we successfully deleted deployment/replicaset, consider it a success
+                return
             else:
                 print(f"Error deleting pod '{pod_name}': {e}")
                 raise Exception(f"Failed to delete pod '{pod_name}': {e}")
         
-        # Optionally delete associated deployment if it exists
-        try:
-            k8s_client.apps_v1.delete_namespaced_deployment(name=pod_name, namespace=namespace)
-            print(f"Successfully deleted deployment '{pod_name}' from namespace '{namespace}'")
-        except ApiException as e:
-            if e.status != 404:  # Ignore if deployment doesn't exist
-                print(f"Warning: Could not delete deployment '{pod_name}': {e}")
-        
         # Optionally delete associated service if it exists
-        try:
-            k8s_client.core_v1.delete_namespaced_service(name=pod_name, namespace=namespace)
-            print(f"Successfully deleted service '{pod_name}' from namespace '{namespace}'")
-        except ApiException as e:
-            if e.status != 404:  # Ignore if service doesn't exist
-                print(f"Warning: Could not delete service '{pod_name}': {e}")
+        if deployment_name:
+            try:
+                k8s_client.core_v1.delete_namespaced_service(name=deployment_name, namespace=namespace)
+                print(f"Successfully deleted service '{deployment_name}' from namespace '{namespace}'")
+            except ApiException as e:
+                if e.status != 404:  # Ignore if service doesn't exist
+                    print(f"Warning: Could not delete service '{deployment_name}': {e}")
                 
     except Exception as e:
         print(f"Error in delete_k8s_resources_simple: {e}")
@@ -223,7 +244,7 @@ def create_pod_mdem(pod_data, server_id):
         'image_url': pod_data.get('image_url', Config.get_default_image()),
         'requested': pod_data['Resources'],
         'owner': pod_data.get('Owner', DefaultValues.DEFAULT_OWNER),
-        'status': PodStatus.IN_PROGRESS.value,  # Start with in-progress status
+        'status': PodStatus.ONLINE.value,  # Start as online in demo mode
         'timestamp': datetime.utcnow().strftime(TimeFormats.ISO_FORMAT),
         'ports': {
             'container_port': container_port,
