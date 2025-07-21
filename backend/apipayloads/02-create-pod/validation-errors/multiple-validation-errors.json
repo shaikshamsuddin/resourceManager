@@ -21,19 +21,12 @@
   },
   "response": [
     {
-      "name": "Multiple Validation Errors Response",
+      "name": "Validation Error Response",
       "originalRequest": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type", "value": "application/json" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"ServerName\": \"invalid-server\",\n  \"PodName\": \"TEST_POD\",\n  \"Resources\": \"invalid\",\n  \"image_url\": \"http://invalid-url\",\n  \"machine_ip\": \"\",\n  \"username\": \"\",\n  \"password\": \"\"\n}"
-        },
         "url": {
           "raw": "http://localhost:5000/create",
           "host": ["localhost"],
@@ -45,14 +38,24 @@
       "code": 400,
       "_postman_previewlanguage": "json",
       "header": [
-        {
-          "key": "Content-Type",
-          "value": "application/json"
-        }
+        { "key": "Content-Type", "value": "application/json" }
       ],
       "cookie": [],
       "body": {
-        "error": "Missing or empty fields: machine_ip, username, password | Pod name must be lowercase. | Pod name must not contain underscores. | Image URL must start with https:// and contain a version tag (e.g., :latest). | Resources must be a dictionary/object | Server not found"
+        "type": "error",
+        "code": 400,
+        "message": "Multiple validation errors occurred.",
+        "details": [
+          "Server 'invalid-server' not found.",
+          "Pod name must be lowercase.",
+          "Pod name must not contain underscores.",
+          "Resources must be a dictionary/object.",
+          "Image URL must start with 'https://' and contain a version tag.",
+          "Owner is required.",
+          "Machine IP is required.",
+          "Username is required.",
+          "Password is required."
+        ]
       }
     }
   ]

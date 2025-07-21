@@ -374,6 +374,11 @@ export class App {
     return this.servers.flatMap((s: any) => (s.pods || []).map((p: any) => ({ ...p, serverName: s.name })));
   }
 
+  get formattedPodMessage(): string {
+    return this.podMessage
+      ? this.podMessage.replace(/\n/g, '<br>').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;')
+      : '';
+  }
 
 
   selectServer(server: any) {
@@ -448,13 +453,11 @@ export class App {
     });
   }
 
-  showAlert(type: 'success' | 'error' | 'info', title: string, message: string) {
-    const dialogConfig = new MatDialogConfig();
-    dialogConfig.position = { top: '40px' };
-    dialogConfig.data = { type, title, message };
-    dialogConfig.maxWidth = '600px';
-    dialogConfig.minWidth = '400px';
-    this.dialog.open(AlertDialogComponent, dialogConfig);
+  showAlert(type: 'success' | 'error' | 'info', title: string, message: string, details?: string[]) {
+    this.dialog.open(AlertDialogComponent, {
+      data: { type, title, message, details },
+      position: { top: '40px' }
+    });
   }
 
   // Helper functions for pod status
@@ -498,5 +501,11 @@ export class App {
       'unknown': 'Unknown'
     };
     return statusNames[status] || 'Unknown';
+  }
+
+  // Add this method to handle mode selector resetResult event
+  onModeSelectorMessage(result: { type: string; message: string; details?: string[] }) {
+    const type = (result.type === 'success' || result.type === 'error' || result.type === 'info') ? result.type : 'success';
+    this.showAlert(type, type.charAt(0).toUpperCase() + type.slice(1), result.message, result.details);
   }
 }

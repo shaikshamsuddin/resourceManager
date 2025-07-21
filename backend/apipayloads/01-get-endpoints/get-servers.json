@@ -23,35 +23,30 @@
           "path": ["servers"]
         }
       },
-      "status": "OK",
-      "code": 200,
-      "_postman_previewlanguage": "json",
-      "header": [
-        {
-          "key": "Content-Type",
-          "value": "application/json"
-        }
-      ],
-      "cookie": [],
-      "body": [
-        {
-          "id": "server-01",
-          "name": "gpu-node-h100-a",
-          "resources": {
-            "total": { "gpus": 8, "ram_gb": 512, "storage_gb": 2048 },
-            "available": { "gpus": 2, "ram_gb": 128, "storage_gb": 548 }
-          },
-          "pods": [
-            {
-              "pod_id": "pod-101",
-              "owner": "team-a",
-              "status": "running",
-              "timestamp": "2025-06-22T10:00:00Z",
-              "requested": { "gpus": 2, "ram_gb": 128, "storage_gb": 500 }
-            }
-          ]
-        }
-      ]
+      "body": {
+        "type": "success",
+        "code": 200,
+        "message": "Servers and pods listed successfully.",
+        "data": [
+          {
+            "id": "server-01",
+            "name": "gpu-node-h100-a",
+            "resources": {
+              "total": { "gpus": 8, "ram_gb": 512, "storage_gb": 2048 },
+              "available": { "gpus": 2, "ram_gb": 128, "storage_gb": 548 }
+            },
+            "pods": [
+              {
+                "pod_id": "pod-101",
+                "owner": "team-a",
+                "status": "running",
+                "timestamp": "2025-06-22T10:00:00Z",
+                "requested": { "gpus": 2, "ram_gb": 128, "storage_gb": 500 }
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 } 

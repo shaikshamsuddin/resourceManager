@@ -21,6 +21,9 @@ import { MatIconModule } from '@angular/material/icon';
       <div class="alert-content">
         <h2 class="alert-title">{{ data.title }}</h2>
         <p class="alert-message">{{ data.message }}</p>
+        <ul *ngIf="data.details && data.details.length" class="alert-details">
+          <li *ngFor="let detail of data.details">{{ detail }}</li>
+        </ul>
       </div>
       <button mat-icon-button (click)="dialogRef.close()" class="close-button">
         <mat-icon>close</mat-icon>
@@ -93,6 +96,13 @@ import { MatIconModule } from '@angular/material/icon';
     .info .close-button {
       color: #0d47a1;
     }
+
+    .alert-details {
+      margin: 8px 0 0 0;
+      padding-left: 18px;
+      font-size: 0.95rem;
+      color: inherit;
+    }
   `]
 })
 export class AlertDialogComponent {
@@ -102,6 +112,7 @@ export class AlertDialogComponent {
       type: 'success' | 'error' | 'info';
       title: string;
       message: string;
+      details?: string[];
     }
   ) {
     // Auto-close success messages after 5 seconds

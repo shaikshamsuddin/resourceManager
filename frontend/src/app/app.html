@@ -1,7 +1,7 @@
 <!-- Consistency/Error Message Area -->
 <!-- (Removed old consistencyMessage text display) -->
 <!-- Pod Creation Message Area -->
-<div *ngIf="podMessage" [ngClass]="{'pod-message-success': podMessageType === 'success', 'pod-message-error': podMessageType === 'error'}" class="pod-message">{{ podMessage }}</div>
+<div *ngIf="podMessage" [ngClass]="{'pod-message-success': podMessageType === 'success', 'pod-message-error': podMessageType === 'error'}" class="pod-message" [innerHTML]="formattedPodMessage"></div>
 
 <!-- Header with title -->
 <div class="dashboard-header">
@@ -29,7 +29,7 @@
       <mat-icon class="led-icon">hub</mat-icon>
       <span class="cluster-status-led" [ngClass]="{
         'led-green': clusterStatus === 'healthy', 
-        'led-red': clusterStatus === 'unhealthy' || clusterStatus === 'connection_failed' || clusterStatus === 'auth_failed' || clusterStatus === 'not_running',
+        'led-red': clusterStatus === 'unhealthy' || clusterStatus === 'connection_failed' || clusterStatus === 'auth_failed' || clusterStatus === 'not_running' || clusterStatus === 'degraded',
         'led-grey': clusterStatus === 'unknown' || !clusterStatus
       }"></span>
     </div>
@@ -47,7 +47,7 @@
 </div>
 
 <!-- Mode Selector -->
-<app-mode-selector *ngIf="showModeSelector" (modeChanged)="onModeChanged($event)"></app-mode-selector>
+<app-mode-selector *ngIf="showModeSelector" (modeChanged)="onModeChanged($event)" (resetResult)="onModeSelectorMessage($event)"></app-mode-selector>
 
 <!-- 1. Resource Information Card (Ribbon) -->
 <mat-card class="resource-info-ribbon">

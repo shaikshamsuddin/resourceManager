@@ -23,7 +23,6 @@
           "path": [""]
         }
       },
-      "status": "OK",
       "code": 200,
       "_postman_previewlanguage": "html",
       "header": [
@@ -33,7 +32,11 @@
         }
       ],
       "cookie": [],
-      "body": "<h1>🎉 Resource Manager Backend is Running! 🎉</h1><p>Welcome! Available API endpoints:</p><ul><li><b>GET /servers</b> - List all servers and pods</li><li><b>POST /create</b> - Create a new pod (JSON body required)</li><li><b>POST /delete</b> - Delete a pod (JSON body required)</li><li><b>POST /update</b> - Update a pod (JSON body required)</li><li><b>GET /consistency-check</b> - Check for data consistency</li></ul><p>See the frontend UI for a friendly interface.</p>"
+      "body": {
+        "type": "success",
+        "code": 200,
+        "message": "<h1>🎉 Resource Manager Backend is Running! 🎉</h1><p>Welcome! Available API endpoints:</p><ul><li><b>GET /servers</b> - List all servers and pods</li><li><b>POST /create</b> - Create a new pod (JSON body required)</li><li><b>POST /delete</b> - Delete a pod (JSON body required)</li><li><b>POST /update</b> - Update a pod (JSON body required)</li><li><b>GET /consistency-check</b> - Check for data consistency</li></ul><p>See the frontend UI for a friendly interface.</p>"
+      }
     }
   ]
 } 

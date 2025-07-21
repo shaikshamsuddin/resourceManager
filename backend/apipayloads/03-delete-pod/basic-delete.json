@@ -25,15 +25,8 @@
       "originalRequest": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type", "value": "application/json" }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"PodName\": \"pod-101\"\n}"
-        },
         "url": {
           "raw": "http://localhost:5000/delete",
           "host": ["localhost"],
@@ -45,13 +38,12 @@
       "code": 200,
       "_postman_previewlanguage": "json",
       "header": [
-        {
-          "key": "Content-Type",
-          "value": "application/json"
-        }
+        { "key": "Content-Type", "value": "application/json" }
       ],
       "cookie": [],
       "body": {
+        "type": "success",
+        "code": 200,
         "message": "Pod deleted"
       }
     },

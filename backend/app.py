@@ -247,19 +247,19 @@ def create_pod_mdem():
         ok, err = validate_resource_request(server, resources)
         if not ok:
             errors.append(err)
-            return jsonify({'error': " | ".join(errors)}), 400
+            return jsonify({'type': 'error', 'message': "\n".join(errors)}), 400
             
         # Validate resources against real Kubernetes node
         if not isinstance(server.get('resources'), dict):
             errors.append('Server resources not available')
-            return jsonify({'error': " | ".join(errors)}), 400
+            return jsonify({'type': 'error', 'message': "\n".join(errors)}), 400
             
         # Check if resources are available
         available = server['resources'].get('available', {})
         for key in ['gpus', 'ram_gb', 'storage_gb']:
             if resources.get(key, 0) > available.get(key, 0):
                 errors.append(f"Insufficient {key}: requested {resources.get(key, 0)}, available {available.get(key, 0)}")
-                return jsonify({'error': " | ".join(errors)}), 400
+                return jsonify({'type': 'error', 'message': "\n".join(errors)}), 400
         
         # Create pod object with port configuration
         pod = create_pod_mdem({
@@ -275,13 +275,13 @@ def create_pod_mdem():
             if Config.get_environment_value() == Environment.LOCAL_MOCK_DB.value:
                 # Add to mock data
                 if mock_data_provider.add_pod_mdem(server_id, pod):
-                    return jsonify({'message': 'Pod created', 'pod': pod}), 200
+                    return jsonify({'type': 'success', 'message': 'Pod created', 'pod': pod}), 200
                 else:
                     return jsonify({'error': 'Failed to add pod to mock data'}), 500
             else:
                 # Create real Kubernetes resources
                 create_pod_k8s(pod)
-                return jsonify({'message': 'Pod created', 'pod': pod}), 200
+                return jsonify({'type': 'success', 'message': 'Pod created', 'pod': pod}), 200
             
         except Exception as e:
             return jsonify({'error': f'Pod creation error: {str(e)}'}), 500
@@ -342,7 +342,7 @@ def delete_pod_mdem():
         if Config.get_environment_value() == Environment.LOCAL_MOCK_DB.value:
             # Delete from mock data
             if mock_data_provider.remove_pod_mdem(pod_name):
-                return jsonify({'message': 'Pod deleted'}), 200
+                return jsonify({'type': 'success', 'message': 'Pod deleted'}), 200
             else:
                 return jsonify({'error': f"Pod '{pod_name}' not found on any server."}), 404
         else:
@@ -372,18 +372,18 @@ def delete_pod_mdem():
                         break
                 
                 if not pod_found:
-                    return jsonify({'error': f"Pod '{pod_name}' not found in cluster."}), 404
+                    return jsonify({'type': 'error', 'message': f"Pod '{pod_name}' not found in cluster."}), 404
                 
                 # Delete the pod with the correct namespace
                 delete_pod_k8s({
                     'pod_id': pod_name,
                     'namespace': pod_namespace
                 })
-                return jsonify({'message': f'Pod {pod_name} deleted from namespace {pod_namespace}'}), 200
+                return jsonify({'type': 'success', 'message': f'Pod {pod_name} deleted from namespace {pod_namespace}\n\tStatus: Success'}), 200
             except Exception as e:
                 error_msg = str(e)
                 if "not found" in error_msg.lower():
-                    return jsonify({'error': f"Pod '{pod_name}' not found in cluster."}), 404
+                    return jsonify({'type': 'error', 'message': f"Pod '{pod_name}' not found in cluster."}), 404
                 else:
                     return jsonify({'error': f'Kubernetes deletion error: {error_msg}'}), 500
     except Exception as e:
@@ -495,7 +495,7 @@ def update_pod_mdem():
                 # Restore old resources if validation fails
                 for key in ['gpus', 'ram_gb', 'storage_gb']:
                     server['resources']['available'][key] -= old_resources.get(key, 0)
-                return jsonify({'error': err}), 400
+                return jsonify({'type': 'error', 'message': err.replace(' | ', '\n')}), 400
             
             # Allocate new resources
             for key in ['gpus', 'ram_gb', 'storage_gb']:
@@ -520,7 +520,7 @@ def update_pod_mdem():
         pod['timestamp'] = updated_pod['timestamp']
 
         save_data(data)
-        return jsonify({'message': 'Pod updated', 'pod': pod}), 200
+        return jsonify({'type': 'success', 'message': 'Pod updated', 'pod': pod}), 200
 
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
@@ -588,9 +588,10 @@ def consistency_check_mdem():
                 if pod_sums.get(key, 0) > total.get(key, 0):
                     errors.append(f"Server {server['name']}: sum of pod {key} > total {key}")
         if errors:
-            return jsonify({"status": "error", "message": "data inconsistency error", "details": errors}), 400
+            details = "\n".join(f"\t{err}" for err in errors)
+            return jsonify({'type': 'error', 'message': f'data inconsistency error:\n{details}'}), 400
         else:
-            return jsonify({"status": "ok", "message": "all data seems consistent"}), 200
+            return jsonify({'type': 'success', 'message': 'all data seems consistent'}), 200
     except Exception as e:
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
@@ -730,6 +731,8 @@ def mode_management():
         if request.method == 'POST':
             data = request.json or {}
             new_mode = data.get('mode', 'demo')
+            if new_mode == 'cloud-k8s':
+                return jsonify({'type': 'info', 'message': 'Mode not enabled yet.'}), 501
             
             # Use ModeConfig to map mode to environment
             environment = ModeConfig.get_environment_for_mode(new_mode)
@@ -746,6 +749,7 @@ def mode_management():
             # Environment variable is already set, Config will pick it up dynamically
             
             return jsonify({
+                'type': 'success',
                 'current_mode': new_mode,
                 'backend_env': environment,
                 'display_name': ModeConfig.get_display_name(new_mode),
@@ -764,6 +768,7 @@ def mode_management():
             current_mode = ModeConfig.get_mode_for_environment(current_env)
             
             return jsonify({
+                'type': 'success',
                 'current_mode': current_mode,
                 'backend_env': current_env,
                 'display_name': ModeConfig.get_display_name(current_mode),
@@ -773,6 +778,53 @@ def mode_management():
             
     except Exception as e:
         return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@app.route('/reset-mode', methods=['POST'])
+def reset_mode():
+    """
+    Reset the selected mode's data (pods/resources) to initial state.
+    Query param: mode=demo or mode=local-k8s
+    """
+    mode = request.args.get('mode')
+    if not mode:
+        return jsonify({'type': 'error', 'message': 'Missing mode parameter'}), 400
+    if mode == 'demo':
+        # Reset mock DB: remove all pods, reset resources
+        try:
+            data = load_data()
+            for server in data:
+                server['pods'] = []
+                if 'resources' in server and 'total' in server['resources']:
+                    server['resources']['available'] = dict(server['resources']['total'])
+            save_data(data)
+            return jsonify({'type': 'success', 'message': 'Mock Demo mode reset successfully.\n\tAll pods deleted and resources reset.'}), 200
+        except Exception as e:
+            return jsonify({'type': 'error', 'message': f'Error: Reset failed.\n\t{str(e)}'}), 500
+    elif mode == 'local-k8s':
+        # Delete all pods from local Kubernetes cluster
+        try:
+            servers = local_kubernetes_provider.get_servers_with_pods()
+            pod_names = []
+            for server in servers:
+                for pod in server.get('pods', []):
+                    pod_names.append((pod.get('pod_id'), pod.get('namespace', 'default')))
+            errors = []
+            for pod_name, namespace in pod_names:
+                try:
+                    delete_pod_k8s({'pod_id': pod_name, 'namespace': namespace})
+                except Exception as e:
+                    errors.append(f"Pod {pod_name}: {str(e)}")
+            if errors:
+                details = "\n".join(f"\t{err}" for err in errors)
+                return jsonify({'type': 'error', 'message': f'Error: Local Kubernetes reset completed with errors.\n{details}'}), 207
+            else:
+                return jsonify({'type': 'success', 'message': 'Local Kubernetes mode reset successfully.\n\tAll pods deleted.'}), 200
+        except Exception as e:
+            return jsonify({'type': 'error', 'message': f'Error: Failed to reset local Kubernetes mode.\n\t{str(e)}'}), 500
+    elif mode == 'cloud-k8s':
+        return jsonify({'type': 'error', 'message': 'Reset not allowed. Mode not enabled yet.'}), 501
+    else:
+        return jsonify({'type': 'error', 'message': 'Invalid mode parameter. Use "demo" or "local-k8s".'}), 400
 
 
 if __name__ == '__main__':
