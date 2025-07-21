@@ -71,9 +71,9 @@ def validate_resource_request(server, requested):
     return True, None
 
 
-def fetch_kubeconfig(machine_ip, username, password):
+def fetch_kubeconfig_k8s(machine_ip, username, password):
     """
-    SSH to VM and fetch kubeconfig file.
+    SSH to VM and fetch kubeconfig file (Kubernetes mode).
     
     Args:
         machine_ip (str): IP address of the machine
@@ -110,9 +110,9 @@ def fetch_kubeconfig(machine_ip, username, password):
     return kubeconfig_path
 
 
-def get_kubeconfig():
+def get_kubeconfig_k8s():
     """
-    Get kubeconfig for local Kubernetes cluster.
+    Get kubeconfig for local Kubernetes cluster (Kubernetes mode).
     This function tries multiple approaches to connect to Kubernetes.
     
     Returns:
@@ -137,9 +137,9 @@ def get_kubeconfig():
     raise Exception("Could not load Kubernetes configuration. Please ensure kubeconfig is available.")
 
 
-def create_k8s_resources_simple(pod_data):
+def create_pod_k8s(pod_data):
     """
-    Create Kubernetes resources using environment-aware client.
+    Create a Kubernetes pod with deployment and service (Kubernetes mode).
     
     Args:
         pod_data (dict): Pod configuration data
@@ -154,24 +154,77 @@ def create_k8s_resources_simple(pod_data):
     k8s_client.create_service(namespace, namespace)
 
 
-def delete_k8s_resources_simple(pod_data):
+def delete_pod_k8s(pod_data):
     """
-    Delete Kubernetes resources using environment-aware client.
+    Delete a Kubernetes pod and its associated resources (Kubernetes mode).
     
     Args:
-        pod_data (dict): Pod configuration data
+        pod_data (dict): Pod configuration data with 'pod_id' and optional 'namespace'
     """
-    namespace = pod_data['pod_id']
+    pod_name = pod_data['pod_id']
+    namespace = pod_data.get('namespace', 'default')  # Default to 'default' namespace
     
-    # Use the new Kubernetes client
-    k8s_client.delete_service(namespace, namespace)
-    k8s_client.delete_deployment(namespace, namespace)
-    k8s_client.delete_namespace(namespace)
+    try:
+        # Initialize the Kubernetes client
+        k8s_client.initialize()
+        
+        # Extract deployment name from pod name (remove the random suffix)
+        # Example: resource-manager-backend-5775b89d4f-wrnkw -> resource-manager-backend
+        deployment_name = None
+        if '-' in pod_name:
+            # Split by '-' and remove the last part (random suffix)
+            parts = pod_name.split('-')
+            if len(parts) >= 3:
+                # Try to find the deployment name by removing the last 2 parts (hash and random suffix)
+                deployment_name = '-'.join(parts[:-2])
+        
+        # First, try to delete the deployment (if it exists) to prevent pod recreation
+        if deployment_name:
+            try:
+                k8s_client.apps_v1.delete_namespaced_deployment(name=deployment_name, namespace=namespace)
+                print(f"Successfully deleted deployment '{deployment_name}' from namespace '{namespace}'")
+            except ApiException as e:
+                if e.status != 404:  # Ignore if deployment doesn't exist
+                    print(f"Warning: Could not delete deployment '{deployment_name}': {e}")
+        
+        # Try to delete the replica set (if it exists)
+        try:
+            k8s_client.apps_v1.delete_namespaced_replica_set(name=pod_name, namespace=namespace)
+            print(f"Successfully deleted replica set '{pod_name}' from namespace '{namespace}'")
+        except ApiException as e:
+            if e.status != 404:  # Ignore if replica set doesn't exist
+                print(f"Warning: Could not delete replica set '{pod_name}': {e}")
+        
+        # Now try to delete the pod directly
+        try:
+            k8s_client.core_v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
+            print(f"Successfully deleted pod '{pod_name}' from namespace '{namespace}'")
+        except ApiException as e:
+            if e.status == 404:
+                print(f"Pod '{pod_name}' not found in namespace '{namespace}'")
+                # If pod is not found, but we successfully deleted deployment/replicaset, consider it a success
+                return
+            else:
+                print(f"Error deleting pod '{pod_name}': {e}")
+                raise Exception(f"Failed to delete pod '{pod_name}': {e}")
+        
+        # Optionally delete associated service if it exists
+        if deployment_name:
+            try:
+                k8s_client.core_v1.delete_namespaced_service(name=deployment_name, namespace=namespace)
+                print(f"Successfully deleted service '{deployment_name}' from namespace '{namespace}'")
+            except ApiException as e:
+                if e.status != 404:  # Ignore if service doesn't exist
+                    print(f"Warning: Could not delete service '{deployment_name}': {e}")
+                
+    except Exception as e:
+        print(f"Error in delete_k8s_resources_simple: {e}")
+        raise
 
 
-def create_pod_object(pod_data, server_id):
+def create_pod_mdem(pod_data, server_id):
     """
-    Create a pod object for storage in the mock database.
+    Create a pod object for storage in the mock database (demo mode).
     
     Args:
         pod_data (dict): Pod configuration data
@@ -191,7 +244,7 @@ def create_pod_object(pod_data, server_id):
         'image_url': pod_data.get('image_url', Config.get_default_image()),
         'requested': pod_data['Resources'],
         'owner': pod_data.get('Owner', DefaultValues.DEFAULT_OWNER),
-        'status': PodStatus.IN_PROGRESS.value,  # Start with in-progress status
+        'status': PodStatus.ONLINE.value,  # Start as online in demo mode
         'timestamp': datetime.utcnow().strftime(TimeFormats.ISO_FORMAT),
         'ports': {
             'container_port': container_port,
@@ -201,16 +254,16 @@ def create_pod_object(pod_data, server_id):
     }
 
 
-def update_pod_object(pod_data, server_id):
+def update_pod_mdem(pod_data, server_id):
     """
-    Update a pod object with new data.
+    Update a pod object in demo mode (mock database).
     
     Args:
         pod_data (dict): Updated pod configuration data
         server_id (str): Server ID
         
     Returns:
-        dict: Updated pod object
+        dict: Updated pod object for demo mode
     """
     return {
         'pod_id': pod_data['PodName'],

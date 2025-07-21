@@ -148,3 +148,8 @@ When adding new payloads:
 2. Include comprehensive comments
 3. Test the payload before committing
 4. Update this README if adding new endpoints 
+
+## /mode Endpoint
+
+- Accepts: 'demo', 'local-k8s', 'cloud-k8s'
+- Example: `{ "mode": "local-k8s" }` 

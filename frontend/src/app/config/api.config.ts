@@ -44,6 +44,8 @@ export class ApiConfig {
     
     // Configuration endpoints
     MODE: '/mode',
+    LAST_MODE: '/last-mode',
+    RESET_LAST_MODE: '/reset-last-mode',
     
     // Root endpoint
     ROOT: '/'
@@ -84,6 +86,14 @@ export class ApiConfig {
   
   static getModeUrl(): string {
     return `${this.BASE_URL}${this.ENDPOINTS.MODE}`;
+  }
+  
+  static getLastModeUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.LAST_MODE}`;
+  }
+  
+  static getResetLastModeUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.RESET_LAST_MODE}`;
   }
   
   static getRootUrl(): string {

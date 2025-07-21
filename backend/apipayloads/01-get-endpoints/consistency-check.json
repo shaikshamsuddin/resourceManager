@@ -34,7 +34,8 @@
       ],
       "cookie": [],
       "body": {
-        "status": "ok",
+        "type": "success",
+        "code": 200,
         "message": "all data seems consistent"
       }
     },
@@ -61,7 +62,8 @@
       ],
       "cookie": [],
       "body": {
-        "status": "error",
+        "type": "error",
+        "code": 400,
         "message": "data inconsistency error",
         "details": [
           "Server gpu-node-h100-a: available gpus > total gpus",

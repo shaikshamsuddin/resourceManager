@@ -52,6 +52,7 @@ export class App {
   podMessageType: 'success' | 'error' | '' = '';
   clusterStatus: string = 'unknown';
   clusterStatusInterval: any;
+  modeCheckInterval: any;
   showModeSelector: boolean = false;
   currentModeConfig: any = null;
 
@@ -76,20 +77,41 @@ export class App {
         // Refresh data when mode changes
         this.fetchServers();
         this.checkConsistency();
-        this.checkClusterStatus();
+        
+        // Handle cluster status polling based on new mode
+        if (this.isRealKubernetesMode()) {
+          this.startClusterStatusPolling();
+        } else {
+          // Stop cluster status polling if switching to demo mode
+          if (this.clusterStatusInterval) {
+            clearInterval(this.clusterStatusInterval);
+            this.clusterStatusInterval = null;
+          }
+          this.clusterStatus = 'unknown';
+        }
       },
       error: (error) => {
         console.error('Failed to change mode:', error);
         // Still refresh data even if mode change failed
         this.fetchServers();
         this.checkConsistency();
-        this.checkClusterStatus();
       }
     });
   }
 
   updateCurrentModeDisplay() {
     this.currentModeConfig = ModeManager.getCurrentModeConfig();
+    console.log('Current mode config:', this.currentModeConfig);
+    console.log('Current servers:', this.servers);
+    
+    // Show mode selector if no mode is selected OR if no servers are available (empty array)
+    if (!this.currentModeConfig || this.servers.length === 0) {
+      console.log('No mode selected or no servers available, showing mode selector');
+      this.showModeSelector = true;
+    } else {
+      console.log('Mode selected and servers available, hiding mode selector');
+      this.showModeSelector = false;
+    }
   }
 
   isRealKubernetesMode(): boolean {
@@ -105,17 +127,74 @@ export class App {
     this.http.get(ApiConfig.getModeUrl()).subscribe({
       next: (response: any) => {
         console.log('Current mode from backend:', response);
-        // The mode selector will handle the UI state
+        
+        // If no current mode is set, try to load the last saved mode
+        if (!response.current_mode) {
+          this.loadLastSavedMode();
+        } else {
+          // Update mode display after getting backend response
+          this.updateCurrentModeDisplay();
+        }
       },
       error: (error) => {
         console.error('Failed to get current mode:', error);
+        // Try to load last saved mode as fallback
+        this.loadLastSavedMode();
+      }
+    });
+  }
+
+  loadLastSavedMode() {
+    // Get last saved mode from backend
+    this.http.get(ApiConfig.getLastModeUrl()).subscribe({
+      next: (response: any) => {
+        console.log('Last saved mode:', response);
+        
+        if (response.last_mode && response.last_mode !== 'null') {
+          // Restore the last saved mode
+          this.restoreLastMode(response.last_mode);
+        } else {
+          // No last mode saved, update display to show mode selector
+          this.updateCurrentModeDisplay();
+        }
+      },
+      error: (error) => {
+        console.error('Failed to load last saved mode:', error);
+        // Still update mode display even on error
+        this.updateCurrentModeDisplay();
+      }
+    });
+  }
+
+  restoreLastMode(mode: string) {
+    // Restore the last saved mode by sending it to the backend
+    this.http.post(ApiConfig.getModeUrl(), { mode: mode }).subscribe({
+      next: (response: any) => {
+        console.log('Last mode restored successfully:', response);
+        this.updateCurrentModeDisplay();
+        this.fetchServers();
+        this.checkConsistency();
+        
+        // Handle cluster status polling based on restored mode
+        if (this.isRealKubernetesMode()) {
+          this.startClusterStatusPolling();
+        }
+      },
+      error: (error) => {
+        console.error('Failed to restore last mode:', error);
+        // Still update mode display even if restoration failed
+        this.updateCurrentModeDisplay();
       }
     });
   }
 
   ngOnInit() {
     this.startConsistencyPolling();
-    this.startClusterStatusPolling();
+    this.startModePolling();
+    // Only start cluster status polling if in real Kubernetes mode
+    if (this.isRealKubernetesMode()) {
+      this.startClusterStatusPolling();
+    }
   }
 
   ngOnDestroy() {
@@ -124,6 +203,9 @@ export class App {
     }
     if (this.clusterStatusInterval) {
       clearInterval(this.clusterStatusInterval);
+    }
+    if (this.modeCheckInterval) {
+      clearInterval(this.modeCheckInterval);
     }
   }
 
@@ -139,6 +221,53 @@ export class App {
       },
       error: (err) => {
         this.consistencyMessage = err?.error?.message || 'data inconsistency error';
+      }
+    });
+  }
+
+  startModePolling() {
+    this.checkMode();
+    this.modeCheckInterval = setInterval(() => this.checkMode(), 15000); // Poll every 15 seconds
+  }
+
+  checkMode() {
+    this.http.get<any>(ApiConfig.getModeUrl()).subscribe({
+      next: (response: any) => {
+        console.log('Mode polling response:', response);
+        
+        // Check if the mode has changed
+        const currentBackendMode = response.current_mode;
+        const currentFrontendMode = ModeManager.getCurrentMode();
+        
+        if (currentBackendMode !== currentFrontendMode) {
+          console.log('Mode change detected:', { backend: currentBackendMode, frontend: currentFrontendMode });
+          
+          if (currentBackendMode) {
+            // Backend has a mode, update frontend
+            ModeManager.setCurrentMode(currentBackendMode as ResourceManagerMode);
+            this.updateCurrentModeDisplay();
+            this.fetchServers();
+            this.checkConsistency();
+            
+            // Handle cluster status polling based on new mode
+            if (this.isRealKubernetesMode()) {
+              this.startClusterStatusPolling();
+            } else {
+              // Stop cluster status polling if switching to demo mode
+              if (this.clusterStatusInterval) {
+                clearInterval(this.clusterStatusInterval);
+                this.clusterStatusInterval = null;
+              }
+              this.clusterStatus = 'unknown';
+            }
+          } else {
+            // Backend has no mode, check for last saved mode
+            this.loadLastSavedMode();
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Mode polling failed:', error);
       }
     });
   }
@@ -166,9 +295,13 @@ export class App {
         if (this.servers.length > 0 && !this.selectedServer) {
           this.selectedServer = this.servers[0];
         }
+        // Update mode display after fetching servers
+        this.updateCurrentModeDisplay();
       },
       error: () => {
         // Handle error silently or show alert
+        // Still update mode display even on error
+        this.updateCurrentModeDisplay();
       }
     });
   }
@@ -361,6 +494,11 @@ export class App {
     return this.servers.flatMap((s: any) => (s.pods || []).map((p: any) => ({ ...p, serverName: s.name })));
   }
 
+  get formattedPodMessage(): string {
+    return this.podMessage
+      ? this.podMessage.replace(/\n/g, '<br>').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;')
+      : '';
+  }
 
 
   selectServer(server: any) {
@@ -416,8 +554,15 @@ export class App {
         
         // Determine alert type based on cluster status
         const clusterStatus = res.cluster_status?.status || 'unknown';
-        const isHealthy = clusterStatus === 'healthy';
-        const alertType = isHealthy ? 'success' : 'error';
+        let alertType: 'success' | 'error' | 'info';
+        
+        if (clusterStatus === 'healthy') {
+          alertType = 'success';
+        } else if (clusterStatus === 'degraded') {
+          alertType = 'info'; // Blue info alert for degraded status
+        } else {
+          alertType = 'error';
+        }
         
         this.showAlert(
           alertType,
@@ -435,13 +580,11 @@ export class App {
     });
   }
 
-  showAlert(type: 'success' | 'error' | 'info', title: string, message: string) {
-    const dialogConfig = new MatDialogConfig();
-    dialogConfig.position = { top: '40px' };
-    dialogConfig.data = { type, title, message };
-    dialogConfig.maxWidth = '600px';
-    dialogConfig.minWidth = '400px';
-    this.dialog.open(AlertDialogComponent, dialogConfig);
+  showAlert(type: 'success' | 'error' | 'info', title: string, message: string, details?: string[]) {
+    this.dialog.open(AlertDialogComponent, {
+      data: { type, title, message, details },
+      position: { top: '40px' }
+    });
   }
 
   // Helper functions for pod status
@@ -449,6 +592,7 @@ export class App {
     const statusColors: { [key: string]: string } = {
       'online': 'status-success',
       'starting': 'status-success',
+      'pending': 'status-pending',
       'in-progress': 'status-progress',
       'updating': 'status-progress',
       'failed': 'status-error',
@@ -463,6 +607,7 @@ export class App {
     const statusIcons: { [key: string]: string } = {
       'online': 'check_circle',
       'starting': 'hourglass_empty',
+      'pending': 'schedule',
       'in-progress': 'sync',
       'updating': 'update',
       'failed': 'error',
@@ -477,6 +622,7 @@ export class App {
     const statusNames: { [key: string]: string } = {
       'online': 'Online',
       'starting': 'Starting',
+      'pending': 'Pending',
       'in-progress': 'In Progress',
       'updating': 'Updating',
       'failed': 'Failed',
@@ -485,5 +631,29 @@ export class App {
       'unknown': 'Unknown'
     };
     return statusNames[status] || 'Unknown';
+  }
+
+  // Add this method to handle mode selector resetResult event
+  onModeSelectorMessage(result: { type: string; message: string; details?: string[] }) {
+    const type = (result.type === 'success' || result.type === 'error' || result.type === 'info') ? result.type : 'success';
+    this.showAlert(type, type.charAt(0).toUpperCase() + type.slice(1), result.message, result.details);
+    
+    // If reset was successful, immediately clear the display and show mode selector
+    if (result.type === 'success' && result.message.includes('reset')) {
+      console.log('Mode reset successful, clearing display and showing mode selector');
+      // Clear current mode and data
+      ModeManager.setCurrentMode(undefined as any);
+      this.servers = [];
+      this.selectedServer = null;
+      this.currentModeConfig = null;
+      // Show mode selector
+      this.showModeSelector = true;
+      // Stop any active polling
+      if (this.clusterStatusInterval) {
+        clearInterval(this.clusterStatusInterval);
+        this.clusterStatusInterval = null;
+      }
+      this.clusterStatus = 'unknown';
+    }
   }
 }

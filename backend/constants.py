@@ -131,7 +131,7 @@ class PodStatus(Enum):
     
     # Success states
     ONLINE = "online"           # Pod is running and healthy
-    STARTING = "starting"       # Pod is being initialized/starting up
+    PENDING = "pending"         # Pod is being initialized/starting up
     
     # Progress states  
     IN_PROGRESS = "in-progress" # Pod is being created/deployed
@@ -147,7 +147,7 @@ class PodStatus(Enum):
     
     # Legacy Kubernetes states (for compatibility)
     RUNNING = "Running"         # Kubernetes Running state
-    PENDING = "Pending"         # Kubernetes Pending state
+    KUBERNETES_PENDING = "Pending"  # Kubernetes Pending state
     TERMINATED = "Terminated"   # Kubernetes Terminated state
 
 
