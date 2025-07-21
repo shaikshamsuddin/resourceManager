@@ -46,7 +46,12 @@ class MockDataProvider:
                         "requested": {"gpus": 2, "ram_gb": 32, "storage_gb": 100, "cpus": 8},
                         "owner": "ml-team",
                         "status": "online",
-                        "timestamp": (datetime.utcnow() - timedelta(hours=2)).strftime(TimeFormats.ISO_FORMAT)
+                        "timestamp": (datetime.utcnow() - timedelta(hours=2)).strftime(TimeFormats.ISO_FORMAT),
+                        "ports": {
+                            "container_port": 8888,
+                            "service_port": 8888,
+                            "expose_service": True
+                        }
                     },
                     {
                         "pod_id": "data-processing-pod-002",

@@ -180,6 +180,11 @@ def create_pod_object(pod_data, server_id):
     Returns:
         dict: Pod object with all required fields
     """
+    # Get port configuration
+    container_port = pod_data.get('container_port', DefaultValues.DEFAULT_CONTAINER_PORT)
+    service_port = pod_data.get('service_port', DefaultValues.DEFAULT_SERVICE_PORT)
+    expose_service = pod_data.get('expose_service', False)
+    
     return {
         'pod_id': pod_data['PodName'],
         'server_id': server_id,
@@ -187,7 +192,12 @@ def create_pod_object(pod_data, server_id):
         'requested': pod_data['Resources'],
         'owner': pod_data.get('Owner', DefaultValues.DEFAULT_OWNER),
         'status': PodStatus.IN_PROGRESS.value,  # Start with in-progress status
-        'timestamp': datetime.utcnow().strftime(TimeFormats.ISO_FORMAT)
+        'timestamp': datetime.utcnow().strftime(TimeFormats.ISO_FORMAT),
+        'ports': {
+            'container_port': container_port,
+            'service_port': service_port,
+            'expose_service': expose_service
+        }
     }
 
 

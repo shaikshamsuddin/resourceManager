@@ -271,6 +271,141 @@ class LocalKubernetesProvider:
         
         node['resources']['available'] = available
 
+    def create_pod_with_service(self, pod_data: Dict) -> Dict:
+        """
+        Create a pod with associated service for external access.
+        
+        Args:
+            pod_data: Pod configuration data
+            
+        Returns:
+            Dictionary with pod and service information
+        """
+        try:
+            # Extract port configuration
+            container_port = pod_data.get('container_port', 80)
+            service_port = pod_data.get('service_port', 80)
+            expose_service = pod_data.get('expose_service', False)
+            
+            # Create pod
+            pod_name = pod_data['PodName']
+            pod_result = self._extract_pod_info_from_data(pod_data)
+            
+            # Create service if requested
+            service_info = None
+            if expose_service:
+                service_info = self._create_service_for_pod(pod_name, container_port, service_port)
+            
+            return {
+                'pod': pod_result,
+                'service': service_info,
+                'access_url': service_info.get('access_url') if service_info else None
+            }
+            
+        except Exception as e:
+            print(f"Error creating pod with service: {e}")
+            return {'error': str(e)}
+    
+    def _create_service_for_pod(self, pod_name: str, container_port: int, service_port: int) -> Dict:
+        """
+        Create a Kubernetes service for pod external access.
+        
+        Args:
+            pod_name: Name of the pod
+            container_port: Port inside the container
+            service_port: Port for the service
+            
+        Returns:
+            Service information dictionary
+        """
+        try:
+            # Create service object
+            service = client.V1Service(
+                metadata=client.V1ObjectMeta(
+                    name=f"{pod_name}-service",
+                    labels={"app": pod_name}
+                ),
+                spec=client.V1ServiceSpec(
+                    type="NodePort",
+                    selector={"app": pod_name},
+                    ports=[
+                        client.V1ServicePort(
+                            port=service_port,
+                            target_port=container_port,
+                            node_port=self._get_available_node_port()
+                        )
+                    ]
+                )
+            )
+            
+            # Create service in Kubernetes
+            created_service = self.core_v1.create_namespaced_service(
+                namespace="default",
+                body=service
+            )
+            
+            # Get access URL
+            access_url = self._get_service_access_url(created_service)
+            
+            return {
+                'name': created_service.metadata.name,
+                'type': created_service.spec.type,
+                'port': service_port,
+                'node_port': created_service.spec.ports[0].node_port,
+                'access_url': access_url
+            }
+            
+        except Exception as e:
+            print(f"Error creating service: {e}")
+            return {'error': str(e)}
+    
+    def _get_available_node_port(self) -> int:
+        """
+        Get an available NodePort in the valid range.
+        
+        Returns:
+            Available NodePort number
+        """
+        # Simple implementation - use a random port in valid range
+        import random
+        return random.randint(30000, 32767)
+    
+    def _get_service_access_url(self, service) -> str:
+        """
+        Generate access URL for the service.
+        
+        Args:
+            service: Kubernetes service object
+            
+        Returns:
+            Access URL string
+        """
+        try:
+            # For local Kubernetes, use minikube service URL
+            node_port = service.spec.ports[0].node_port
+            return f"http://localhost:{node_port}"
+        except Exception:
+            return "Access URL not available"
+    
+    def _extract_pod_info_from_data(self, pod_data: Dict) -> Dict:
+        """
+        Extract pod information from pod data.
+        
+        Args:
+            pod_data: Pod configuration data
+            
+        Returns:
+            Pod information dictionary
+        """
+        return {
+            'pod_id': pod_data['PodName'],
+            'image_url': pod_data.get('image_url', 'nginx:latest'),
+            'requested': pod_data.get('Resources', {}),
+            'owner': pod_data.get('Owner', 'unknown'),
+            'status': 'starting',
+            'timestamp': datetime.utcnow().strftime(TimeFormats.ISO_FORMAT)
+        }
+
 
 # Global instance for local Kubernetes
 local_kubernetes_provider = LocalKubernetesProvider() 

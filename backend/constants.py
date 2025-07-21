@@ -19,6 +19,98 @@ class Environment(Enum):
     LOCAL_MOCK_DB = "local-mock-db"  # Demo mode with mock data
 
 
+class Mode(Enum):
+    """Application modes for different environments."""
+    DEMO = "demo"                    # Local Mock Demo mode
+    LOCAL_KUBERNETES = "local-k8s"   # Local Kubernetes mode (minikube)
+    CLOUD_KUBERNETES = "cloud-k8s"   # Cloud Kubernetes mode (Azure AKS)
+
+
+class ModeConfig:
+    """Mode configuration and mapping utilities."""
+    
+    # Mode to environment mapping
+    MODE_TO_ENVIRONMENT = {
+        Mode.DEMO.value: Environment.LOCAL_MOCK_DB.value,
+        Mode.LOCAL_KUBERNETES.value: Environment.DEVELOPMENT.value,
+        Mode.CLOUD_KUBERNETES.value: Environment.PRODUCTION.value
+    }
+    
+    # Environment to mode mapping (reverse)
+    ENVIRONMENT_TO_MODE = {
+        Environment.LOCAL_MOCK_DB.value: Mode.DEMO.value,
+        Environment.DEVELOPMENT.value: Mode.LOCAL_KUBERNETES.value,
+        Environment.PRODUCTION.value: Mode.CLOUD_KUBERNETES.value
+    }
+    
+    # Mode display names
+    MODE_DISPLAY_NAMES = {
+        Mode.DEMO.value: "Local Mock Demo",
+        Mode.LOCAL_KUBERNETES.value: "Local Kubernetes",
+        Mode.CLOUD_KUBERNETES.value: "Cloud Kubernetes"
+    }
+    
+    # Mode descriptions
+    MODE_DESCRIPTIONS = {
+        Mode.DEMO.value: "Demo mode with realistic mock data",
+        Mode.LOCAL_KUBERNETES.value: "Local Kubernetes cluster (minikube)",
+        Mode.CLOUD_KUBERNETES.value: "Cloud Kubernetes cluster (Azure AKS)"
+    }
+    
+    # Mode capabilities
+    MODE_CAPABILITIES = {
+        Mode.DEMO.value: {
+            "real_kubernetes": False,
+            "port_management": False,
+            "service_creation": False,
+            "external_access": False
+        },
+        Mode.LOCAL_KUBERNETES.value: {
+            "real_kubernetes": True,
+            "port_management": True,
+            "service_creation": True,
+            "external_access": True
+        },
+        Mode.CLOUD_KUBERNETES.value: {
+            "real_kubernetes": True,
+            "port_management": True,
+            "service_creation": True,
+            "external_access": True
+        }
+    }
+    
+    @classmethod
+    def get_environment_for_mode(cls, mode: str) -> str:
+        """Get environment for a given mode."""
+        return cls.MODE_TO_ENVIRONMENT.get(mode, Environment.LOCAL_MOCK_DB.value)
+    
+    @classmethod
+    def get_mode_for_environment(cls, environment: str) -> str:
+        """Get mode for a given environment."""
+        return cls.ENVIRONMENT_TO_MODE.get(environment, Mode.DEMO.value)
+    
+    @classmethod
+    def get_display_name(cls, mode: str) -> str:
+        """Get display name for a mode."""
+        return cls.MODE_DISPLAY_NAMES.get(mode, "Unknown Mode")
+    
+    @classmethod
+    def get_description(cls, mode: str) -> str:
+        """Get description for a mode."""
+        return cls.MODE_DESCRIPTIONS.get(mode, "Unknown mode")
+    
+    @classmethod
+    def get_capabilities(cls, mode: str) -> dict:
+        """Get capabilities for a mode."""
+        return cls.MODE_CAPABILITIES.get(mode, {})
+    
+    @classmethod
+    def supports_feature(cls, mode: str, feature: str) -> bool:
+        """Check if a mode supports a specific feature."""
+        capabilities = cls.get_capabilities(mode)
+        return capabilities.get(feature, False)
+
+
 class AuthMethod(Enum):
     """Kubernetes authentication methods."""
     LOCAL_KUBECONFIG = "local_kubeconfig"
@@ -96,6 +188,27 @@ class DefaultValues:
     DEFAULT_REPLICAS = 1
     DEFAULT_PORT = 80
     DEFAULT_TARGET_PORT = 80
+    
+    # Port configuration
+    DEFAULT_CONTAINER_PORT = 80
+    DEFAULT_SERVICE_PORT = 80
+    MIN_NODE_PORT = 30000
+    MAX_NODE_PORT = 32767
+    
+    # Common application ports
+    COMMON_PORTS = {
+        'web': 80,
+        'https': 443,
+        'api': 8080,
+        'nodejs': 3000,
+        'python': 5000,
+        'mysql': 3306,
+        'postgres': 5432,
+        'mongodb': 27017,
+        'redis': 6379,
+        'nginx': 80,
+        'apache': 80
+    }
     
     # Default namespace prefixes
     NAMESPACE_PREFIX_DEV = "rm-dev"

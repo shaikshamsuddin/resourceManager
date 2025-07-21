@@ -24,7 +24,7 @@ from providers.mock_data_provider import mock_data_provider
 from providers.kubernetes_provider import local_kubernetes_provider
 from providers.cloud_kubernetes_provider import cloud_kubernetes_provider
 from health_monitor import health_monitor
-from constants import Ports, PodStatus, Environment
+from constants import Ports, PodStatus, Environment, Mode, ModeConfig
 
 app = Flask(__name__)
 
@@ -180,11 +180,14 @@ def create_pod_mdem():
                 errors.append(f"Insufficient {key}: requested {resources.get(key, 0)}, available {available.get(key, 0)}")
                 return jsonify({'error': " | ".join(errors)}), 400
         
-        # Create pod object
+        # Create pod object with port configuration
         pod = create_pod_object({
             'PodName': pod_name,
             'Resources': resources,
-            'Owner': owner
+            'Owner': owner,
+            'container_port': req.get('container_port', 80),
+            'service_port': req.get('service_port', 80),
+            'expose_service': req.get('expose_service', False)
         }, server_id)
         
         try:
@@ -612,15 +615,11 @@ def mode_management_mdem():
             data = request.json or {}
             new_mode = data.get('mode', 'demo')
             
-            # Map frontend modes to backend environments
-            mode_mapping = {
-                'demo': 'local-mock-db',
-                'local-k8s': 'development', 
-                'cloud-k8s': 'production'
-            }
+            # Use ModeConfig to map mode to environment
+            environment = ModeConfig.get_environment_for_mode(new_mode)
             
             # Set environment variable
-            os.environ['ENVIRONMENT'] = mode_mapping.get(new_mode, 'local-mock-db')
+            os.environ['ENVIRONMENT'] = environment
             
             # Reload configuration to pick up the new environment
             import importlib
@@ -631,8 +630,10 @@ def mode_management_mdem():
             
             return jsonify({
                 'current_mode': new_mode,
-                'backend_env': mode_mapping.get(new_mode, 'local-mock-db'),
-                'message': f'Mode changed to {new_mode}'
+                'backend_env': environment,
+                'display_name': ModeConfig.get_display_name(new_mode),
+                'description': ModeConfig.get_description(new_mode),
+                'message': f'Mode changed to {ModeConfig.get_display_name(new_mode)}'
             }), 200
         else:
             # GET request - return current mode info
@@ -643,16 +644,14 @@ def mode_management_mdem():
             from config import Config
             
             current_env = Config.ENVIRONMENT.value
-            mode_mapping_reverse = {
-                'local-mock-db': 'demo',
-                'development': 'local-k8s',
-                'production': 'cloud-k8s'
-            }
+            current_mode = ModeConfig.get_mode_for_environment(current_env)
             
             return jsonify({
-                'current_mode': mode_mapping_reverse.get(current_env, 'demo'),
+                'current_mode': current_mode,
                 'backend_env': current_env,
-                'description': f'Current backend environment: {current_env}'
+                'display_name': ModeConfig.get_display_name(current_mode),
+                'description': ModeConfig.get_description(current_mode),
+                'capabilities': ModeConfig.get_capabilities(current_mode)
             }), 200
             
     except Exception as e:
