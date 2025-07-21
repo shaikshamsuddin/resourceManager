@@ -13,6 +13,13 @@ from kubernetes import client, config as k8s_config
 from kubernetes.client.rest import ApiException
 import paramiko
 
+from config import Config
+from k8s_client import k8s_client
+from constants import (
+    ResourceType, PodStatus, DefaultValues, ErrorMessages,
+    SuccessMessages, TimeFormats
+)
+
 
 def get_available_resources(server):
     """
@@ -26,16 +33,16 @@ def get_available_resources(server):
     """
     if not server:
         return {
-            'gpus': 0,
-            'ram_gb': 0,
-            'storage_gb': 0
+            ResourceType.GPUS.value: 0,
+            ResourceType.RAM_GB.value: 0,
+            ResourceType.STORAGE_GB.value: 0
         }
     total = server.get('resources', {}).get('total', {})
     available = server.get('resources', {}).get('available', {})
     return {
-        'gpus': available.get('gpus', 0),
-        'ram_gb': available.get('ram_gb', 0),
-        'storage_gb': available.get('storage_gb', 0)
+        ResourceType.GPUS.value: available.get(ResourceType.GPUS.value, 0),
+        ResourceType.RAM_GB.value: available.get(ResourceType.RAM_GB.value, 0),
+        ResourceType.STORAGE_GB.value: available.get(ResourceType.STORAGE_GB.value, 0)
     }
 
 
@@ -51,9 +58,16 @@ def validate_resource_request(server, requested):
         tuple: (is_valid, error_message)
     """
     available = get_available_resources(server)
-    for key in ['gpus', 'ram_gb', 'storage_gb']:
+    resource_types = [ResourceType.GPUS, ResourceType.RAM_GB, ResourceType.STORAGE_GB]
+    
+    for resource_type in resource_types:
+        key = resource_type.value
         if requested.get(key, 0) > available.get(key, 0):
-            return False, f"Not enough {key} available. Requested: {requested.get(key, 0)}, Available: {available.get(key, 0)}"
+            return False, ErrorMessages.INSUFFICIENT_RESOURCES.format(
+                resource=key,
+                requested=requested.get(key, 0),
+                available=available.get(key, 0)
+            )
     return True, None
 
 
@@ -125,121 +139,34 @@ def get_kubeconfig():
 
 def create_k8s_resources_simple(pod_data):
     """
-    Create Kubernetes resources using local kubeconfig.
+    Create Kubernetes resources using environment-aware client.
     
     Args:
         pod_data (dict): Pod configuration data
     """
-    # Load kubeconfig (local or in-cluster)
-    get_kubeconfig()
-    
-    core_v1 = client.CoreV1Api()
-    apps_v1 = client.AppsV1Api()
-    
     namespace = pod_data['pod_id']
     image_url = pod_data['image_url']
     resources = pod_data['requested']
     
-    # 1. Create Namespace
-    ns_body = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace))
-    try:
-        core_v1.create_namespace(ns_body)
-    except ApiException as e:
-        if e.status != 409:  # 409 = AlreadyExists
-            raise
-    
-    # 2. Create Deployment
-    container = client.V1Container(
-        name=namespace,
-        image=image_url,
-        resources=client.V1ResourceRequirements(
-            requests={
-                'cpu': str(resources.get('ram_gb', 1)),
-                'memory': f"{resources.get('ram_gb', 1)}Gi",
-                'nvidia.com/gpu': str(resources.get('gpus', 0))
-            },
-            limits={
-                'cpu': str(resources.get('ram_gb', 1)),
-                'memory': f"{resources.get('ram_gb', 1)}Gi",
-                'nvidia.com/gpu': str(resources.get('gpus', 0))
-            }
-        )
-    )
-    
-    template = client.V1PodTemplateSpec(
-        metadata=client.V1ObjectMeta(labels={"app": namespace}),
-        spec=client.V1PodSpec(containers=[container])
-    )
-    
-    spec = client.V1DeploymentSpec(
-        replicas=1,
-        selector=client.V1LabelSelector(match_labels={"app": namespace}),
-        template=template
-    )
-    
-    deployment = client.V1Deployment(
-        metadata=client.V1ObjectMeta(name=namespace, namespace=namespace),
-        spec=spec
-    )
-    
-    try:
-        apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment)
-    except ApiException as e:
-        if e.status != 409:  # 409 = AlreadyExists
-            raise
-    
-    # 3. Create Service
-    service = client.V1Service(
-        metadata=client.V1ObjectMeta(name=namespace, namespace=namespace),
-        spec=client.V1ServiceSpec(
-            selector={"app": namespace},
-            ports=[client.V1ServicePort(port=80, target_port=80)],
-            type="ClusterIP"
-        )
-    )
-    
-    try:
-        core_v1.create_namespaced_service(namespace=namespace, body=service)
-    except ApiException as e:
-        if e.status != 409:  # 409 = AlreadyExists
-            raise
+    # Use the new Kubernetes client
+    k8s_client.create_namespace(namespace)
+    k8s_client.create_deployment(namespace, namespace, image_url, resources)
+    k8s_client.create_service(namespace, namespace)
 
 
 def delete_k8s_resources_simple(pod_data):
     """
-    Delete Kubernetes resources using local kubeconfig.
+    Delete Kubernetes resources using environment-aware client.
     
     Args:
         pod_data (dict): Pod configuration data
     """
-    # Load kubeconfig (local or in-cluster)
-    get_kubeconfig()
-    
-    core_v1 = client.CoreV1Api()
-    apps_v1 = client.AppsV1Api()
-    
     namespace = pod_data['pod_id']
     
-    # 1. Delete Service
-    try:
-        core_v1.delete_namespaced_service(name=namespace, namespace=namespace)
-    except ApiException as e:
-        if e.status != 404:  # 404 = NotFound
-            raise
-    
-    # 2. Delete Deployment
-    try:
-        apps_v1.delete_namespaced_deployment(name=namespace, namespace=namespace)
-    except ApiException as e:
-        if e.status != 404:  # 404 = NotFound
-            raise
-    
-    # 3. Delete Namespace
-    try:
-        core_v1.delete_namespace(name=namespace)
-    except ApiException as e:
-        if e.status != 404:  # 404 = NotFound
-            raise
+    # Use the new Kubernetes client
+    k8s_client.delete_service(namespace, namespace)
+    k8s_client.delete_deployment(namespace, namespace)
+    k8s_client.delete_namespace(namespace)
 
 
 def create_pod_object(pod_data, server_id):
@@ -256,11 +183,11 @@ def create_pod_object(pod_data, server_id):
     return {
         'pod_id': pod_data['PodName'],
         'server_id': server_id,
-        'image_url': pod_data['image_url'],
+        'image_url': pod_data.get('image_url', Config.get_default_image()),
         'requested': pod_data['Resources'],
-        'owner': pod_data.get('Owner', 'unknown'),
-        'status': 'Running',
-        'timestamp': datetime.utcnow().isoformat() + 'Z'
+        'owner': pod_data.get('Owner', DefaultValues.DEFAULT_OWNER),
+        'status': PodStatus.IN_PROGRESS.value,  # Start with in-progress status
+        'timestamp': datetime.utcnow().strftime(TimeFormats.ISO_FORMAT)
     }
 
 
@@ -278,9 +205,110 @@ def update_pod_object(pod_data, server_id):
     return {
         'pod_id': pod_data['PodName'],
         'server_id': server_id,
-        'image_url': pod_data['image_url'],
+        'image_url': pod_data.get('image_url', Config.get_default_image()),
         'requested': pod_data['Resources'],
-        'owner': pod_data.get('Owner', 'unknown'),
-        'status': 'Running',
-        'timestamp': datetime.utcnow().isoformat() + 'Z'
+        'owner': pod_data.get('Owner', DefaultValues.DEFAULT_OWNER),
+        'status': PodStatus.RUNNING.value,
+        'timestamp': datetime.utcnow().strftime(TimeFormats.ISO_FORMAT)
     } 
+
+def map_kubernetes_status_to_user_friendly(kubernetes_status: str) -> str:
+    """
+    Map Kubernetes pod status to user-friendly status.
+    
+    Args:
+        kubernetes_status: Raw Kubernetes pod status
+        
+    Returns:
+        User-friendly status string
+    """
+    status_mapping = {
+        # Kubernetes states to user-friendly states
+        'Running': 'online',
+        'Pending': 'starting',
+        'Failed': 'failed',
+        'Succeeded': 'online',
+        'Unknown': 'unknown',
+        'Terminated': 'failed',
+        'CrashLoopBackOff': 'error',
+        'ImagePullBackOff': 'error',
+        'ErrImagePull': 'error',
+        'CreateContainerError': 'error',
+        'CreateContainerConfigError': 'error',
+        'InvalidImageName': 'error',
+        'ContainerCreating': 'starting',
+        'PodInitializing': 'starting',
+        'Terminating': 'updating',
+        
+        # User-friendly states (pass through)
+        'online': 'online',
+        'starting': 'starting',
+        'in-progress': 'in-progress',
+        'updating': 'updating',
+        'failed': 'failed',
+        'error': 'error',
+        'unknown': 'unknown',
+        'timeout': 'timeout'
+    }
+    
+    return status_mapping.get(kubernetes_status, 'unknown')
+
+def get_status_color(status: str) -> str:
+    """
+    Get CSS color class for pod status.
+    
+    Args:
+        status: Pod status string
+        
+    Returns:
+        CSS color class name
+    """
+    color_mapping = {
+        # Success states - Green
+        'online': 'status-success',
+        'starting': 'status-success',
+        
+        # Progress states - Blue
+        'in-progress': 'status-progress',
+        'updating': 'status-progress',
+        
+        # Failure states - Red
+        'failed': 'status-error',
+        'error': 'status-error',
+        'timeout': 'status-error',
+        
+        # Unknown states - Grey
+        'unknown': 'status-unknown'
+    }
+    
+    return color_mapping.get(status, 'status-unknown')
+
+def get_status_icon(status: str) -> str:
+    """
+    Get Material Design icon name for pod status.
+    
+    Args:
+        status: Pod status string
+        
+    Returns:
+        Material Design icon name
+    """
+    icon_mapping = {
+        # Success states
+        'online': 'check_circle',
+        'starting': 'hourglass_empty',
+        
+        # Progress states
+        'in-progress': 'sync',
+        'updating': 'update',
+        
+        # Failure states
+        'failed': 'error',
+        'error': 'error_outline',
+        'timeout': 'schedule',
+        
+        # Unknown states
+        'unknown': 'help_outline'
+    }
+    
+    return icon_mapping.get(status, 'help_outline') 

@@ -67,7 +67,10 @@ Create a new pod
 - `ServerName`: Target server ID
 - `PodName`: Name for the new pod
 - `Resources`: Resource requirements (gpus, ram_gb, storage_gb)
-- `image_url`: Container image URL
+
+**Optional fields:**
+- `Owner`: Pod owner (defaults to "unknown")
+- `image_url`: Container image URL (defaults to "nginx:latest")
 
 **Example:**
 ```json
@@ -79,7 +82,6 @@ Create a new pod
     "ram_gb": 64,
     "storage_gb": 100
   },
-  "image_url": "nginx:latest",
   "Owner": "my-team"
 }
 ```

@@ -7,6 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { PodDialogBase, PodDialogData, PodResources } from '../shared/pod-dialog.base';
+import { environmentService } from '../config/environment.config';
+import { DefaultValues, ResourceType } from '../constants/app.constants';
 
 @Component({
   selector: 'app-add-pod-dialog',
@@ -60,8 +62,9 @@ import { PodDialogBase, PodDialogData, PodResources } from '../shared/pod-dialog
           <mat-hint>Available: {{ getMaxAvailable('storage_gb') }} GB</mat-hint>
           <mat-error *ngIf="resourceErrors['storage_gb']">{{ resourceErrors['storage_gb'] }}</mat-error>
         </mat-form-field>
-        <div class="form-section-title">Image Details</div>
-        <mat-form-field appearance="outline" style="width: 100%">
+        <!-- Image URL field - conditionally shown based on environment -->
+        <div class="form-section-title" *ngIf="environmentService.requireImageUrl()">Image Details</div>
+        <mat-form-field appearance="outline" style="width: 100%" *ngIf="environmentService.requireImageUrl()">
           <mat-label>Image URL</mat-label>
           <input matInput [(ngModel)]="pod.image_url" name="image_url" required>
         </mat-form-field>
@@ -120,14 +123,17 @@ import { PodDialogBase, PodDialogData, PodResources } from '../shared/pod-dialog
 export class AddPodDialogComponent extends PodDialogBase {
   @Output() podCreated = new EventEmitter<any>();
 
+  // Make environmentService accessible in template
+  environmentService = environmentService;
+
   pod = {
     PodName: '',
     Resources: {
-      gpus: 0,
-      ram_gb: 0,
-      storage_gb: 0
+      [ResourceType.GPUS]: DefaultValues.DEFAULT_GPUS,
+      [ResourceType.RAM_GB]: DefaultValues.DEFAULT_MEMORY_GB,
+      [ResourceType.STORAGE_GB]: DefaultValues.DEFAULT_STORAGE_GB
     } as PodResources,
-    image_url: '',
+    image_url: DefaultValues.DEFAULT_IMAGE,
     ServerName: '',
     ServerDisplayName: ''
   };

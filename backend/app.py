@@ -7,9 +7,11 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 import os
+from datetime import datetime
 from flasgger import Swagger
 
-# Import utility functions from utils module
+# Import configuration and utility functions
+from config import Config
 from utils import (
     get_available_resources,
     validate_resource_request,
@@ -18,12 +20,26 @@ from utils import (
     create_pod_object,
     update_pod_object
 )
+from providers.mock_data_provider import mock_data_provider
+from providers.kubernetes_provider import local_kubernetes_provider
+from providers.cloud_kubernetes_provider import cloud_kubernetes_provider
+from health_monitor import health_monitor
+from constants import Ports, PodStatus, Environment
 
 app = Flask(__name__)
-CORS(app)
-swagger = Swagger(app)
 
-MOCK_DB_JSON = os.path.join(os.path.dirname(__file__), 'mock_db.json')
+# Configure CORS based on environment
+cors_origins = Config.get_cors_origins()
+if cors_origins:
+    CORS(app, origins=cors_origins)
+else:
+    CORS(app)
+
+# Configure Swagger based on environment
+if Config.get_api_config()['enable_swagger']:
+    swagger = Swagger(app)
+
+MOCK_DB_JSON = os.path.join(os.path.dirname(__file__), 'data', 'mock_db.json')
 
 
 def load_data():
@@ -58,22 +74,22 @@ def index():
     '''
 
 @app.route('/servers', methods=['GET'])
-def get_servers():
+def get_servers_mdem():
     """
-    List all servers and pods
+    List all servers and pods (real Kubernetes data)
     ---
     tags:
       - Servers
     responses:
       200:
-        description: List of all servers and their pods
+        description: List of all servers and their pods from Kubernetes
         examples:
           application/json:
-            - id: server-01
-              name: gpu-node-h100-a
+            - id: node-01
+              name: minikube
               resources:
-                total: { gpus: 8, ram_gb: 512, storage_gb: 2048 }
-                available: { gpus: 2, ram_gb: 128, storage_gb: 548 }
+                total: { gpus: 0, ram_gb: 8, storage_gb: 60 }
+                available: { gpus: 0, ram_gb: 6, storage_gb: 58 }
               pods: []
       500:
         description: Server error
@@ -83,24 +99,39 @@ def get_servers():
             details: "<details>"
     """
     try:
-        data = load_data()
-        return jsonify(data), 200
+        # Use appropriate provider based on environment
+        if Config.ENVIRONMENT.value == Environment.LOCAL_MOCK_DB.value:
+            # Use mock data provider for demo mode
+            servers = mock_data_provider.get_servers_with_pods_mdem()
+        elif Config.ENVIRONMENT.value == Environment.DEVELOPMENT.value:
+            # Use local Kubernetes provider
+            servers = local_kubernetes_provider.get_servers_with_pods()
+        elif Config.ENVIRONMENT.value == Environment.PRODUCTION.value:
+            # Use cloud Kubernetes provider
+            servers = cloud_kubernetes_provider.get_servers_with_pods()
+        else:
+            # Fallback to mock data
+            servers = mock_data_provider.get_servers_with_pods_mdem()
+        
+        return jsonify(servers), 200
     except Exception as e:
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @app.route('/create', methods=['POST'])
-def create_pod():
+def create_pod_mdem():
     try:
         req = request.json
         if req is None:
             return jsonify({'error': 'Invalid JSON data'}), 400
-        required_fields = ["ServerName", "PodName", "Resources", "image_url"]
+        # Get required fields based on environment
+        required_fields = ["ServerName", "PodName", "Resources"]
+        if Config.require_image_url():
+            required_fields.append("image_url")
         errors = []
         missing = [f for f in required_fields if f not in req or not req[f]]
         if missing:
             errors.append(f"Missing required field: {', '.join(missing)}")
         pod_name = req.get('PodName', '')
-        image_url = req.get('image_url', '')
         if not isinstance(pod_name, str) or not pod_name:
             errors.append("Pod name is required.")
         else:
@@ -108,15 +139,22 @@ def create_pod():
                 errors.append("Pod name must be lowercase.")
             if "_" in pod_name:
                 errors.append("Pod name must not contain underscores.")
-        if not (isinstance(image_url, str) and image_url.strip()):
-            errors.append("Image URL must be a non-empty string.")
         
         server_id = req.get('ServerName')
         resources = req.get('Resources', {})
         owner = req.get('Owner', 'unknown')
         
-        data = load_data()
-        server = next((s for s in data if s['id'] == server_id), None)
+        # Get data based on environment
+        if Config.ENVIRONMENT.value == Environment.LOCAL_MOCK_DB.value:
+            servers = mock_data_provider.get_servers_with_pods_mdem()
+        elif Config.ENVIRONMENT.value == Environment.DEVELOPMENT.value:
+            servers = local_kubernetes_provider.get_servers_with_pods()
+        elif Config.ENVIRONMENT.value == Environment.PRODUCTION.value:
+            servers = cloud_kubernetes_provider.get_servers_with_pods()
+        else:
+            servers = mock_data_provider.get_servers_with_pods_mdem()
+        
+        server = next((s for s in servers if s['id'] == server_id), None)
         if not server:
             errors.append(f"Server '{server_id}' not found.")
             return jsonify({'error': " | ".join(errors)}), 404
@@ -130,44 +168,44 @@ def create_pod():
             errors.append(err)
             return jsonify({'error': " | ".join(errors)}), 400
             
-        # Initialize server resources structure if needed
+        # Validate resources against real Kubernetes node
         if not isinstance(server.get('resources'), dict):
-            server['resources'] = {'total': {}, 'available': {}}
-        if not isinstance(server['resources'].get('available'), dict):
-            server['resources']['available'] = {}
+            errors.append('Server resources not available')
+            return jsonify({'error': " | ".join(errors)}), 400
             
-        # Update available resources
+        # Check if resources are available
+        available = server['resources'].get('available', {})
         for key in ['gpus', 'ram_gb', 'storage_gb']:
-            current_available = server['resources']['available'].get(key, 0)
-            current_total = server['resources'].get('total', {}).get(key, 0)
-            if key not in server['resources']['available']:
-                server['resources']['available'][key] = current_total
-            server['resources']['available'][key] = current_available - resources.get(key, 0)
-            
+            if resources.get(key, 0) > available.get(key, 0):
+                errors.append(f"Insufficient {key}: requested {resources.get(key, 0)}, available {available.get(key, 0)}")
+                return jsonify({'error': " | ".join(errors)}), 400
+        
+        # Create pod object
         pod = create_pod_object({
             'PodName': pod_name,
             'Resources': resources,
-            'image_url': image_url,
             'Owner': owner
         }, server_id)
         
-        # Initialize pods list if needed
-        if not isinstance(server.get('pods'), list):
-            server['pods'] = []
-        server['pods'].append(pod)
-        save_data(data)
-        
         try:
-            create_k8s_resources_simple(pod)
-        except Exception as e:
-            return jsonify({'error': f'Kubernetes error: {str(e)}'}), 500
+            if Config.ENVIRONMENT.value == Environment.LOCAL_MOCK_DB.value:
+                # Add to mock data
+                if mock_data_provider.add_pod_mdem(server_id, pod):
+                    return jsonify({'message': 'Pod created', 'pod': pod}), 200
+                else:
+                    return jsonify({'error': 'Failed to add pod to mock data'}), 500
+            else:
+                # Create real Kubernetes resources
+                create_k8s_resources_simple(pod)
+                return jsonify({'message': 'Pod created', 'pod': pod}), 200
             
-        return jsonify({'message': 'Pod created', 'pod': pod}), 200
+        except Exception as e:
+            return jsonify({'error': f'Pod creation error: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
 @app.route('/delete', methods=['POST'])
-def delete_pod():
+def delete_pod_mdem():
     """
     Delete a pod
     ---
@@ -214,32 +252,26 @@ def delete_pod():
         if missing:
             return jsonify({'error': f"Missing required field: {', '.join(missing)}"}), 400
         pod_name = req['PodName']
-        data = load_data()
-        found = False
-        for server in data:
-            pod = next((p for p in server['pods'] if p['pod_id'] == pod_name), None)
-            if pod:
-                for key in ['gpus', 'ram_gb', 'storage_gb']:
-                    server['resources']['available'][key] += pod['requested'].get(key, 0)
-                server['pods'].remove(pod)
-                found = True
-                break
-        if not found:
-            return jsonify({'error': f"Pod '{pod_name}' not found on any server."}), 404
         
-        # Delete from Kubernetes if pod was found
-        try:
-            delete_k8s_resources_simple({'pod_id': pod_name})
-        except Exception as e:
-            return jsonify({'error': f'Kubernetes deletion error: {str(e)}'}), 500
-        
-        save_data(data)
-        return jsonify({'message': 'Pod deleted'}), 200
+        # Handle deletion based on environment
+        if Config.ENVIRONMENT.value == Environment.LOCAL_MOCK_DB.value:
+            # Delete from mock data
+            if mock_data_provider.remove_pod(pod_name):
+                return jsonify({'message': 'Pod deleted'}), 200
+            else:
+                return jsonify({'error': f"Pod '{pod_name}' not found on any server."}), 404
+        else:
+            # Delete from real Kubernetes
+            try:
+                delete_k8s_resources_simple({'pod_id': pod_name})
+                return jsonify({'message': 'Pod deleted'}), 200
+            except Exception as e:
+                return jsonify({'error': f'Kubernetes deletion error: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
 @app.route('/update', methods=['POST'])
-def update_pod():
+def update_pod_mdem():
     """
     Update a pod
     ---
@@ -357,19 +389,7 @@ def update_pod():
         if 'Owner' in req:
             pod['owner'] = req['Owner']
         
-        if 'image_url' in req:
-            pod['image_url'] = req['image_url']
-            # Parse and update image details
-            if req['image_url'].startswith('https://') and ':' in req['image_url']:
-                try:
-                    image_url_no_proto = req['image_url'][len('https://'):]
-                    registry_and_image, image_tag = image_url_no_proto.rsplit(':', 1)
-                    registry_url, image_name = registry_and_image.split('/', 1)
-                    pod['registery_url'] = registry_url
-                    pod['image_name'] = image_name
-                    pod['image_tag'] = image_tag
-                except Exception as e:
-                    return jsonify({'error': f'Failed to parse image_url: {str(e)}'}), 400
+        # Image URL handling removed - using default nginx:latest
 
         # Update timestamp using utility function
         updated_pod = update_pod_object({
@@ -387,7 +407,7 @@ def update_pod():
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
 @app.route('/consistency-check', methods=['GET'])
-def consistency_check():
+def consistency_check_mdem():
     """
     Check for data consistency
     ---
@@ -416,8 +436,20 @@ def consistency_check():
             details: "<details>"
     """
     try:
-        with open(MOCK_DB_JSON) as f:
-            servers = json.load(f)
+        # Use appropriate provider based on environment
+        if Config.ENVIRONMENT.value == Environment.LOCAL_MOCK_DB.value:
+            # Use mock data for demo mode
+            servers = mock_data_provider.get_servers_with_pods_mdem()
+        elif Config.ENVIRONMENT.value == Environment.DEVELOPMENT.value:
+            # Use local Kubernetes provider
+            servers = local_kubernetes_provider.get_servers_with_pods()
+        elif Config.ENVIRONMENT.value == Environment.PRODUCTION.value:
+            # Use cloud Kubernetes provider
+            servers = cloud_kubernetes_provider.get_servers_with_pods()
+        else:
+            # Fallback to mock data
+            servers = mock_data_provider.get_servers_with_pods_mdem()
+        
         errors = []
         for server in servers:
             total = server['resources']['total']
@@ -443,5 +475,196 @@ def consistency_check():
     except Exception as e:
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """
+    Basic health check endpoint
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Health check result
+        examples:
+          application/json:
+            status: "healthy"
+            timestamp: "2024-01-01T00:00:00Z"
+      500:
+        description: Health check failed
+        examples:
+          application/json:
+            status: "unhealthy"
+            error: "Health check failed"
+    """
+    try:
+        # Force a health check
+        health_data = health_monitor.force_health_check()
+        cluster_status = health_data['cluster_status']['status']
+        
+        if health_monitor.is_healthy():
+            return jsonify({
+                'status': 'healthy',
+                'cluster_status': cluster_status,
+                'timestamp': datetime.now().isoformat()
+            }), 200
+        else:
+            return jsonify({
+                'status': 'unhealthy',
+                'cluster_status': cluster_status,
+                'error': 'Kubernetes cluster health check failed',
+                'timestamp': datetime.now().isoformat()
+            }), 500
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': f'Health check failed: {str(e)}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@app.route('/health/detailed', methods=['GET'])
+def detailed_health_check():
+    """
+    Detailed health check endpoint with all health metrics
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Detailed health check result
+        examples:
+          application/json:
+            cluster_status:
+              status: "healthy"
+              last_check: "2024-01-01T00:00:00Z"
+            health_checks:
+              cluster_connectivity:
+                status: "pass"
+                details: "Kubernetes cluster is healthy"
+    """
+    try:
+        health_data = health_monitor.get_detailed_health()
+        return jsonify(health_data), 200
+    except Exception as e:
+        return jsonify({
+            'error': f'Detailed health check failed: {str(e)}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@app.route('/cluster-status', methods=['GET'])
+def cluster_status():
+    """
+    Get current cluster status
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Cluster status information
+        examples:
+          application/json:
+            status: "healthy"
+            last_check: "2024-01-01T00:00:00Z"
+            monitoring_active: true
+    """
+    try:
+        status_data = health_monitor.get_cluster_status()
+        return jsonify(status_data), 200
+    except Exception as e:
+        return jsonify({
+            'error': f'Failed to get cluster status: {str(e)}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+@app.route('/mode', methods=['GET', 'POST'])
+def mode_management_mdem():
+    """
+    Get or set current mode
+    ---
+    tags:
+      - Configuration
+    parameters:
+      - in: body
+        name: body
+        required: false
+        schema:
+          type: object
+          properties:
+            mode:
+              type: string
+              enum: [demo, local-k8s, cloud-k8s, dev]
+    responses:
+      200:
+        description: Current mode information
+        examples:
+          application/json:
+            current_mode: demo
+            backend_env: local-mock-db
+            description: Demo mode with mock data
+      500:
+        description: Server error
+    """
+    try:
+        if request.method == 'POST':
+            data = request.json or {}
+            new_mode = data.get('mode', 'demo')
+            
+            # Map frontend modes to backend environments
+            mode_mapping = {
+                'demo': 'local-mock-db',
+                'local-k8s': 'development', 
+                'cloud-k8s': 'production'
+            }
+            
+            # Set environment variable
+            os.environ['ENVIRONMENT'] = mode_mapping.get(new_mode, 'local-mock-db')
+            
+            # Reload configuration to pick up the new environment
+            import importlib
+            import config
+            importlib.reload(config)
+            # Re-import Config after reload
+            from config import Config
+            
+            return jsonify({
+                'current_mode': new_mode,
+                'backend_env': mode_mapping.get(new_mode, 'local-mock-db'),
+                'message': f'Mode changed to {new_mode}'
+            }), 200
+        else:
+            # GET request - return current mode info
+            # Re-import Config to ensure we have the latest
+            import importlib
+            import config
+            importlib.reload(config)
+            from config import Config
+            
+            current_env = Config.ENVIRONMENT.value
+            mode_mapping_reverse = {
+                'local-mock-db': 'demo',
+                'development': 'local-k8s',
+                'production': 'cloud-k8s'
+            }
+            
+            return jsonify({
+                'current_mode': mode_mapping_reverse.get(current_env, 'demo'),
+                'backend_env': current_env,
+                'description': f'Current backend environment: {current_env}'
+            }), 200
+            
+    except Exception as e:
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Start health monitoring
+    health_monitor.start_monitoring()
+    
+    # Get port from configuration
+    port = Ports.get_backend_port()
+    
+    # Start Flask app
+    app.run(debug=True, port=port)

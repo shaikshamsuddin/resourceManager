@@ -16,7 +16,7 @@ import { MatIconModule } from '@angular/material/icon';
   template: `
     <div class="alert-container" [ngClass]="data.type">
       <mat-icon class="alert-icon">
-        {{ data.type === 'success' ? 'check_circle' : 'error' }}
+        {{ data.type === 'success' ? 'check_circle' : data.type === 'info' ? 'info' : 'error' }}
       </mat-icon>
       <div class="alert-content">
         <h2 class="alert-title">{{ data.title }}</h2>
@@ -45,6 +45,11 @@ import { MatIconModule } from '@angular/material/icon';
     .error {
       background-color: #ffebee;
       color: #b71c1c;
+    }
+
+    .info {
+      background-color: #e3f2fd;
+      color: #0d47a1;
     }
 
     .alert-icon {
@@ -84,13 +89,17 @@ import { MatIconModule } from '@angular/material/icon';
     .error .close-button {
       color: #b71c1c;
     }
+
+    .info .close-button {
+      color: #0d47a1;
+    }
   `]
 })
 export class AlertDialogComponent {
   constructor(
     public dialogRef: MatDialogRef<AlertDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: {
-      type: 'success' | 'error';
+      type: 'success' | 'error' | 'info';
       title: string;
       message: string;
     }
