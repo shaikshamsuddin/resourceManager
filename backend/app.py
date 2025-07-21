@@ -131,6 +131,7 @@ def create_pod_mdem():
         missing = [f for f in required_fields if f not in req or not req[f]]
         if missing:
             errors.append(f"Missing required field: {', '.join(missing)}")
+
         pod_name = req.get('PodName', '')
         if not isinstance(pod_name, str) or not pod_name:
             errors.append("Pod name is required.")
@@ -156,13 +157,11 @@ def create_pod_mdem():
         
         server = next((s for s in servers if s['id'] == server_id), None)
         if not server:
-            errors.append(f"Server '{server_id}' not found.")
-            return jsonify({'error': " | ".join(errors)}), 404
-            
+            return jsonify({'error': f"Server '{server_id}' not found."}), 404
+
         if not isinstance(resources, dict):
-            errors.append('Resources must be a dictionary/object')
-            return jsonify({'error': " | ".join(errors)}), 400
-            
+            return jsonify({'error': 'Resources must be a dictionary/object'}), 400
+
         ok, err = validate_resource_request(server, resources)
         if not ok:
             errors.append(err)
@@ -207,6 +206,7 @@ def create_pod_mdem():
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
+    
 @app.route('/delete', methods=['POST'])
 def delete_pod_mdem():
     """
