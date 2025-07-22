@@ -158,6 +158,7 @@ class LocalKubernetesProvider:
             
             return {
                 "pod_id": pod.metadata.name,
+                "namespace": pod.metadata.namespace,  # Add namespace information
                 "server_id": f"node-{(self._get_node_index(pod.spec.node_name, []) or 0) + 1:02d}" if pod.spec.node_name else "node-01",
                 "image_url": pod.spec.containers[0].image if pod.spec.containers else "unknown",
                 "requested": resources,

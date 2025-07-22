@@ -156,69 +156,79 @@ def create_pod_k8s(pod_data):
 
 def delete_pod_k8s(pod_data):
     """
-    Delete a Kubernetes pod and its associated resources (Kubernetes mode).
-    
+    Robustly delete a Kubernetes pod and all associated resources (ingress, service, deployment, pod, optionally namespace).
     Args:
         pod_data (dict): Pod configuration data with 'pod_id' and optional 'namespace'
     """
     pod_name = pod_data['pod_id']
-    namespace = pod_data.get('namespace', 'default')  # Default to 'default' namespace
-    
+    namespace = pod_data.get('namespace', pod_name)  # Default to pod_id as namespace
+
     try:
-        # Initialize the Kubernetes client
         k8s_client.initialize()
-        
-        # Extract deployment name from pod name (remove the random suffix)
-        # Example: resource-manager-backend-5775b89d4f-wrnkw -> resource-manager-backend
-        deployment_name = None
+
+        # Extract base name for deployment/service/ingress
+        base_name = pod_name
         if '-' in pod_name:
-            # Split by '-' and remove the last part (random suffix)
             parts = pod_name.split('-')
-            if len(parts) >= 3:
-                # Try to find the deployment name by removing the last 2 parts (hash and random suffix)
-                deployment_name = '-'.join(parts[:-2])
-        
-        # First, try to delete the deployment (if it exists) to prevent pod recreation
-        if deployment_name:
-            try:
-                k8s_client.apps_v1.delete_namespaced_deployment(name=deployment_name, namespace=namespace)
-                print(f"Successfully deleted deployment '{deployment_name}' from namespace '{namespace}'")
-            except ApiException as e:
-                if e.status != 404:  # Ignore if deployment doesn't exist
-                    print(f"Warning: Could not delete deployment '{deployment_name}': {e}")
-        
-        # Try to delete the replica set (if it exists)
+            if len(parts) >= 4:
+                base_name = '-'.join(parts[:-3])
+            elif len(parts) >= 3:
+                base_name = '-'.join(parts[:-2])
+
+        print(f"[K8S DELETE] Using base name '{base_name}' and namespace '{namespace}' for deletion.")
+
+        # 1. Delete Ingress (if exists)
         try:
-            k8s_client.apps_v1.delete_namespaced_replica_set(name=pod_name, namespace=namespace)
-            print(f"Successfully deleted replica set '{pod_name}' from namespace '{namespace}'")
-        except ApiException as e:
-            if e.status != 404:  # Ignore if replica set doesn't exist
-                print(f"Warning: Could not delete replica set '{pod_name}': {e}")
-        
-        # Now try to delete the pod directly
+            k8s_client.networking_v1.delete_namespaced_ingress(name=base_name, namespace=namespace)
+            print(f"Successfully deleted ingress '{base_name}' from namespace '{namespace}'")
+        except Exception as e:
+            if hasattr(e, 'status') and e.status == 404:
+                print(f"Ingress '{base_name}' not found in namespace '{namespace}', skipping.")
+            else:
+                print(f"Warning: Could not delete ingress '{base_name}': {e}")
+
+        # 2. Delete Service
+        try:
+            k8s_client.core_v1.delete_namespaced_service(name=base_name, namespace=namespace)
+            print(f"Successfully deleted service '{base_name}' from namespace '{namespace}'")
+        except Exception as e:
+            if hasattr(e, 'status') and e.status == 404:
+                print(f"Service '{base_name}' not found in namespace '{namespace}', skipping.")
+            else:
+                print(f"Warning: Could not delete service '{base_name}': {e}")
+
+        # 3. Delete Deployment
+        try:
+            k8s_client.apps_v1.delete_namespaced_deployment(name=base_name, namespace=namespace)
+            print(f"Successfully deleted deployment '{base_name}' from namespace '{namespace}'")
+        except Exception as e:
+            if hasattr(e, 'status') and e.status == 404:
+                print(f"Deployment '{base_name}' not found in namespace '{namespace}', skipping.")
+            else:
+                print(f"Warning: Could not delete deployment '{base_name}': {e}")
+
+        # 4. Delete Pod (as fallback)
         try:
             k8s_client.core_v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
             print(f"Successfully deleted pod '{pod_name}' from namespace '{namespace}'")
-        except ApiException as e:
-            if e.status == 404:
-                print(f"Pod '{pod_name}' not found in namespace '{namespace}'")
-                # If pod is not found, but we successfully deleted deployment/replicaset, consider it a success
-                return
+        except Exception as e:
+            if hasattr(e, 'status') and e.status == 404:
+                print(f"Pod '{pod_name}' not found in namespace '{namespace}', skipping.")
             else:
-                print(f"Error deleting pod '{pod_name}': {e}")
-                raise Exception(f"Failed to delete pod '{pod_name}': {e}")
-        
-        # Optionally delete associated service if it exists
-        if deployment_name:
-            try:
-                k8s_client.core_v1.delete_namespaced_service(name=deployment_name, namespace=namespace)
-                print(f"Successfully deleted service '{deployment_name}' from namespace '{namespace}'")
-            except ApiException as e:
-                if e.status != 404:  # Ignore if service doesn't exist
-                    print(f"Warning: Could not delete service '{deployment_name}': {e}")
-                
+                print(f"Warning: Could not delete pod '{pod_name}': {e}")
+
+        # 5. (Optional) Delete Namespace (uncomment to enable full cleanup)
+        # try:
+        #     k8s_client.core_v1.delete_namespace(name=namespace)
+        #     print(f"Successfully deleted namespace '{namespace}'")
+        # except Exception as e:
+        #     if hasattr(e, 'status') and e.status == 404:
+        #         print(f"Namespace '{namespace}' not found, skipping.")
+        #     else:
+        #         print(f"Warning: Could not delete namespace '{namespace}': {e}")
+
     except Exception as e:
-        print(f"Error in delete_k8s_resources_simple: {e}")
+        print(f"Error in delete_pod_k8s: {e}")
         raise
 
 

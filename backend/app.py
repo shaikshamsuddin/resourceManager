@@ -137,7 +137,7 @@ def index():
     </head>
     <body>
     <div class="container">
-        <h1>🎉 Resource Manager Backend is Running! 🎉</h1>
+    <h1>🎉 Resource Manager Backend is Running! 🎉</h1>
         <div class="info-row">
             <b>Backend Version:</b> <span class="badge">{BACKEND_VERSION}</span>
             <b>Started:</b> <span class="badge">{BACKEND_START_TIME}</span>
@@ -160,17 +160,17 @@ def index():
             </table>
         </div>
         <div class="section-title">API Endpoints</div>
-        <ul>
-            <li><b>GET /servers</b> - List all servers and pods</li>
-            <li><b>POST /create</b> - Create a new pod (JSON body required)</li>
-            <li><b>POST /delete</b> - Delete a pod (JSON body required)</li>
-            <li><b>POST /update</b> - Update a pod (JSON body required)</li>
-            <li><b>GET /consistency-check</b> - Check for data consistency</li>
+    <ul>
+      <li><b>GET /servers</b> - List all servers and pods</li>
+      <li><b>POST /create</b> - Create a new pod (JSON body required)</li>
+      <li><b>POST /delete</b> - Delete a pod (JSON body required)</li>
+      <li><b>POST /update</b> - Update a pod (JSON body required)</li>
+      <li><b>GET /consistency-check</b> - Check for data consistency</li>
             <li><b>GET /mode</b> - Get or set backend mode</li>
             <li><b>GET /health</b> - Basic health check</li>
             <li><b>GET /health/detailed</b> - Detailed health check</li>
             <li><b>GET /cluster-status</b> - Cluster status</li>
-        </ul>
+    </ul>
         <div class="section-title">API Testing &amp; Documentation</div>
         <p>Access <a href="/apidocs/" target="_blank">Swagger UI</a> to view, send, and test API calls interactively.</p>
         <div class="section-title">Frontend UI</div>
@@ -276,10 +276,10 @@ def create_pod_mdem():
         server = next((s for s in servers if s['id'] == server_id), None)
         if not server:
             return jsonify({'error': f"Server '{server_id}' not found."}), 404
-
+            
         if not isinstance(resources, dict):
             return jsonify({'error': 'Resources must be a dictionary/object'}), 400
-
+            
         ok, err = validate_resource_request(server, resources)
         if not ok:
             errors.append(err)
@@ -324,7 +324,7 @@ def create_pod_mdem():
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
-    
+
 @app.route('/delete', methods=['POST'])
 def delete_pod_mdem():
     """
@@ -401,8 +401,8 @@ def delete_pod_mdem():
                     for pod in server.get('pods', []):
                         if pod.get('pod_id') == pod_name:
                             pod_found = True
-                            # Extract namespace from pod name if it contains namespace info
-                            # For now, use default namespace
+                            # Use the namespace from pod data if available
+                            pod_namespace = pod.get('namespace', 'default')
                             break
                     if pod_found:
                         break

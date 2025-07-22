@@ -1,0 +1,57 @@
+
+> frontend@0.0.0 start
+> ng serve
+
+❯ Building...
+✔ Building...
+Initial chunk files | Names         |  Raw size
+main.js             | main          | 180.88 kB | 
+styles.css          | styles        | 111.12 kB | 
+polyfills.js        | polyfills     |  95 bytes | 
+
+                    | Initial total | 292.09 kB
+
+Application bundle generation complete. [5.773 seconds]
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AddPodDialogComponent is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:36:4:
+[37m      36 │     [32mAddPodDialogComponent[37m,
+         ╵     [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: EditPodDialogComponent is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:37:4:
+[37m      37 │     [32mEditPodDialogComponent[37m,
+         ╵     [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  ➜  Local:   http://localhost:4200/
+fatal error: all goroutines are asleep - deadlock!
+
+goroutine 1 [chan receive]:
+github.com/evanw/esbuild/internal/helpers.(*ThreadSafeWaitGroup).Wait(...)
+	github.com/evanw/esbuild/internal/helpers/waitgroup.go:36
+main.runService.func2()
+	github.com/evanw/esbuild/cmd/esbuild/service.go:114 +0x88
+main.runService(0x1)
+	github.com/evanw/esbuild/cmd/esbuild/service.go:160 +0x47c
+main.main()
+	github.com/evanw/esbuild/cmd/esbuild/main.go:249 +0xaa0
+
+goroutine 35 [chan receive]:
+main.runService.func1()
+	github.com/evanw/esbuild/cmd/esbuild/service.go:98 +0x40
+created by main.runService in goroutine 1
+	github.com/evanw/esbuild/cmd/esbuild/service.go:97 +0x19c
+
+goroutine 36 [chan receive]:
+main.(*serviceType).sendRequest(0x1400020a2a0, {0x10305e700, 0x140009d20c0})
+	github.com/evanw/esbuild/cmd/esbuild/service.go:192 +0x138
+main.runService.func3()
+	github.com/evanw/esbuild/cmd/esbuild/service.go:125 +0x44
+created by main.runService in goroutine 1
+	github.com/evanw/esbuild/cmd/esbuild/service.go:122 +0x2e4
