@@ -61,12 +61,18 @@ class Config:
         }
     }
     
-    # Azure configuration (for production)
+    # Azure configuration (for production and Azure VM)
     AZURE_CONFIG = {
         'subscription_id': os.getenv(ConfigKeys.AZURE_SUBSCRIPTION_ID),
         'resource_group': os.getenv(ConfigKeys.AZURE_RESOURCE_GROUP),
         'aks_cluster_name': os.getenv(ConfigKeys.AZURE_AKS_CLUSTER_NAME),
-        'use_managed_identity': os.getenv(ConfigKeys.AZURE_USE_MANAGED_IDENTITY, 'true').lower() == 'true'
+        'use_managed_identity': os.getenv(ConfigKeys.AZURE_USE_MANAGED_IDENTITY, 'true').lower() == 'true',
+        # Azure VM settings
+        'vm_ip': os.getenv(ConfigKeys.AZURE_VM_IP),
+        'vm_username': os.getenv(ConfigKeys.AZURE_VM_USERNAME, 'azureuser'),
+        'vm_ssh_key_path': os.getenv(ConfigKeys.AZURE_VM_SSH_KEY_PATH),
+        'vm_kubeconfig': os.getenv(ConfigKeys.AZURE_VM_KUBECONFIG),
+        'vm_password': os.getenv(ConfigKeys.AZURE_VM_PASSWORD)
     }
     
     # API configuration

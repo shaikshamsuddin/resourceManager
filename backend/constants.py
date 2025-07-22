@@ -54,7 +54,7 @@ class ModeConfig:
     MODE_DESCRIPTIONS = {
         Mode.DEMO.value: "Demo mode with realistic mock data",
         Mode.LOCAL_KUBERNETES.value: "Local Kubernetes cluster (minikube)",
-        Mode.CLOUD_KUBERNETES.value: "Cloud Kubernetes cluster (Azure AKS)"
+        Mode.CLOUD_KUBERNETES.value: "Cloud Kubernetes cluster (Azure AKS, Azure VM, GKE)"
     }
     
     # Mode capabilities
@@ -274,6 +274,13 @@ class ConfigKeys:
     AZURE_RESOURCE_GROUP = "AZURE_RESOURCE_GROUP"
     AZURE_AKS_CLUSTER_NAME = "AZURE_AKS_CLUSTER_NAME"
     AZURE_USE_MANAGED_IDENTITY = "AZURE_USE_MANAGED_IDENTITY"
+    
+    # Azure VM (for cloud-k8s mode)
+    AZURE_VM_IP = "AZURE_VM_IP"
+    AZURE_VM_USERNAME = "AZURE_VM_USERNAME"
+    AZURE_VM_SSH_KEY_PATH = "AZURE_VM_SSH_KEY_PATH"
+    AZURE_VM_KUBECONFIG = "AZURE_VM_KUBECONFIG"
+    AZURE_VM_PASSWORD = "AZURE_VM_PASSWORD"
     
     # CORS
     CORS_ORIGINS = "CORS_ORIGINS"

@@ -1,10 +1,12 @@
 """
 Cloud Kubernetes Provider
-This module handles cloud Kubernetes resource management (Azure AKS, GKE, etc.).
+This module handles cloud Kubernetes resource management (Azure AKS, GKE, Azure VM, etc.).
 """
 
 import json
 import os
+import subprocess
+import tempfile
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from kubernetes import client, config as k8s_config
@@ -18,10 +20,78 @@ from utils import map_kubernetes_status_to_user_friendly
 
 
 class CloudKubernetesProvider:
-    """Manages cloud Kubernetes resources (Azure AKS, GKE, etc.)."""
+    """Manages cloud Kubernetes resources (Azure AKS, GKE, Azure VM, etc.)."""
     
     def __init__(self):
         """Initialize cloud Kubernetes client."""
+        try:
+            # Try to load cloud kubeconfig (Azure AKS, GKE, Azure VM, etc.)
+            self._initialize_kubernetes_client()
+        except Exception as e:
+            print(f"Failed to initialize cloud Kubernetes client: {e}")
+            raise
+        
+        self.core_v1 = client.CoreV1Api()
+        self.apps_v1 = client.AppsV1Api()
+        
+    def _initialize_kubernetes_client(self):
+        """Initialize Kubernetes client with support for Azure VM connections."""
+        try:
+            # Check if we're connecting to an Azure VM
+            azure_vm_ip = os.getenv('AZURE_VM_IP')
+            
+            if azure_vm_ip:
+                # Azure VM connection - create kubeconfig from VM
+                print(f"Detected Azure VM connection to: {azure_vm_ip}")
+                self._setup_azure_vm_connection(azure_vm_ip)
+            else:
+                # Standard cloud connection (Azure AKS, GKE, etc.)
+                print("Using standard cloud Kubernetes connection")
+                self._setup_standard_cloud_connection()
+                
+        except Exception as e:
+            print(f"Failed to initialize Kubernetes client: {e}")
+            raise
+    
+    def _setup_azure_vm_connection(self, vm_ip: str):
+        """Setup connection to Azure VM Kubernetes cluster."""
+        try:
+            # Get Azure VM connection details
+            vm_username = os.getenv('AZURE_VM_USERNAME', 'azureuser')
+            vm_ssh_key = os.getenv('AZURE_VM_SSH_KEY_PATH')
+            
+            # Check if kubeconfig is already provided
+            kubeconfig_path = os.getenv('AZURE_VM_KUBECONFIG')
+            if kubeconfig_path and os.path.exists(kubeconfig_path):
+                print(f"Using provided kubeconfig: {kubeconfig_path}")
+                # Load kubeconfig with insecure TLS for Azure VM
+                k8s_config.load_kube_config(config_file=kubeconfig_path)
+                # Configure client to skip TLS verification
+                self._configure_insecure_client()
+                return
+            
+            # Create kubeconfig from Azure VM
+            kubeconfig_content = self._generate_kubeconfig_from_vm(vm_ip, vm_username, vm_ssh_key)
+            
+            # Write to temporary file
+            temp_dir = tempfile.gettempdir()
+            kubeconfig_path = os.path.join(temp_dir, 'azure_vm_kubeconfig')
+            
+            with open(kubeconfig_path, 'w') as f:
+                f.write(kubeconfig_content)
+            
+            # Load the kubeconfig
+            k8s_config.load_kube_config(config_file=kubeconfig_path)
+            # Configure client to skip TLS verification
+            self._configure_insecure_client()
+            print(f"Created and loaded kubeconfig from Azure VM: {kubeconfig_path}")
+            
+        except Exception as e:
+            print(f"Failed to setup Azure VM connection: {e}")
+            raise
+    
+    def _setup_standard_cloud_connection(self):
+        """Setup standard cloud Kubernetes connection."""
         try:
             # Try to load cloud kubeconfig (Azure AKS, GKE, etc.)
             k8s_config.load_kube_config()
@@ -33,10 +103,101 @@ class CloudKubernetesProvider:
             except Exception as e2:
                 print(f"Failed to load in-cluster config: {e2}")
                 raise
-        
-        self.core_v1 = client.CoreV1Api()
-        self.apps_v1 = client.AppsV1Api()
-        
+    
+    def _generate_kubeconfig_from_vm(self, vm_ip: str, username: str, ssh_key_path: Optional[str] = None) -> str:
+        """Generate kubeconfig by connecting to Azure VM."""
+        try:
+            # Build SSH command
+            ssh_cmd = ['ssh']
+            if ssh_key_path:
+                ssh_cmd.extend(['-i', ssh_key_path])
+            else:
+                # Use password authentication if no SSH key provided
+                ssh_cmd.extend(['-o', 'PubkeyAuthentication=no'])
+                ssh_cmd.extend(['-o', 'PasswordAuthentication=yes'])
+            
+            ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no'])
+            ssh_cmd.extend([f'{username}@{vm_ip}'])
+            
+            # Get kubeconfig from VM
+            kubeconfig_cmd = ssh_cmd + ['cat ~/.kube/config']
+            result = subprocess.run(kubeconfig_cmd, capture_output=True, text=True, timeout=30)
+            
+            if result.returncode != 0:
+                # If password authentication failed, try with sshpass
+                if not ssh_key_path:
+                    print("Trying password authentication with sshpass...")
+                    return self._generate_kubeconfig_with_password(vm_ip, username)
+                else:
+                    raise Exception(f"Failed to get kubeconfig from VM: {result.stderr}")
+            
+            kubeconfig_content = result.stdout
+            
+            # Update server address to use VM IP
+            kubeconfig_data = json.loads(kubeconfig_content)
+            for cluster in kubeconfig_data.get('clusters', []):
+                if 'cluster' in cluster and 'server' in cluster['cluster']:
+                    # Replace localhost/127.0.0.1 with VM IP
+                    server = cluster['cluster']['server']
+                    if 'localhost' in server or '127.0.0.1' in server:
+                        # Extract port from server URL
+                        if ':' in server:
+                            port = server.split(':')[-1]
+                            cluster['cluster']['server'] = f'https://{vm_ip}:{port}'
+                        else:
+                            cluster['cluster']['server'] = f'https://{vm_ip}:6443'
+            
+            return json.dumps(kubeconfig_data, indent=2)
+            
+        except subprocess.TimeoutExpired:
+            raise Exception("Timeout connecting to Azure VM")
+        except Exception as e:
+            raise Exception(f"Failed to generate kubeconfig: {e}")
+    
+    def _generate_kubeconfig_with_password(self, vm_ip: str, username: str) -> str:
+        """Generate kubeconfig using password authentication with sshpass."""
+        try:
+            # Get password from environment
+            password = os.getenv('AZURE_VM_PASSWORD')
+            if not password:
+                raise Exception("AZURE_VM_PASSWORD environment variable not set")
+            
+            # Use sshpass for password authentication
+            ssh_cmd = ['sshpass', '-p', password, 'ssh']
+            ssh_cmd.extend(['-o', 'StrictHostKeyChecking=no'])
+            ssh_cmd.extend(['-o', 'PubkeyAuthentication=no'])
+            ssh_cmd.extend([f'{username}@{vm_ip}'])
+            
+            # Get kubeconfig from VM
+            kubeconfig_cmd = ssh_cmd + ['cat ~/.kube/config']
+            result = subprocess.run(kubeconfig_cmd, capture_output=True, text=True, timeout=30)
+            
+            if result.returncode != 0:
+                raise Exception(f"Failed to get kubeconfig from VM: {result.stderr}")
+            
+            kubeconfig_content = result.stdout
+            
+            # Update server address to use VM IP
+            kubeconfig_data = json.loads(kubeconfig_content)
+            for cluster in kubeconfig_data.get('clusters', []):
+                if 'cluster' in cluster and 'server' in cluster['cluster']:
+                    # Replace localhost/127.0.0.1 with VM IP
+                    server = cluster['cluster']['server']
+                    if 'localhost' in server or '127.0.0.1' in server:
+                        # Extract port from server URL
+                        if ':' in server:
+                            port = server.split(':')[-1]
+                            cluster['cluster']['server'] = f'https://{vm_ip}:{port}'
+                        else:
+                            cluster['cluster']['server'] = f'https://{vm_ip}:6443'
+            
+            return json.dumps(kubeconfig_data, indent=2)
+            
+        except subprocess.TimeoutExpired:
+            raise Exception("Timeout connecting to Azure VM")
+        except Exception as e:
+            raise Exception(f"Failed to generate kubeconfig with password: {e}")
+    
     def get_servers_with_pods(self) -> List[Dict]:
         """
         Get cloud Kubernetes nodes and their pods.
@@ -235,7 +396,7 @@ class CloudKubernetesProvider:
         if phase == "Running":
             return PodStatus.ONLINE.value
         elif phase == "Pending":
-            return PodStatus.STARTING.value
+            return PodStatus.PENDING.value
         elif phase == "Failed":
             return PodStatus.FAILED.value
         elif phase == "Succeeded":
@@ -276,6 +437,26 @@ class CloudKubernetesProvider:
                 available[key] = max(0, available[key] - requested.get(key, 0))
         
         node['resources']['available'] = available
+
+    def _configure_insecure_client(self):
+        """Configure Kubernetes client to skip TLS verification for Azure VM."""
+        try:
+            # Create API client with insecure configuration
+            configuration = client.Configuration()
+            configuration.verify_ssl = False
+            configuration.assert_hostname = False
+            
+            # Create API client with updated configuration
+            self.core_v1 = client.CoreV1Api(api_client=client.ApiClient(configuration))
+            self.apps_v1 = client.AppsV1Api(api_client=client.ApiClient(configuration))
+            
+            print("✅ Configured insecure TLS for Azure VM connection")
+            
+        except Exception as e:
+            print(f"Warning: Could not configure insecure TLS: {e}")
+            # Fall back to standard client creation
+            self.core_v1 = client.CoreV1Api()
+            self.apps_v1 = client.AppsV1Api()
 
 
 # Global instance for cloud Kubernetes
