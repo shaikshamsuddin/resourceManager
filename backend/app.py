@@ -401,8 +401,8 @@ def delete_pod_mdem():
                     for pod in server.get('pods', []):
                         if pod.get('pod_id') == pod_name:
                             pod_found = True
-                            # Extract namespace from pod name if it contains namespace info
-                            # For now, use default namespace
+                            # Use the namespace from pod data if available
+                            pod_namespace = pod.get('namespace', 'default')
                             break
                     if pod_found:
                         break

@@ -1,0 +1,32 @@
+
+> frontend@0.0.0 start
+> ng serve
+
+❯ Building...
+✔ Building...
+Initial chunk files | Names         |  Raw size
+main.js             | main          | 180.88 kB | 
+styles.css          | styles        | 111.12 kB | 
+polyfills.js        | polyfills     |  95 bytes | 
+
+                    | Initial total | 292.09 kB
+
+Application bundle generation complete. [5.773 seconds]
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: AddPodDialogComponent is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:36:4:
+[37m      36 │     [32mAddPodDialogComponent[37m,
+         ╵     [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: EditPodDialogComponent is not used within the template of App[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/app.ts:37:4:
+[37m      37 │     [32mEditPodDialogComponent[37m,
+         ╵     [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  ➜  Local:   http://localhost:4200/
