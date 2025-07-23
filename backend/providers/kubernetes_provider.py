@@ -18,17 +18,21 @@ from utils import map_kubernetes_status_to_user_friendly
 
 
 class LocalKubernetesProvider:
-    """Manages local Kubernetes resources (minikube, local clusters)."""
+    """Manages local Kubernetes resources (minikube, local clusters, or remote clusters via kubeconfig)."""
     
     def __init__(self):
-        """Initialize local Kubernetes client."""
+        """Initialize Kubernetes client (local or remote)."""
+        kubeconfig_path = os.environ.get('KUBECONFIG_REMOTE')
         try:
-            # Load local kubeconfig (minikube, local clusters)
-            k8s_config.load_kube_config()
+            if kubeconfig_path and os.path.exists(kubeconfig_path):
+                print(f"Loading kubeconfig from {kubeconfig_path}")
+                k8s_config.load_kube_config(config_file=kubeconfig_path)
+            else:
+                print("Loading default local kubeconfig")
+                k8s_config.load_kube_config()
         except Exception as e:
-            print(f"Failed to load local kubeconfig: {e}")
+            print(f"Failed to load kubeconfig: {e}")
             raise
-        
         self.core_v1 = client.CoreV1Api()
         self.apps_v1 = client.AppsV1Api()
         
