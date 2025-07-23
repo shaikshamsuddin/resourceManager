@@ -41,7 +41,14 @@ export class ApiConfig {
     DELETE_POD: '/delete',
     UPDATE_POD: '/update',
     
-
+    // Server configuration endpoints
+    SERVER_CONFIG: '/api/server-config',
+    SERVER_CONFIG_CONFIGURE: '/api/server-config/configure',
+    SERVER_CONFIG_SERVERS: '/api/server-config/servers',
+    SERVER_CONFIG_TEST: '/api/server-config/test',
+    SERVER_CONFIG_DECONFIGURE: '/api/server-config/deconfigure',
+    SERVER_CONFIG_RECONNECT: '/api/server-config/reconnect',
+    SERVER_CONFIG_HEALTH: '/api/server-config/health',
     
     // Root endpoint
     ROOT: '/'
@@ -78,7 +85,34 @@ export class ApiConfig {
     return `${this.BASE_URL}${this.ENDPOINTS.UPDATE_POD}`;
   }
   
-
+  // Server configuration URL getters
+  static getServerConfigUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG}`;
+  }
+  
+  static getServerConfigConfigureUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_CONFIGURE}`;
+  }
+  
+  static getServerConfigServersUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_SERVERS}`;
+  }
+  
+  static getServerConfigTestUrl(serverId: string): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_TEST}/${serverId}`;
+  }
+  
+  static getServerConfigDeconfigureUrl(serverId: string): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_DECONFIGURE}/${serverId}`;
+  }
+  
+  static getServerConfigHealthUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_HEALTH}`;
+  }
+  
+  static getServerConfigReconnectUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_RECONNECT}`;
+  }
   
   static getRootUrl(): string {
     return `${this.BASE_URL}${this.ENDPOINTS.ROOT}`;

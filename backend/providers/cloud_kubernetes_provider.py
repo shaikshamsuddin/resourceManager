@@ -22,17 +22,86 @@ from utils import map_kubernetes_status_to_user_friendly
 class CloudKubernetesProvider:
     """Manages cloud Kubernetes resources (Azure AKS, GKE, Azure VM, etc.)."""
     
-    def __init__(self):
+    def __init__(self, server_config: Dict = None):
         """Initialize cloud Kubernetes client."""
-        try:
-            # Try to load cloud kubeconfig (Azure AKS, GKE, Azure VM, etc.)
-            self._initialize_kubernetes_client()
-        except Exception as e:
-            print(f"Failed to initialize cloud Kubernetes client: {e}")
-            raise
+        self.server_config = server_config
+        self.core_v1 = None
+        self.apps_v1 = None
+        self._initialized = False
         
-        self.core_v1 = client.CoreV1Api()
-        self.apps_v1 = client.AppsV1Api()
+        # Don't initialize immediately - wait until first use
+        # This prevents password prompts during startup
+    
+    def _initialize_with_server_config(self, server_config: Dict):
+        """Initialize Kubernetes client using server configuration from master.json."""
+        try:
+            connection_coords = server_config.get('connection_coordinates', {})
+            kubeconfig_data = connection_coords.get('kubeconfig_data')
+            
+            if kubeconfig_data:
+                # Use kubeconfig data from master.json
+                print(f"Initializing with kubeconfig data for server: {server_config.get('id')}")
+                self._load_kubeconfig_from_data(kubeconfig_data)
+            else:
+                # Fall back to file path
+                kubeconfig_path = connection_coords.get('kubeconfig_path')
+                if kubeconfig_path:
+                    print(f"Initializing with kubeconfig file: {kubeconfig_path}")
+                    self._load_kubeconfig_from_file(kubeconfig_path)
+                else:
+                    raise Exception("No kubeconfig data or path found in server configuration")
+                    
+        except Exception as e:
+            print(f"Failed to initialize with server config: {e}")
+            raise
+    
+    def _load_kubeconfig_from_data(self, kubeconfig_data: Dict):
+        """Load kubeconfig from data dictionary."""
+        try:
+            import tempfile
+            import os
+            
+            # Create temporary kubeconfig file
+            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.yaml') as temp_file:
+                import yaml
+                yaml.dump(kubeconfig_data, temp_file)
+                temp_file_path = temp_file.name
+            
+            # Load the kubeconfig
+            k8s_config.load_kube_config(config_file=temp_file_path)
+            self._configure_insecure_client()
+            
+            # Clean up temporary file
+            os.unlink(temp_file_path)
+            
+            print("Successfully loaded kubeconfig from data")
+            
+        except Exception as e:
+            print(f"Failed to load kubeconfig from data: {e}")
+            raise
+    
+    def _load_kubeconfig_from_file(self, kubeconfig_path: str):
+        """Load kubeconfig from file path."""
+        try:
+            from pathlib import Path
+            
+            # Convert relative path to absolute
+            if not os.path.isabs(kubeconfig_path):
+                backend_dir = Path(__file__).parent.parent
+                kubeconfig_path = str(backend_dir / kubeconfig_path)
+            
+            if not os.path.exists(kubeconfig_path):
+                raise Exception(f"Kubeconfig file not found: {kubeconfig_path}")
+            
+            # Load the kubeconfig
+            k8s_config.load_kube_config(config_file=kubeconfig_path)
+            self._configure_insecure_client()
+            
+            print(f"Successfully loaded kubeconfig from file: {kubeconfig_path}")
+            
+        except Exception as e:
+            print(f"Failed to load kubeconfig from file: {e}")
+            raise
         
     def _initialize_kubernetes_client(self):
         """Initialize Kubernetes client with support for Azure VM connections."""
@@ -43,15 +112,28 @@ class CloudKubernetesProvider:
             if azure_vm_ip:
                 # Azure VM connection - create kubeconfig from VM
                 print(f"Detected Azure VM connection to: {azure_vm_ip}")
-                self._setup_azure_vm_connection(azure_vm_ip)
+                try:
+                    self._setup_azure_vm_connection(azure_vm_ip)
+                except Exception as e:
+                    print(f"⚠️  Azure VM connection failed (will be configured via API): {e}")
+                    # Don't fail startup - let users configure via API
+                    self.client = None
+                    return
             else:
                 # Standard cloud connection (Azure AKS, GKE, etc.)
                 print("Using standard cloud Kubernetes connection")
-                self._setup_standard_cloud_connection()
+                try:
+                    self._setup_standard_cloud_connection()
+                except Exception as e:
+                    print(f"⚠️  Cloud connection failed: {e}")
+                    # Don't fail startup - let users configure via API
+                    self.client = None
+                    return
                 
         except Exception as e:
-            print(f"Failed to initialize Kubernetes client: {e}")
-            raise
+            print(f"⚠️  Kubernetes client initialization failed: {e}")
+            # Don't fail startup - let users configure via API
+            self.client = None
     
     def _setup_azure_vm_connection(self, vm_ip: str):
         """Setup connection to Azure VM Kubernetes cluster."""
@@ -198,6 +280,31 @@ class CloudKubernetesProvider:
         except Exception as e:
             raise Exception(f"Failed to generate kubeconfig with password: {e}")
     
+    def _ensure_initialized(self):
+        """Ensure the Kubernetes client is initialized before use."""
+        if not self._initialized:
+            if self.server_config:
+                try:
+                    # Initialize with server configuration
+                    self._initialize_with_server_config(self.server_config)
+                except Exception as e:
+                    print(f"Failed to initialize cloud Kubernetes client with server config: {e}")
+                    raise
+            else:
+                try:
+                    # Try to load cloud kubeconfig (Azure AKS, GKE, Azure VM, etc.)
+                    self._initialize_kubernetes_client()
+                except Exception as e:
+                    print(f"Failed to initialize cloud Kubernetes client: {e}")
+                    raise
+            
+            if self.core_v1 is None:
+                self.core_v1 = client.CoreV1Api()
+            if self.apps_v1 is None:
+                self.apps_v1 = client.AppsV1Api()
+            
+            self._initialized = True
+
     def get_servers_with_pods(self) -> List[Dict]:
         """
         Get cloud Kubernetes nodes and their pods.
@@ -206,6 +313,9 @@ class CloudKubernetesProvider:
             List of cloud Kubernetes nodes with pods
         """
         try:
+            # Initialize client on first use
+            self._ensure_initialized()
+            
             nodes = self.core_v1.list_node()
             pods = self.core_v1.list_pod_for_all_namespaces()
             

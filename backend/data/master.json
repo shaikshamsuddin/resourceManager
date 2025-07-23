@@ -1,29 +1,65 @@
 {
   "servers": [
     {
-      "id": "azure-vm-01",
-      "name": "Azure VM MicroK8s",
+      "id": "azure-vm-4-246-163-135",
+      "name": "Azure VM Kubernetes (4.246.163.135)",
       "type": "kubernetes",
       "environment": "live",
       "connection_coordinates": {
         "method": "kubeconfig",
-        "host": "4.246.178.26",
+        "host": "4.246.163.135",
         "port": 16443,
         "username": "azureuser",
-        "kubeconfig_path": "./azure_vm_kubeconfig_updated",
+        "kubeconfig_path": "azure_vm_kubeconfig_updated",
+        "kubeconfig_data": {
+          "apiVersion": "v1",
+          "clusters": [
+            {
+              "cluster": {
+                "server": "https://4.246.163.135:16443",
+                "insecure-skip-tls-verify": true
+              },
+              "name": "microk8s-cluster"
+            }
+          ],
+          "contexts": [
+            {
+              "context": {
+                "cluster": "microk8s-cluster",
+                "user": "admin"
+              },
+              "name": "microk8s"
+            }
+          ],
+          "current-context": "microk8s",
+          "kind": "Config",
+          "preferences": {},
+          "users": [
+            {
+              "name": "admin",
+              "user": {
+                "client-certificate-data": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN6RENDQWJTZ0F3SUJBZ0lVT3ZOVFhGS1dIK3JRd0tUZ0lQVGVWZEhDU1Uwd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0Z6RVZNQk1HQTFVRUF3d01NVEF1TVRVeUxqRTRNeTR4TUI0WERUSTFNRFl5TlRFd05UQXpOMW9YRFRNMQpNRFl5TXpFd05UQXpOMW93S1RFT01Bd0dBMVVFQXd3RllXUnRhVzR4RnpBVkJnTlZCQW9NRG5ONWMzUmxiVHB0CllYTjBaWEp6TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF0eFJtb1YzOW1tS3gKTjROamRJaHZtVldZOXoyTEFCcnh3U08veDhScEVnRk9zZklyT1JoVjFQN0pxTjU2ZkMxeUdFUEJibzk5Tk1HcApNQVE1YktvSzJjZ0YvdkJITXlqcUM0enh3dEJaYXNLdllTSUNvcUMwdGtnVHcyMTk3ei8rNXZnSU5SV0VPRFdICml0ZDZkV2xjWXQrcjhmeElPTlVnTDJXT2laOFRJUG1pNWQzcnRJQzRkVzhlSnJSRExQOUo1WHMwR05JcEI4TmgKQlBhYzJITUxoT3ZJb3gyVHBFcDRRaER2azljc2J4NkVyZWV2SmptUjZBYXhDNStTRnEzQzl1d2VOS2FFZ1pXVQptWkpHUHhHTjJZenlCRHY1WjFtcU1BdEhNakNYZStLWnU4RzZhTHJ1WWw2R0x6ZVY5V1BaNXREeFlMM0Q3ckdNCkcrUldZK2dleFFJREFRQUJNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUJLczFJV3JuN3F3QmZvNk44OXd6M0cKVk5SUVNjMjcxNTVRZlFNVHRXaDQxNElHQTliUDhzdFowTlZjblJ4UExpRWtKeXc2cGhqUEp1SUdvTnlFVU9hbAphcS9NbzZ2SVhmb3loTUdvWUZFTWoxY1hLOTBuSVc4SXlsekpCaUZiR2diUUZoSHF6dVFrVGIyMWhtRy9BeU5vCkJXTVVucnRZeVFqS24zSWJ5NmdRU2x2aXRTdldGaE84YzlOeFZlNzNkWHdPbVRLZnBsbkQ1dVc4K3RoZmFsamgKL3JCbGhEU25JdUVMVW1UN2hZVm1WZnV3eGhTb1pzOGZhN3F5RHV3NE43c1NlVnBHSzFuK3ZGbktkbkVuV0Fwcwowem5zTitJMXgrUmpEVU1ycnhLSndYQ29kR2h2Sjl0aDd3R2UrdCtBR2xUUjhKS3JqWUFCMEVBbXVSTFFaeENyCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K",
+                "client-key-data": "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBdHhSbW9WMzltbUt4TjROamRJaHZtVldZOXoyTEFCcnh3U08veDhScEVnRk9zZklyCk9SaFYxUDdKcU41NmZDMXlHRVBCYm85OU5NR3BNQVE1YktvSzJjZ0YvdkJITXlqcUM0enh3dEJaYXNLdllTSUMKb3FDMHRrZ1R3MjE5N3ovKzV2Z0lOUldFT0RXSGl0ZDZkV2xjWXQrcjhmeElPTlVnTDJXT2laOFRJUG1pNWQzcgp0SUM0ZFc4ZUpyUkRMUDlKNVhzMEdOSXBCOE5oQlBhYzJITUxoT3ZJb3gyVHBFcDRRaER2azljc2J4NkVyZWV2CkpqbVI2QWF4QzUrU0ZxM0M5dXdlTkthRWdaV1VtWkpHUHhHTjJZenlCRHY1WjFtcU1BdEhNakNYZStLWnU4RzYKYUxydVlsNkdMemVWOVdQWjV0RHhZTDNEN3JHTUcrUldZK2dleFFJREFRQUJBb0lCQUVkZ3BjNitCVlMrcTVjWQpHNXRnWWhvbS9EZFFnRFB2VFZmZXB6T3NTTWFqU2Rvb3IxOVlOSWFSTzNBaUpTRHEydlBJM3M1TEZTYVBablg0Ci82WjArVHdGTndrNUJwbFVsME1mbFZZOXdzN1R6bXFSUnZPK3NoWHJMZ0ZnVzl2K1dGUVdXYVRRbWJjTWI2YmEKOGJ4NjhuRCtBVnliM2xDQ0QwVkxVL0lsMmVCZHFtWmwzSkpWS0h6OTM3VHNHWDFENXU4VVl6aE5pM29OQ0FZZAorV1YvVlY0ZHpjZGJkUWhtNm1yV3J4dUh4U0N3dE5xOE5LMEdDTmFNZHRJTjVDS3J0VGozOHRZNXUzSlI3RGw5CmlYM1Jzbk50TERiWEc0QXM0NHJoSTZQWFBOdDlvU2daNmMwaVdobUVZQUJ0Zlp4eGZmbnk1ZXJZR3FCMGhrK0wKaVRoallrRUNnWUVBNVRBTG1BaWwydmhCbW4xOFZEVXRlZk9GOFdvUmo0a2hqajlRYmJVS09pMlY5MWVpNmN3WQpGeTBXL3oveWFHZWlqR01iclhuczFaeFNDdXd5Q0YzTVlyNWtEUkowSW0wZmxLYWNWcllOUVREN0o4WHhHYU52CnZoK1lsS2xwMnd5OURYcDg5QlNFczUzZlJ1Q1hNdWV5czU3Qm9oQUpLMkxDN0I3R0NOUjJ3RlVDZ1lFQXpIOTMKQmJydExwcE14dk9zUmFQcVFkQXpRWkxYWFlpdnNHb3hzaTgyK1VOWVlpNDRoZUNJaEJKRkp6MmN1S1NSQzNibQpsVkxJQTB1NUFPbE9vdzRZVlFYSzdVWHdoVFRtT3FyVnc2aGRhdFhDZnpDRjNSUEs4aGFOaXlpNzFBV2p6WlVyCkpZcHNqNnZnRENHVFNwNE1HWFBZU1MwVHVTZEhLQ0R0cnFnc2xMRUNnWUVBc0pCUURrTnpTdnVBeHYwdm9Fd0wKaWUwRFhwWUJpMXZ3L3Y1bC91Ni9QMHpKUVBGQjcrNHREUVhPdHJ4VUN2ejBMRVZhR0U1YkY4SERMdWtDTHBIYwptS0htd0c5Y0N2MlltOU96azlYUzVrdE80amhMWXg0WFF4aGlXdjBkTVFWaVRCVDJXSy9KLy9wNi9jYWVsVGdNCjR2WkdaSTBJRTJXVmw0U3B1am04ZHJVQ2dZRUFqQXdYSlBONUQxdFlqVCsva1FuS21qdk5mbkRqMFFpVTJVcEEKc25pbk8xbWxvOGRucWplMUJrM0UwalRkcVkzNlQxR2taRXNHODByZWJnTlplVTFqMklaWkRObkMrRmJiL1AyVgoyNkxvSnd3eFlRMkgvM2xZbVNaYzFScVdWNE50UkpPTnN1M3pud2prTFNxcFJvYXFYcHY1V1ZQbmwvdVFQYWtmClhXZUs4R0VDZ1lBQldzZ0JRRHJ2TEp2U3lPUEZ0RGhkMGc5VW1qWkxRaGc5cjR2RDdBdityRWpSeDN6M3pNdkEKY012RlA0MktnMlFIY2g3bkJoY1BmM1JRT0VQSWhqNE1tL1Z3OTUxeUJkQUdLanlLSDB1My9oOTdUVHhRQWo2QgoxUjV2OFIrYUpGNXovUENuZS9Xd1VtejROT0dFT2xaSVlxR29Vd29EQlRIVDZRMmtoUHh1NkE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo="
+              }
+            }
+          ]
+        },
         "insecure_skip_tls_verify": true
       },
       "metadata": {
-        "location": "Azure East US",
-        "environment": "production",
-        "description": "Azure VM with MicroK8s cluster"
+        "location": "Azure VM",
+        "environment": "live",
+        "description": "Kubernetes cluster on Azure VM 4.246.163.135",
+        "setup_method": "api_automated",
+        "setup_timestamp": "2025-07-23T21:15:38.117481",
+        "configured_by": "api"
       }
     }
   ],
   "config": {
-    "default_server": "azure-vm-01",
+    "default_server": "azure-vm-4-246-163-135",
     "refresh_interval": 30,
     "timeout": 30,
     "max_retries": 3
   }
-} 
+}

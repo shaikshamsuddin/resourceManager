@@ -12,6 +12,8 @@ import { MatDialog, MatDialogModule, MatDialogConfig } from '@angular/material/d
 import { AddPodDialogComponent } from './add-pod-dialog/add-pod-dialog';
 import { EditPodDialogComponent } from './edit-pod-dialog/edit-pod-dialog';
 import { AlertDialogComponent } from './alert-dialog/alert-dialog';
+import { ServerConfigDialogComponent } from './server-config-dialog/server-config-dialog';
+import { ServerManagementComponent } from './server-management/server-management';
 
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
@@ -35,6 +37,8 @@ import { ApiConfig } from './config/api.config';
     MatIconModule,
     AddPodDialogComponent,
     EditPodDialogComponent,
+    ServerConfigDialogComponent,
+    ServerManagementComponent,
 ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -51,6 +55,7 @@ export class App {
   podMessageType: 'success' | 'error' | '' = '';
   azureVMStatus: string = 'unknown';
   azureVMStatusInterval: any;
+  isReconnecting: boolean = false;
 
   constructor(private http: HttpClient, private dialog: MatDialog) {
     // Validate API configuration on startup
@@ -186,6 +191,23 @@ export class App {
 
     dialogRef.componentInstance.podCreated.subscribe((pod: any) => {
       this.deployPod(pod, this.selectedServer.server_id || this.selectedServer.id);
+    });
+  }
+
+  openServerConfigDialog() {
+    const dialogRef = this.dialog.open(ServerConfigDialogComponent, {
+      width: '480px',
+      maxHeight: '90vh',
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.fetchServers();
+        if (result.status === 'success') {
+          this.showAlert('success', 'Success', 'Server configured successfully!');
+        }
+      }
     });
   }
 
@@ -411,6 +433,28 @@ export class App {
     });
   }
 
+  onServerStatusClick(server: any) {
+    const status = server.status || 'Online';
+    const serverName = server.server_name || server.name || 'Unknown Server';
+    const location = server.metadata?.location || server.ip || 'Unknown location';
+    const pods = server.pods?.length || 0;
+    
+    let alertType: 'success' | 'error' | 'info' = 'info';
+    if (status === 'Online' || status === 'online') {
+      alertType = 'success';
+    } else {
+      alertType = 'error';
+    }
+    
+    const details = `Server: ${serverName}\nLocation: ${location}\nStatus: ${status}\nActive Pods: ${pods}`;
+    
+    this.showAlert(
+      alertType,
+      'Server Connection Status',
+      details
+    );
+  }
+
   showAlert(type: 'success' | 'error' | 'info', title: string, message: string, details?: string[]) {
     this.dialog.open(AlertDialogComponent, {
       data: { type, title, message, details },
@@ -476,5 +520,95 @@ export class App {
       'Server Selected',
       `You are now managing: ${server.server_name || server.name}`
     );
+  }
+
+  deconfigureServer(server: any) {
+    // Show confirmation dialog
+    const confirmMessage = `Are you sure you want to de-configure server "${server.server_name || server.name}"? This will:
+    • Remove the server configuration
+    • Delete associated kubeconfig files
+    • Update the system configuration
+    
+    This action cannot be undone.`;
+    
+    if (confirm(confirmMessage)) {
+      const serverId = server.server_id || server.id;
+      
+      // Debug: Log the server object and ID being used
+      console.log('De-configuring server object:', server);
+      console.log('Server ID being used:', serverId);
+      
+      this.http.delete(ApiConfig.getServerConfigDeconfigureUrl(serverId))
+        .subscribe({
+          next: (response: any) => {
+            // Show success message
+            this.showAlert(
+              'success',
+              'Server De-configured',
+              `Server "${server.server_name || server.name}" has been successfully de-configured and removed from the system.`
+            );
+            
+            // Show additional info if available
+            if (response.data?.removed_files?.length > 0) {
+              console.log('Removed files:', response.data.removed_files);
+            }
+            
+            if (response.data?.remaining_servers !== undefined) {
+              console.log(`Remaining servers: ${response.data.remaining_servers}`);
+            }
+            
+            // Refresh the server list from backend
+            this.fetchServers();
+          },
+          error: (error) => {
+            // Show error message
+            const errorMessage = error.error?.message || 'Failed to de-configure server';
+            this.showAlert(
+              'error',
+              'De-configuration Failed',
+              errorMessage
+            );
+            console.error('Failed to de-configure server:', error);
+          }
+        });
+    }
+  }
+
+  reconnectServers() {
+    this.isReconnecting = true;
+    
+    this.http.post(ApiConfig.getServerConfigReconnectUrl(), {})
+      .subscribe({
+        next: (response: any) => {
+          this.isReconnecting = false;
+          
+          // Show success message with details
+          const data = response.data;
+          const message = `${response.message}\n\n` +
+            `• Total servers: ${data.total_servers}\n` +
+            `• Successfully reconnected: ${data.successful_reconnections}\n` +
+            `• Failed reconnections: ${data.failed_reconnections}`;
+          
+          this.showAlert(
+            'success',
+            'Server Reconnection Complete',
+            message
+          );
+          
+          // Refresh the server list to show updated status
+          this.fetchServers();
+        },
+        error: (error) => {
+          this.isReconnecting = false;
+          
+          const errorMessage = error.error?.message || 'Failed to reconnect servers';
+          this.showAlert(
+            'error',
+            'Reconnection Failed',
+            errorMessage
+          );
+          console.error('Failed to reconnect servers:', error);
+        }
+      });
   }
 }

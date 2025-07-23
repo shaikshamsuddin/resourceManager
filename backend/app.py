@@ -33,6 +33,9 @@ from server_manager import server_manager
 from health_monitor import health_monitor
 from constants import Ports, PodStatus, ConfigKeys, APP_CONFIG
 
+# Import server configuration API
+from server_configuration_api import server_config_bp
+
 app = Flask(__name__)
 
 # Configure CORS based on environment
@@ -45,6 +48,9 @@ else:
 # Configure Swagger based on environment
 if Config.get_api_config()['enable_swagger']:
     swagger = Swagger(app)
+
+# Register server configuration blueprint
+app.register_blueprint(server_config_bp)
 
 
 

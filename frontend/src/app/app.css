@@ -152,11 +152,26 @@ body {
   min-height: 200px;
 }
 
+.choose-server-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.server-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .choose-server-title {
   font-size: 1.3rem;
   font-weight: 600;
   color: #333;
-  margin-bottom: 18px;
+  margin: 0;
   letter-spacing: 1px;
 }
 
@@ -211,6 +226,56 @@ body {
 
 .server-sub-card:hover {
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.server-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.server-info {
+  flex: 1;
+}
+
+.server-status-leds {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.server-status-leds .led-container {
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.server-status-leds .led-container:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.server-status-leds .led-icon {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  color: #666;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.server-status-leds .led-container:hover .led-icon {
+  color: #333;
+  opacity: 1;
+  transform: scale(1.05);
 }
 
 .server-name {
@@ -470,6 +535,12 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
     flex-direction: column;
     gap: 18px;
   }
+  .choose-server-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
   .choose-server-row {
     flex-direction: row;
     flex-wrap: wrap;
@@ -480,7 +551,8 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
 
 /* Common LED styles for both consistency and cluster status */
 .resource-integrity-led,
-.azure-vm-status-led {
+.azure-vm-status-led,
+.server-status-led {
   display: inline-block;
   width: 10px;
   height: 10px;

@@ -47,9 +47,9 @@ class ServerManager:
                             "provider": provider,
                             "config": server
                         }
-                        print(f"✅ Initialized provider for server: {server_id}")
+                        print(f"✅ Created provider for server: {server_id} (lazy initialization)")
                 except Exception as e:
-                    print(f"❌ Failed to initialize provider for {server_id}: {e}")
+                    print(f"❌ Failed to create provider for {server_id}: {e}")
     
     def _create_provider(self, server_config: Dict):
         """Create appropriate provider based on server type and connection method."""
@@ -61,7 +61,7 @@ class ServerManager:
             # Use CloudKubernetesProvider for Azure VM or cloud connections
             if connection_method == "kubeconfig" and connection_coords.get("host"):
                 print(f"Using CloudKubernetesProvider for {server_config.get('id')} with kubeconfig")
-                return CloudKubernetesProvider()
+                return CloudKubernetesProvider(server_config)
             else:
                 # Use LocalKubernetesProvider for local connections
                 print(f"Using LocalKubernetesProvider for {server_config.get('id')}")
