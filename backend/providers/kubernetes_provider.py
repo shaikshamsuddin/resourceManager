@@ -56,19 +56,21 @@ class KubernetesProvider:
                 kubeconfig_path = os.path.expanduser(kubeconfig_path)
                 
                 if os.path.exists(kubeconfig_path):
-                    k8s_config.load_kube_config(config_file=kubeconfig_path)
                     print(f"Loaded kubeconfig from: {kubeconfig_path}")
                 else:
                     raise Exception(f"Kubeconfig file not found: {kubeconfig_path}")
             else:
-                # Use default kubeconfig
-                k8s_config.load_kube_config()
                 print("Loaded default kubeconfig")
             
             # Configure insecure TLS if specified
             if self.connection_coordinates.get("insecure_skip_tls_verify", False):
                 self._configure_insecure_client()
             else:
+                # Load kubeconfig normally
+                if kubeconfig_path:
+                    k8s_config.load_kube_config(config_file=kubeconfig_path)
+                else:
+                    k8s_config.load_kube_config()
                 self.core_v1 = client.CoreV1Api()
                 self.apps_v1 = client.AppsV1Api()
                 
@@ -101,8 +103,24 @@ class KubernetesProvider:
     def _configure_insecure_client(self):
         """Configure Kubernetes client to skip TLS verification."""
         try:
-            # Create API client with insecure configuration
-            configuration = client.Configuration()
+            # Load kubeconfig into configuration
+            kubeconfig_path = self.connection_coordinates.get("kubeconfig_path")
+            if kubeconfig_path:
+                kubeconfig_path = os.path.expanduser(kubeconfig_path)
+                if os.path.exists(kubeconfig_path):
+                    # Load kubeconfig into configuration
+                    configuration = k8s_config.load_kube_config(config_file=kubeconfig_path)
+                else:
+                    raise Exception(f"Kubeconfig file not found: {kubeconfig_path}")
+            else:
+                # Use default kubeconfig
+                configuration = k8s_config.load_kube_config()
+            
+            # If configuration is None, create a new one
+            if configuration is None:
+                configuration = client.Configuration()
+            
+            # Configure insecure settings
             configuration.verify_ssl = False
             # Remove assert_hostname as it's not supported in newer versions
             # configuration.assert_hostname = False
