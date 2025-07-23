@@ -40,7 +40,7 @@ class Config:
         env = cls.get_environment()
         if env is None:
             return False
-        return env == Environment.DEVELOPMENT
+        return env == Environment.DEMO
     
     # Kubernetes configuration
     KUBERNETES_CONFIG = {
@@ -115,7 +115,7 @@ class Config:
         env = cls.get_environment()
         if env is None:
             return False
-        return env == Environment.PRODUCTION
+        return env == Environment.LIVE
     
     @classmethod
     def is_development(cls) -> bool:
@@ -123,7 +123,7 @@ class Config:
         env = cls.get_environment()
         if env is None:
             return False
-        return env == Environment.DEVELOPMENT
+        return env == Environment.DEMO
     
     @classmethod
     def is_mock_demo(cls) -> bool:
@@ -131,7 +131,7 @@ class Config:
         env = cls.get_environment()
         if env is None:
             return False
-        return env == Environment.LOCAL_MOCK_DB
+        return env == Environment.DEMO
     
     @classmethod
     def get_default_image(cls) -> str:

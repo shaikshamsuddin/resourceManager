@@ -20,21 +20,6 @@
       }
     },
     {
-      "id": "local-minikube",
-      "name": "Local Development",
-      "type": "kubernetes",
-      "environment": "live",
-      "connection_coordinates": {
-        "method": "local",
-        "kubeconfig_path": "~/.kube/config"
-      },
-      "metadata": {
-        "location": "local",
-        "environment": "development",
-        "description": "Local minikube cluster"
-      }
-    },
-    {
       "id": "demo-server-01",
       "name": "Demo Server Alpha",
       "type": "mock",
