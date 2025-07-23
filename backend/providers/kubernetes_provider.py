@@ -17,125 +17,24 @@ from constants import (
 from utils import map_kubernetes_status_to_user_friendly
 
 
-class KubernetesProvider:
-    """Manages Kubernetes resources with configurable connection."""
+class LocalKubernetesProvider:
+    """Manages local Kubernetes resources (minikube, local clusters, or remote clusters via kubeconfig)."""
     
-    def __init__(self, connection_coordinates: Dict = None):
-        """Initialize Kubernetes client with connection coordinates."""
-        self.connection_coordinates = connection_coordinates or {}
-        self.core_v1 = None
-        self.apps_v1 = None
-        self._initialize_kubernetes_client()
-        
-    def _initialize_kubernetes_client(self):
-        """Initialize Kubernetes client based on connection coordinates."""
+    def __init__(self):
+        """Initialize Kubernetes client (local or remote)."""
+        kubeconfig_path = os.environ.get('KUBECONFIG_REMOTE')
         try:
-            method = self.connection_coordinates.get("method", "local")
-            
-            if method == "kubeconfig":
-                self._setup_kubeconfig_connection()
-            elif method == "ssh":
-                self._setup_ssh_connection()
-            elif method == "local":
-                self._setup_local_connection()
+            if kubeconfig_path and os.path.exists(kubeconfig_path):
+                print(f"Loading kubeconfig from {kubeconfig_path}")
+                k8s_config.load_kube_config(config_file=kubeconfig_path)
             else:
-                # Fallback to local connection
-                self._setup_local_connection()
-                
+                print("Loading default local kubeconfig")
+                k8s_config.load_kube_config()
         except Exception as e:
-            print(f"Failed to initialize Kubernetes client: {e}")
+            print(f"Failed to load kubeconfig: {e}")
             raise
-    
-    def _setup_kubeconfig_connection(self):
-        """Setup connection using kubeconfig file."""
-        try:
-            kubeconfig_path = self.connection_coordinates.get("kubeconfig_path")
-            
-            if kubeconfig_path:
-                # Expand ~ to home directory
-                kubeconfig_path = os.path.expanduser(kubeconfig_path)
-                
-                if os.path.exists(kubeconfig_path):
-                    print(f"Loaded kubeconfig from: {kubeconfig_path}")
-                else:
-                    raise Exception(f"Kubeconfig file not found: {kubeconfig_path}")
-            else:
-                print("Loaded default kubeconfig")
-            
-            # Configure insecure TLS if specified
-            if self.connection_coordinates.get("insecure_skip_tls_verify", False):
-                self._configure_insecure_client()
-            else:
-                # Load kubeconfig normally
-                if kubeconfig_path:
-                    k8s_config.load_kube_config(config_file=kubeconfig_path)
-                else:
-                    k8s_config.load_kube_config()
-                self.core_v1 = client.CoreV1Api()
-                self.apps_v1 = client.AppsV1Api()
-                
-        except Exception as e:
-            print(f"Failed to setup kubeconfig connection: {e}")
-            raise
-    
-    def _setup_ssh_connection(self):
-        """Setup connection via SSH to remote server."""
-        try:
-            # This would implement SSH-based connection
-            # For now, fall back to local connection
-            print("SSH connection not implemented yet, using local connection")
-            self._setup_local_connection()
-        except Exception as e:
-            print(f"Failed to setup SSH connection: {e}")
-            raise
-    
-    def _setup_local_connection(self):
-        """Setup local Kubernetes connection."""
-        try:
-            k8s_config.load_kube_config()
-            self.core_v1 = client.CoreV1Api()
-            self.apps_v1 = client.AppsV1Api()
-            print("Using local Kubernetes connection")
-        except Exception as e:
-            print(f"Failed to setup local connection: {e}")
-            raise
-    
-    def _configure_insecure_client(self):
-        """Configure Kubernetes client to skip TLS verification."""
-        try:
-            # Load kubeconfig into configuration
-            kubeconfig_path = self.connection_coordinates.get("kubeconfig_path")
-            if kubeconfig_path:
-                kubeconfig_path = os.path.expanduser(kubeconfig_path)
-                if os.path.exists(kubeconfig_path):
-                    # Load kubeconfig into configuration
-                    configuration = k8s_config.load_kube_config(config_file=kubeconfig_path)
-                else:
-                    raise Exception(f"Kubeconfig file not found: {kubeconfig_path}")
-            else:
-                # Use default kubeconfig
-                configuration = k8s_config.load_kube_config()
-            
-            # If configuration is None, create a new one
-            if configuration is None:
-                configuration = client.Configuration()
-            
-            # Configure insecure settings
-            configuration.verify_ssl = False
-            # Remove assert_hostname as it's not supported in newer versions
-            # configuration.assert_hostname = False
-            
-            # Create API client with updated configuration
-            self.core_v1 = client.CoreV1Api(api_client=client.ApiClient(configuration))
-            self.apps_v1 = client.AppsV1Api(api_client=client.ApiClient(configuration))
-            
-            print("✅ Configured insecure TLS for connection")
-            
-        except Exception as e:
-            print(f"Warning: Could not configure insecure TLS: {e}")
-            # Fall back to standard client creation
-            self.core_v1 = client.CoreV1Api()
-            self.apps_v1 = client.AppsV1Api()
+        self.core_v1 = client.CoreV1Api()
+        self.apps_v1 = client.AppsV1Api()
         
     def get_servers_with_pods(self) -> List[Dict]:
         """

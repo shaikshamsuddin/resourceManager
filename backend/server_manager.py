@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 from pathlib import Path
 
 from constants import ErrorMessages
-from providers.kubernetes_provider import KubernetesProvider
+from providers.kubernetes_provider import LocalKubernetesProvider
 from providers.demo_data_provider import demo_data_provider
 
 
@@ -56,7 +56,7 @@ class ServerManager:
         server_type = server_config.get("type")
         
         if server_type == "kubernetes":
-            return KubernetesProvider(server_config.get("connection_coordinates", {}))
+            return LocalKubernetesProvider()
         elif server_type == "mock":
             return demo_data_provider
         else:
