@@ -49,7 +49,7 @@ class Config:
             'default_image': DefaultValues.DEFAULT_IMAGE_DEV,
             'namespace_prefix': DefaultValues.NAMESPACE_PREFIX_DEV
         },
-        Environment.UNIFIED.value: {
+        Environment.LIVE.value: {
             'auth_method': AuthMethod.LOCAL_KUBECONFIG.value,
             'default_image': DefaultValues.DEFAULT_IMAGE_DEV,
             'namespace_prefix': DefaultValues.NAMESPACE_PREFIX_DEV
@@ -78,7 +78,7 @@ class Config:
             'enable_swagger': True,
             'cors_origins': ['http://localhost:4200', 'http://127.0.0.1:4200']
         },
-        Environment.UNIFIED.value: {
+        Environment.LIVE.value: {
             'require_image_url': False,
             'require_k8s_auth': False,
             'enable_swagger': True,
@@ -91,18 +91,18 @@ class Config:
         """Get Kubernetes configuration for current environment."""
         env_value = cls.get_environment_value()
         if env_value is None:
-            # No environment set - return unified config as fallback
-            return cls.KUBERNETES_CONFIG[Environment.UNIFIED.value]
-        return cls.KUBERNETES_CONFIG.get(env_value, cls.KUBERNETES_CONFIG[Environment.UNIFIED.value])
+            # No environment set - return live config as fallback
+            return cls.KUBERNETES_CONFIG[Environment.LIVE.value]
+        return cls.KUBERNETES_CONFIG.get(env_value, cls.KUBERNETES_CONFIG[Environment.LIVE.value])
     
     @classmethod
     def get_api_config(cls) -> Dict[str, Any]:
         """Get API configuration for current environment."""
         env_value = cls.get_environment_value()
         if env_value is None:
-            # No environment set - return unified config as fallback
-            return cls.API_CONFIG[Environment.UNIFIED.value]
-        return cls.API_CONFIG.get(env_value, cls.API_CONFIG[Environment.UNIFIED.value])
+            # No environment set - return live config as fallback
+            return cls.API_CONFIG[Environment.LIVE.value]
+        return cls.API_CONFIG.get(env_value, cls.API_CONFIG[Environment.LIVE.value])
     
     @classmethod
     def get_azure_config(cls) -> Dict[str, Any]:
