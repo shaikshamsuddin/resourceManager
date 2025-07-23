@@ -411,8 +411,4 @@ class LocalKubernetesProvider:
             'owner': pod_data.get('Owner', 'unknown'),
             'status': 'starting',
             'timestamp': datetime.utcnow().strftime(TimeFormats.ISO_FORMAT)
-        }
-
-
-# Global instance for local Kubernetes
-local_kubernetes_provider = LocalKubernetesProvider() 
+        } 
