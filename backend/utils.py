@@ -232,58 +232,7 @@ def delete_pod_k8s(pod_data):
         raise
 
 
-def create_pod_mdem(pod_data, server_id):
-    """
-    Create a pod object for storage in the mock database (demo mode).
-    
-    Args:
-        pod_data (dict): Pod configuration data
-        server_id (str): Server ID where pod will be deployed
-        
-    Returns:
-        dict: Pod object with all required fields
-    """
-    # Get port configuration
-    container_port = pod_data.get('container_port', DefaultValues.DEFAULT_CONTAINER_PORT)
-    service_port = pod_data.get('service_port', DefaultValues.DEFAULT_SERVICE_PORT)
-    expose_service = pod_data.get('expose_service', False)
-    
-    return {
-        'pod_id': pod_data['PodName'],
-        'server_id': server_id,
-        'image_url': pod_data.get('image_url', Config.get_default_image()),
-        'requested': pod_data['Resources'],
-        'owner': pod_data.get('Owner', DefaultValues.DEFAULT_OWNER),
-        'status': PodStatus.ONLINE.value,  # Start as online in demo mode
-        'timestamp': datetime.utcnow().strftime(TimeFormats.ISO_FORMAT),
-        'ports': {
-            'container_port': container_port,
-            'service_port': service_port,
-            'expose_service': expose_service
-        }
-    }
-
-
-def update_pod_mdem(pod_data, server_id):
-    """
-    Update a pod object in demo mode (mock database).
-    
-    Args:
-        pod_data (dict): Updated pod configuration data
-        server_id (str): Server ID
-        
-    Returns:
-        dict: Updated pod object for demo mode
-    """
-    return {
-        'pod_id': pod_data['PodName'],
-        'server_id': server_id,
-        'image_url': pod_data.get('image_url', Config.get_default_image()),
-        'requested': pod_data['Resources'],
-        'owner': pod_data.get('Owner', DefaultValues.DEFAULT_OWNER),
-        'status': PodStatus.RUNNING.value,
-        'timestamp': datetime.utcnow().strftime(TimeFormats.ISO_FORMAT)
-    } 
+ 
 
 def map_kubernetes_status_to_user_friendly(kubernetes_status: str) -> str:
     """

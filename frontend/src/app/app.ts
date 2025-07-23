@@ -12,11 +12,11 @@ import { MatDialog, MatDialogModule, MatDialogConfig } from '@angular/material/d
 import { AddPodDialogComponent } from './add-pod-dialog/add-pod-dialog';
 import { EditPodDialogComponent } from './edit-pod-dialog/edit-pod-dialog';
 import { AlertDialogComponent } from './alert-dialog/alert-dialog';
-import { ModeSelectorComponent } from './mode-selector/mode-selector';
+
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { ApiConfig } from './config/api.config';
-import { ModeManager, ResourceManagerMode } from './config/mode.config';
+
 
 @Component({
   selector: 'app-root',
@@ -31,12 +31,11 @@ import { ModeManager, ResourceManagerMode } from './config/mode.config';
     MatSelectModule,
     MatDividerModule,
     MatDialogModule,
-    MatTableModule,
+        MatTableModule,
     MatIconModule,
     AddPodDialogComponent,
     EditPodDialogComponent,
-    ModeSelectorComponent
-  ],
+],
   templateUrl: './app.html',
   styleUrl: './app.css',
   standalone: true
@@ -46,123 +45,75 @@ export class App {
 
   servers: any[] = [];
   selectedServer: any = null;
-  consistencyMessage: string = '';
-  consistencyCheckInterval: any;
+  resourceIntegrityMessage: string = '';
+  resourceIntegrityCheckInterval: any;
   podMessage: string = '';
   podMessageType: 'success' | 'error' | '' = '';
-  clusterStatus: string = 'unknown';
-  clusterStatusInterval: any;
-  modeCheckInterval: any;
-  showModeSelector: boolean = false;
-  currentModeConfig: any = null;
+  azureVMStatus: string = 'unknown';
+  azureVMStatusInterval: any;
 
   constructor(private http: HttpClient, private dialog: MatDialog) {
-    // Initialize mode manager
-    ModeManager.initialize();
-    
     // Validate API configuration on startup
     ApiConfig.validateConfig();
     this.fetchServers();
-    this.getCurrentMode();
-    this.updateCurrentModeDisplay();
   }
 
   ngOnInit() {
-    this.startConsistencyPolling();
-    this.startModePolling();
-    // Only start cluster status polling if in real Kubernetes mode
-    if (this.isRealKubernetesMode()) {
-      this.startClusterStatusPolling();
-    }
+    this.startResourceIntegrityPolling();
+    this.startAzureVMStatusPolling();
   }
 
   ngOnDestroy() {
-    if (this.consistencyCheckInterval) {
-      clearInterval(this.consistencyCheckInterval);
+    if (this.resourceIntegrityCheckInterval) {
+      clearInterval(this.resourceIntegrityCheckInterval);
     }
-    if (this.clusterStatusInterval) {
-      clearInterval(this.clusterStatusInterval);
-    }
-    if (this.modeCheckInterval) {
-      clearInterval(this.modeCheckInterval);
+    if (this.azureVMStatusInterval) {
+      clearInterval(this.azureVMStatusInterval);
     }
   }
 
-  startConsistencyPolling() {
-    this.checkConsistency();
-    this.consistencyCheckInterval = setInterval(() => this.checkConsistency(), 10000);
+  startResourceIntegrityPolling() {
+    this.checkResourceIntegrity();
+    this.resourceIntegrityCheckInterval = setInterval(() => this.checkResourceIntegrity(), 10000);
   }
 
-  checkConsistency() {
-    this.http.get<any>(ApiConfig.getConsistencyCheckUrl()).subscribe({
+  checkResourceIntegrity() {
+    this.http.get<any>(ApiConfig.getResourceValidationUrl()).subscribe({
       next: (res) => {
-        this.consistencyMessage = res.message;
+        this.resourceIntegrityMessage = res.message;
       },
       error: (err) => {
-        this.consistencyMessage = err?.error?.message || 'data inconsistency error';
+        this.resourceIntegrityMessage = err?.error?.message || 'resource validation error';
       }
     });
   }
 
-  startModePolling() {
-    this.checkMode();
-    this.modeCheckInterval = setInterval(() => this.checkMode(), 15000); // Poll every 15 seconds
+
+
+  startAzureVMStatusPolling() {
+    this.checkAzureVMStatus();
+    this.azureVMStatusInterval = setInterval(() => this.checkAzureVMStatus(), 30000);
   }
 
-  checkMode() {
-    this.http.get<any>(ApiConfig.getModeUrl()).subscribe({
-      next: (response: any) => {
-        console.log('Mode polling response:', response);
-        
-        // Check if the mode has changed
-        const currentBackendMode = response.current_mode;
-        const currentFrontendMode = ModeManager.getCurrentMode();
-        
-        if (currentBackendMode !== currentFrontendMode) {
-          console.log('Mode change detected:', { backend: currentBackendMode, frontend: currentFrontendMode });
-          
-          if (currentBackendMode) {
-            // Backend has a mode, update frontend
-            ModeManager.setCurrentMode(currentBackendMode as ResourceManagerMode);
-            this.updateCurrentModeDisplay();
-            this.fetchServers();
-            this.checkConsistency();
-            
-            // Handle cluster status polling based on new mode
-            if (this.isRealKubernetesMode()) {
-              this.startClusterStatusPolling();
-            } else {
-              // Stop cluster status polling if switching to demo mode
-              if (this.clusterStatusInterval) {
-                clearInterval(this.clusterStatusInterval);
-                this.clusterStatusInterval = null;
-              }
-              this.clusterStatus = 'unknown';
-            }
+  checkAzureVMStatus() {
+    // Check Azure VM connection by making a request to the servers endpoint
+    this.http.get<any[]>(ApiConfig.getServersUrl()).subscribe({
+      next: (res) => {
+        if (res && res.length > 0) {
+          // Check if we can get server details and if the server is responsive
+          const server = res[0];
+          if (server.status === 'Online' || server.status === 'online') {
+            this.azureVMStatus = 'connected';
           } else {
-            // Backend has no mode, check for last saved mode
-            this.loadLastSavedMode();
+            this.azureVMStatus = 'server_unavailable';
           }
+        } else {
+          this.azureVMStatus = 'connection_failed';
         }
       },
-      error: (error) => {
-        console.error('Mode polling failed:', error);
-      }
-    });
-  }
-
-  startClusterStatusPolling() {
-    this.checkClusterStatus();
-    this.clusterStatusInterval = setInterval(() => this.checkClusterStatus(), 30000);
-  }
-
-  checkClusterStatus() {
-    this.http.get<any>(ApiConfig.getClusterStatusUrl()).subscribe({
-      next: (res) => {
-        this.clusterStatus = res.status;
-      },
       error: (err) => {
-        this.clusterStatus = 'connection_failed';
+        console.error('Azure VM connection check failed:', err);
+        this.azureVMStatus = 'connection_failed';
       }
     });
   }
@@ -379,76 +330,82 @@ export class App {
       : '';
   }
 
-  onConsistencyLedClick() {
-    // Handle unknown/empty consistency message
-    if (!this.consistencyMessage) {
+  onResourceIntegrityLedClick() {
+    // Handle unknown/empty resource integrity message
+    if (!this.resourceIntegrityMessage) {
       this.showAlert(
         'info',
-        'Consistency Status',
-        'Data consistency status is unknown. Checking now...'
+        'Resource Integrity Status',
+        'Resource integrity status is unknown. Checking now...'
       );
-      this.checkConsistency();
+      this.checkResourceIntegrity();
       return;
     }
     
-    // Determine alert type based on consistency message
-    const isError = this.consistencyMessage?.toLowerCase().includes('error') || 
-                   this.consistencyMessage?.toLowerCase().includes('inconsistency');
+    // Determine alert type based on resource integrity message
+    const isError = this.resourceIntegrityMessage?.toLowerCase().includes('error') || 
+                   this.resourceIntegrityMessage?.toLowerCase().includes('failed') ||
+                   this.resourceIntegrityMessage?.toLowerCase().includes('invalid');
     const alertType = isError ? 'error' : 'success';
     
-    // Show the consistency message in a snackbar
+    // Show the resource integrity message in a snackbar
     this.showAlert(
       alertType,
-      'Consistency Status',
-      this.consistencyMessage
+      'Resource Integrity Status',
+      this.resourceIntegrityMessage
     );
-    // Trigger a new consistency check immediately
-    this.checkConsistency();
+    // Trigger a new resource integrity check immediately
+    this.checkResourceIntegrity();
   }
 
-  onClusterStatusClick() {
-    // Handle unknown cluster status
-    if (!this.clusterStatus || this.clusterStatus === 'unknown') {
+  onAzureVMStatusClick() {
+    // Handle unknown Azure VM status
+    if (!this.azureVMStatus || this.azureVMStatus === 'unknown') {
       this.showAlert(
         'info',
-        'Cluster Status',
-        'Cluster status is unknown. Checking now...'
+        'Azure VM Status',
+        'Azure VM status is unknown. Checking now...'
       );
-      this.checkClusterStatus();
+      this.checkAzureVMStatus();
       return;
     }
     
-    this.http.get<any>(ApiConfig.getHealthDetailedUrl()).subscribe({
-      next: (res) => {
-        const details = Object.entries(res.health_checks || {})
-          .map(([check, result]: [string, any]) => 
-            `${check.replace(/_/g, ' ').toUpperCase()}: ${result.status} - ${result.details}`
-          )
-          .join('\n');
-        
-        // Determine alert type based on cluster status
-        const clusterStatus = res.cluster_status?.status || 'unknown';
-        let alertType: 'success' | 'error' | 'info';
-        
-        if (clusterStatus === 'healthy') {
-          alertType = 'success';
-        } else if (clusterStatus === 'degraded') {
-          alertType = 'info'; // Blue info alert for degraded status
+    // Get detailed Azure VM connection information
+    this.http.get<any[]>(ApiConfig.getServersUrl()).subscribe({
+      next: (response) => {
+        if (response && response.length > 0) {
+          const server = response[0];
+          const status = server.status || 'unknown';
+          const location = server.metadata?.location || server.ip || 'Unknown location';
+          const pods = server.pods?.length || 0;
+          
+          let alertType: 'success' | 'error' | 'info' = 'info';
+          if (status === 'Online' || status === 'online') {
+            alertType = 'success';
+          } else {
+            alertType = 'error';
+          }
+          
+          const details = `Server: ${server.server_name || server.name}\nLocation: ${location}\nStatus: ${status}\nActive Pods: ${pods}`;
+          
+          this.showAlert(
+            alertType,
+            'Azure VM Connection Status',
+            details
+          );
         } else {
-          alertType = 'error';
+          this.showAlert(
+            'error',
+            'Azure VM Connection Failed',
+            'No servers found. Please check your Azure VM configuration and network connectivity.'
+          );
         }
-        
-        this.showAlert(
-          alertType,
-          'Kubernetes Cluster Health',
-          `Status: ${clusterStatus}\n\n${details}`
-        );
       },
       error: (err) => {
         this.showAlert(
           'error',
-          'Cluster Health Check Failed',
-          'Unable to retrieve detailed cluster health information.'
+          'Azure VM Connection Failed',
+          'Unable to connect to Azure VM. Please check:\n\n• Network connectivity\n• Azure VM is running\n• Kubeconfig is properly configured\n• Backend service is accessible'
         );
       }
     });
@@ -507,50 +464,7 @@ export class App {
     return statusNames[status] || 'Unknown';
   }
 
-  onModeChanged(mode: any) {
-    // Send mode change to backend
-    this.http.post(ApiConfig.getModeUrl(), { mode: mode }).subscribe({
-      next: (response: any) => {
-        console.log('Mode changed successfully:', response);
-        // Update mode display
-        this.updateCurrentModeDisplay();
-        // Refresh data when mode changes
-        this.fetchServers();
-        this.checkConsistency();
-        
-        // Handle cluster status polling based on new mode
-        if (this.isRealKubernetesMode()) {
-          this.startClusterStatusPolling();
-        } else {
-          // Stop cluster status polling if switching to demo mode
-          if (this.clusterStatusInterval) {
-            clearInterval(this.clusterStatusInterval);
-            this.clusterStatusInterval = null;
-          }
-          this.clusterStatus = 'unknown';
-        }
-      },
-      error: (error) => {
-        console.error('Failed to change mode:', error);
-        // Still refresh data even if mode change failed
-        this.fetchServers();
-        this.checkConsistency();
-      }
-    });
-  }
 
-  updateCurrentModeDisplay() {
-    const currentMode = ModeManager.getCurrentMode();
-    this.currentModeConfig = ModeManager.getCurrentModeConfig();
-  }
-
-  isRealKubernetesMode(): boolean {
-    return ModeManager.getCurrentMode() === ResourceManagerMode.LIVE;
-  }
-
-  toggleModeSelector() {
-    this.showModeSelector = !this.showModeSelector;
-  }
 
   selectServer(server: any) {
     this.selectedServer = server;
@@ -562,105 +476,5 @@ export class App {
       'Server Selected',
       `You are now managing: ${server.server_name || server.name}`
     );
-  }
-
-  getCurrentMode() {
-    this.http.get<any>(ApiConfig.getModeUrl()).subscribe({
-      next: (response: any) => {
-        console.log('Current mode response:', response);
-        
-        if (response.current_mode) {
-          // Backend has a mode set
-          ModeManager.setCurrentMode(response.current_mode as ResourceManagerMode);
-          this.updateCurrentModeDisplay();
-          
-          // Start appropriate polling based on mode
-          if (this.isRealKubernetesMode()) {
-            this.startClusterStatusPolling();
-          }
-        } else {
-          // Backend has no mode set - check for last saved mode
-          this.loadLastSavedMode();
-        }
-      },
-      error: (error) => {
-        console.error('Failed to get current mode:', error);
-        // Check for last saved mode as fallback
-        this.loadLastSavedMode();
-      }
-    });
-  }
-
-  loadLastSavedMode() {
-    this.http.get<any>(ApiConfig.getLastModeUrl()).subscribe({
-      next: (response: any) => {
-        console.log('Last saved mode response:', response);
-        
-        if (response.last_mode) {
-          // Restore the last saved mode
-          this.restoreLastMode(response.last_mode);
-        } else {
-          // No saved mode - show mode selector
-          this.showModeSelector = true;
-        }
-      },
-      error: (error) => {
-        console.error('Failed to get last saved mode:', error);
-        // Show mode selector as fallback
-        this.showModeSelector = true;
-      }
-    });
-  }
-
-  restoreLastMode(mode: string) {
-    console.log('Restoring last mode:', mode);
-    
-    // Set the mode in the mode manager
-    ModeManager.setCurrentMode(mode as ResourceManagerMode);
-    this.updateCurrentModeDisplay();
-    
-    // Send mode to backend
-    this.http.post(ApiConfig.getModeUrl(), { mode: mode }).subscribe({
-      next: (response: any) => {
-        console.log('Mode restored successfully:', response);
-        this.showModeSelector = false;
-        this.fetchServers();
-        this.checkConsistency();
-        
-        // Start appropriate polling based on mode
-        if (this.isRealKubernetesMode()) {
-          this.startClusterStatusPolling();
-        }
-      },
-      error: (error) => {
-        console.error('Failed to restore mode:', error);
-        // Show mode selector if restoration failed
-        this.showModeSelector = true;
-      }
-    });
-  }
-
-  // Add this method to handle mode selector resetResult event
-  onModeSelectorMessage(result: { type: string; message: string; details?: string[] }) {
-    const type = (result.type === 'success' || result.type === 'error' || result.type === 'info') ? result.type : 'success';
-    this.showAlert(type, type.charAt(0).toUpperCase() + type.slice(1), result.message, result.details);
-    
-    // If reset was successful, immediately clear the display and show mode selector
-    if (result.type === 'success' && result.message.includes('reset')) {
-      console.log('Mode reset successful, clearing display and showing mode selector');
-      // Clear current mode and data
-      ModeManager.setCurrentMode(undefined as any);
-      this.servers = [];
-      this.selectedServer = null;
-      this.currentModeConfig = null;
-      // Show mode selector
-      this.showModeSelector = true;
-      // Stop any active polling
-      if (this.clusterStatusInterval) {
-        clearInterval(this.clusterStatusInterval);
-        this.clusterStatusInterval = null;
-      }
-      this.clusterStatus = 'unknown';
-    }
   }
 }

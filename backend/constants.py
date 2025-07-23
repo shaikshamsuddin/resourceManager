@@ -10,66 +10,18 @@ import subprocess
 import re
 
 
-class Environment(Enum):
-    DEMO = "demo"
-    LIVE = "live"
-
-class Mode(Enum):
-    DEMO = "demo"
-    LIVE = "live"
-
-class ModeConfig:
-    MODE_TO_ENVIRONMENT = {
-        Mode.DEMO.value: Environment.DEMO.value,
-        Mode.LIVE.value: Environment.LIVE.value
+# Application configuration constants
+APP_CONFIG = {
+    "display_name": "Resource Manager",
+    "description": "Live mode managing all real servers via master.json",
+    "capabilities": {
+        "real_kubernetes": True,
+        "port_management": True,
+        "service_creation": True,
+        "external_access": True,
+        "multi_server": True
     }
-    ENVIRONMENT_TO_MODE = {
-        Environment.DEMO.value: Mode.DEMO.value,
-        Environment.LIVE.value: Mode.LIVE.value
-    }
-    MODE_DISPLAY_NAMES = {
-        Mode.DEMO.value: "Demo Mode",
-        Mode.LIVE.value: "Live Mode"
-    }
-    MODE_DESCRIPTIONS = {
-        Mode.DEMO.value: "Demo mode with realistic mock data",
-        Mode.LIVE.value: "Live mode managing all real servers via master.json"
-    }
-    MODE_CAPABILITIES = {
-        Mode.DEMO.value: {
-            "real_kubernetes": False,
-            "port_management": False,
-            "service_creation": False,
-            "external_access": False,
-            "multi_server": False
-        },
-        Mode.LIVE.value: {
-            "real_kubernetes": True,
-            "port_management": True,
-            "service_creation": True,
-            "external_access": True,
-            "multi_server": True
-        }
-    }
-    @classmethod
-    def get_environment_for_mode(cls, mode: str) -> str:
-        return cls.MODE_TO_ENVIRONMENT.get(mode, Environment.DEMO.value)
-    @classmethod
-    def get_mode_for_environment(cls, environment: str) -> str:
-        return cls.ENVIRONMENT_TO_MODE.get(environment, Mode.DEMO.value)
-    @classmethod
-    def get_display_name(cls, mode: str) -> str:
-        return cls.MODE_DISPLAY_NAMES.get(mode, "Unknown Mode")
-    @classmethod
-    def get_description(cls, mode: str) -> str:
-        return cls.MODE_DESCRIPTIONS.get(mode, "Unknown mode")
-    @classmethod
-    def get_capabilities(cls, mode: str) -> dict:
-        return cls.MODE_CAPABILITIES.get(mode, {})
-    @classmethod
-    def supports_feature(cls, mode: str, feature: str) -> bool:
-        capabilities = cls.get_capabilities(mode)
-        return capabilities.get(feature, False)
+}
 
 
 class AuthMethod(Enum):
@@ -219,7 +171,6 @@ class ValidationRules:
     MAX_STORAGE_GB = 10000
     
     # Image URL patterns
-    DOCKER_HUB_PATTERN = r'^[a-zA-Z0-9][a-zA-Z0-9._-]*/[a-zA-Z0-9][a-zA-Z0-9._-]*:[a-zA-Z0-9._-]+$'
     FULL_URL_PATTERN = r'^https?://[^\s/$.?#].[^\s]*$'
 
 
@@ -311,9 +262,9 @@ class ApiEndpoints:
     CREATE_POD = "/create"
     DELETE_POD = "/delete"
     UPDATE_POD = "/update"
-    CONSISTENCY_CHECK = "/consistency-check"
+    RESOURCE_VALIDATION = "/resource-validation"
     HEALTH_CHECK = "/health"
-    CLUSTER_STATUS = "/cluster-status"
+
     HEALTH_DETAILED = "/health/detailed"
 
 
@@ -336,7 +287,7 @@ class TimeFormats:
 class FilePaths:
     """File path constants."""
     
-    MOCK_DB = "mock_db.json"
+
     CONFIG_FILE = ".env"
     LOG_FILE = "app.log"
     TEMP_DIR = "/tmp"
@@ -403,12 +354,11 @@ class HealthCheckConfig:
 
 # Port Configuration
 class Ports:
-    """Port configuration with environment-based defaults and dynamic detection"""
+    """Port configuration with environment-based defaults"""
     
     # Default ports (can be overridden by environment variables)
     BACKEND_DEFAULT = 5005
     KUBERNETES_API_DEFAULT = 8443
-    MINIKUBE_DEFAULT = 53492  # Common minikube port
     
     # Environment variable names
     BACKEND_PORT_ENV = 'BACKEND_PORT'
@@ -422,53 +372,4 @@ class Ports:
     @classmethod
     def get_kubernetes_api_port(cls) -> int:
         """Get Kubernetes API port from environment or use default"""
-        return int(os.getenv(cls.KUBERNETES_API_PORT_ENV, cls.KUBERNETES_API_DEFAULT))
-    
-    @classmethod
-    def detect_minikube_port(cls) -> Optional[int]:
-        """Dynamically detect minikube port from kubectl config"""
-        try:
-            # First try to get the current server URL
-            result = subprocess.run(
-                ['kubectl', 'config', 'view', '--minify', '--output', 'jsonpath={.clusters[0].cluster.server}'],
-                capture_output=True, text=True, timeout=5
-            )
-            if result.returncode == 0 and result.stdout:
-                # Extract port from URL like https://127.0.0.1:53492
-                match = re.search(r':(\d+)$', result.stdout.strip())
-                if match:
-                    return int(match.group(1))
-            
-            # If that fails, try to get minikube status and extract port
-            result = subprocess.run(
-                ['minikube', 'status', '--output', 'json'],
-                capture_output=True, text=True, timeout=5
-            )
-            if result.returncode == 0 and result.stdout:
-                import json
-                try:
-                    status = json.loads(result.stdout)
-                    if 'Host' in status and 'Port' in status['Host']:
-                        return int(status['Host']['Port'])
-                except (json.JSONDecodeError, KeyError, ValueError):
-                    pass
-                    
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError, ValueError):
-            pass
-        return None
-    
-    @classmethod
-    def get_kubernetes_port(cls) -> int:
-        """Get Kubernetes port with fallback: env var -> dynamic detection -> default"""
-        # Try environment variable first
-        env_port = os.getenv(cls.KUBERNETES_API_PORT_ENV)
-        if env_port:
-            return int(env_port)
-        
-        # Try dynamic detection
-        detected_port = cls.detect_minikube_port()
-        if detected_port:
-            return detected_port
-        
-        # Fallback to default
-        return cls.MINIKUBE_DEFAULT 
+        return int(os.getenv(cls.KUBERNETES_API_PORT_ENV, cls.KUBERNETES_API_DEFAULT)) 

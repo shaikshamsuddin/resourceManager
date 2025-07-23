@@ -10,20 +10,28 @@ import os
 from datetime import datetime
 from flasgger import Swagger
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("✅ Loaded environment variables from .env file")
+except ImportError:
+    print("⚠️  python-dotenv not installed, using system environment variables")
+except Exception as e:
+    print(f"⚠️  Failed to load .env file: {e}")
+
 # Import configuration and utility functions
 from config import Config
 from utils import (
     get_available_resources,
     validate_resource_request,
     create_pod_k8s,
-    delete_pod_k8s,
-    create_pod_mdem as create_pod_mdem_util,  # Use alias to avoid conflict with endpoint
-    update_pod_mdem
+    delete_pod_k8s
 )
-from providers.mock_data_provider import mock_data_provider
+
 from server_manager import server_manager
 from health_monitor import health_monitor
-from constants import Ports, PodStatus, Environment, Mode, ModeConfig, ConfigKeys
+from constants import Ports, PodStatus, ConfigKeys, APP_CONFIG
 
 app = Flask(__name__)
 
@@ -38,73 +46,26 @@ else:
 if Config.get_api_config()['enable_swagger']:
     swagger = Swagger(app)
 
-MOCK_DB_JSON = os.path.join(os.path.dirname(__file__), 'data', 'mock_db.json')
-LAST_MODE_JSON = os.path.join(os.path.dirname(__file__), 'data', 'last_mode.json')
+
 
 # Add at module level
 BACKEND_VERSION = "1.0.0"
 BACKEND_START_TIME = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-def load_data():
-    """Load data from mock database JSON file."""
-    with open(MOCK_DB_JSON, 'r') as f:
-        return json.load(f)
 
-
-def save_data(data):
-    """Save data to mock database JSON file."""
-    with open(MOCK_DB_JSON, 'w') as f:
-        json.dump(data, f, indent=2)
-
-
-def load_last_mode():
-    """Load last selected mode from JSON file."""
-    try:
-        with open(LAST_MODE_JSON, 'r') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {"last_mode": None, "last_updated": None}
-
-
-def save_last_mode(mode):
-    """Save last selected mode to JSON file."""
-    data = {
-        "last_mode": mode,
-        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-    with open(LAST_MODE_JSON, 'w') as f:
-        json.dump(data, f, indent=2)
 
 # --- API Endpoints ---
 @app.route('/')
 def index():
-    # Get current mode and environment
-    from constants import ModeConfig
-    env = Config.get_environment_value()
-    
-    if env is None:
-        # No environment set - show no mode selected
-        mode = None
-        display_name = "No Mode Selected"
-        description = "Please select a mode to continue"
-        capabilities = {}
-    else:
-        mode = ModeConfig.get_mode_for_environment(env)
-        display_name = ModeConfig.get_display_name(mode)
-        description = ModeConfig.get_description(mode)
-        capabilities = ModeConfig.get_capabilities(mode)
+    # Get application configuration
+    display_name = APP_CONFIG["display_name"]
+    description = APP_CONFIG["description"]
+    capabilities = APP_CONFIG["capabilities"]
     
     # Try to get a quick cluster/server summary
     try:
-        if env == 'local-mock-db':
-            servers = mock_data_provider.get_servers_with_pods_mdem()
-        elif env == 'development':
-            servers = local_kubernetes_provider.get_servers_with_pods()
-        elif env == 'production':
-            servers = cloud_kubernetes_provider.get_servers_with_pods()
-        else:
-            servers = []
+        servers = server_manager.get_all_servers_with_pods()
         total_servers = len(servers)
         total_pods = sum(len(s.get('pods', [])) for s in servers)
     except Exception:
@@ -142,8 +103,7 @@ def index():
             <b>Started:</b> <span class="badge">{BACKEND_START_TIME}</span>
         </div>
         <div class="info-row">
-            <b>Current Mode:</b> <span class="badge">{display_name}</span>
-            <b>Environment:</b> <span class="badge">{env}</span>
+            <b>Application:</b> <span class="badge">{display_name}</span>
         </div>
         <div class="info-row">
             <b>Description:</b> {description}
@@ -164,11 +124,11 @@ def index():
       <li><b>POST /create</b> - Create a new pod (JSON body required)</li>
       <li><b>POST /delete</b> - Delete a pod (JSON body required)</li>
       <li><b>POST /update</b> - Update a pod (JSON body required)</li>
-      <li><b>GET /consistency-check</b> - Check for data consistency</li>
-            <li><b>GET /mode</b> - Get or set backend mode</li>
+      <li><b>GET /resource-validation</b> - Validate Azure VM resource integrity</li>
+
             <li><b>GET /health</b> - Basic health check</li>
             <li><b>GET /health/detailed</b> - Detailed health check</li>
-            <li><b>GET /cluster-status</b> - Cluster status</li>
+    
     </ul>
         <div class="section-title">API Testing &amp; Documentation</div>
         <p>Access <a href="/apidocs/" target="_blank">Swagger UI</a> to view, send, and test API calls interactively.</p>
@@ -213,11 +173,6 @@ def get_servers():
             details: "<details>"
     """
     try:
-        # Get current environment to filter servers
-        current_env = Config.get_environment_value()
-        if current_env == 'unified':
-            current_env = 'live'
-        
         # Check if specific server is requested
         server_id = request.args.get('server_id')
         
@@ -225,15 +180,12 @@ def get_servers():
             # Get specific server data
             server_data = server_manager.get_server_with_pods(server_id)
             if server_data:
-                # Check if server matches current environment
-                if current_env and server_data.get("environment") != current_env:
-                    return jsonify({'error': f'Server {server_id} not available in current mode'}), 404
                 return jsonify([server_data]), 200
             else:
                 return jsonify({'error': f'Server {server_id} not found'}), 404
         else:
-            # Get all servers data filtered by environment
-            servers = server_manager.get_all_servers_with_pods(environment=current_env)
+            # Get all servers data
+            servers = server_manager.get_all_servers_with_pods()
             return jsonify(servers), 200
             
     except Exception as e:
@@ -440,28 +392,29 @@ def update_pod():
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
-@app.route('/consistency-check', methods=['GET'])
-def consistency_check_mdem():
+@app.route('/resource-validation', methods=['GET'])
+def resource_validation():
     """
-    Check for data consistency
+    Validate Azure VM resource allocation integrity
     ---
     tags:
       - Utility
     responses:
       200:
-        description: Consistency check result
+        description: Resource validation result
         examples:
           application/json:
             status: ok
-            message: all data seems consistent
+            message: Azure VM resource allocation is valid
       400:
-        description: Data inconsistency error
+        description: Resource validation error
         examples:
           application/json:
             status: error
-            message: data inconsistency error
+            message: Resource validation failed
             details:
-              - "Pod 'pod-101' not found on server 'server-01'"
+              - "Azure VM: Available CPUs exceeds total"
+              - "Azure VM: Pods requesting more RAM than available"
       500:
         description: Server error
         examples:
@@ -470,19 +423,8 @@ def consistency_check_mdem():
             details: "<details>"
     """
     try:
-        # Use appropriate provider based on environment
-        if Config.get_environment_value() == Environment.LOCAL_MOCK_DB.value:
-            # Use mock data for demo mode
-            servers = mock_data_provider.get_servers_with_pods_mdem()
-        elif Config.get_environment_value() == Environment.DEVELOPMENT.value:
-            # Use local Kubernetes provider
-            servers = local_kubernetes_provider.get_servers_with_pods()
-        elif Config.get_environment_value() == Environment.PRODUCTION.value:
-            # Use cloud Kubernetes provider
-            servers = cloud_kubernetes_provider.get_servers_with_pods()
-        else:
-            # Fallback to mock data
-            servers = mock_data_provider.get_servers_with_pods_mdem()
+        # Use server manager for all environments
+        servers = server_manager.get_all_servers_with_pods()
         
         errors = []
         for server in servers:
@@ -505,11 +447,11 @@ def consistency_check_mdem():
         if errors:
             return jsonify({
                 'type': 'error',
-                'message': 'Data inconsistency detected. See details below.',
+                'message': 'Resource validation failed. See details below.',
                 'details': errors
             }), 400
         else:
-            return jsonify({'type': 'success', 'message': 'all data seems consistent'}), 200
+            return jsonify({'type': 'success', 'message': 'Azure VM resource allocation is valid'}), 200
     except Exception as e:
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
@@ -591,232 +533,17 @@ def detailed_health_check():
         }), 500
 
 
-@app.route('/cluster-status', methods=['GET'])
-def cluster_status():
-    """
-    Get current cluster status
-    ---
-    tags:
-      - Health
-    responses:
-      200:
-        description: Cluster status information
-        examples:
-          application/json:
-            status: "healthy"
-            last_check: "2024-01-01T00:00:00Z"
-            monitoring_active: true
-    """
-    try:
-        status_data = health_monitor.get_cluster_status()
-        return jsonify(status_data), 200
-    except Exception as e:
-        return jsonify({
-            'error': f'Failed to get cluster status: {str(e)}',
-            'timestamp': datetime.now().isoformat()
-        }), 500
 
 
-@app.route('/mode', methods=['GET', 'POST'])
-def mode_management():
-    """
-    Get or set current mode
-    ---
-    tags:
-      - Configuration
-    parameters:
-      - in: body
-        name: body
-        required: false
-        schema:
-          type: object
-          properties:
-            mode:
-              type: string
-              enum: [demo, local-k8s, cloud-k8s]
-    responses:
-      200:
-        description: Current mode information
-        examples:
-          application/json:
-            current_mode: demo
-            backend_env: local-mock-db
-            description: Demo mode with mock data
-      500:
-        description: Server error
-    """
-    try:
-        if request.method == 'POST':
-            data = request.json or {}
-            new_mode = data.get('mode', 'demo')
-            if new_mode == 'cloud-k8s':
-                return jsonify({'type': 'info', 'message': 'Mode not enabled yet.'}), 501
-            
-            # Use ModeConfig to map mode to environment
-            environment = ModeConfig.get_environment_for_mode(new_mode)
-            
-            # Set environment variable
-            os.environ['ENVIRONMENT'] = environment
-            
-            # Reload configuration to pick up the new environment
-            import importlib
-            import config
-            importlib.reload(config)
-            # Re-import Config after reload
-            from config import Config
-            # Environment variable is already set, Config will pick it up dynamically
-            
-            # Save the last selected mode
-            save_last_mode(new_mode)
-            
-            return jsonify({
-                'type': 'success',
-                'current_mode': new_mode,
-                'backend_env': environment,
-                'display_name': ModeConfig.get_display_name(new_mode),
-                'description': ModeConfig.get_description(new_mode),
-                'message': f'Mode changed to {ModeConfig.get_display_name(new_mode)}'
-            }), 200
-        else:
-            # GET request - return current mode info
-            # Re-import Config to ensure we have the latest
-            import importlib
-            import config
-            importlib.reload(config)
-            from config import Config
-            # Get current environment dynamically
-            current_env = Config.get_environment_value()
-            
-            if current_env is None:
-                # No environment set - return no mode selected
-                return jsonify({
-                    'type': 'info',
-                    'current_mode': None,
-                    'backend_env': None,
-                    'display_name': 'No Mode Selected',
-                    'description': 'Please select a mode to continue',
-                    'capabilities': {}
-                }), 200
-            
-            current_mode = ModeConfig.get_mode_for_environment(current_env)
-            
-            return jsonify({
-                'type': 'success',
-                'current_mode': current_mode,
-                'backend_env': current_env,
-                'display_name': ModeConfig.get_display_name(current_mode),
-                'description': ModeConfig.get_description(current_mode),
-                'capabilities': ModeConfig.get_capabilities(current_mode)
-            }), 200
-            
-    except Exception as e:
-        return jsonify({'error': f'Server error: {str(e)}'}), 500
-
-@app.route('/last-mode', methods=['GET'])
-def get_last_mode():
-    """
-    Get the last selected mode from persistent storage.
-    ---
-    tags:
-      - Mode
-    responses:
-      200:
-        description: Last selected mode
-        examples:
-          application/json:
-            last_mode: "demo"
-            last_updated: "2025-07-21 21:30:00"
-      500:
-        description: Server error
-    """
-    try:
-        last_mode_data = load_last_mode()
-        return jsonify(last_mode_data), 200
-    except Exception as e:
-        return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 
-@app.route('/reset-last-mode', methods=['POST'])
-def reset_last_mode():
-    """
-    Reset the last selected mode (set to null).
-    ---
-    tags:
-      - Mode
-    responses:
-      200:
-        description: Last mode reset successfully
-        examples:
-          application/json:
-            type: "success"
-            message: "Last mode reset successfully"
-      500:
-        description: Server error
-    """
-    try:
-        # Clear the last saved mode
-        save_last_mode(None)
-        
-        # Also clear the environment variable to ensure no mode is active
-        if 'ENVIRONMENT' in os.environ:
-            del os.environ['ENVIRONMENT']
-        
-        return jsonify({
-            'type': 'success',
-            'message': 'Last mode reset successfully'
-        }), 200
-    except Exception as e:
-        return jsonify({'error': f'Server error: {str(e)}'}), 500
 
-@app.route('/reset-mode', methods=['POST'])
-def reset_mode():
-    """
-    Reset the selected mode's data (pods/resources) to initial state.
-    Query param: mode=demo or mode=local-k8s
-    """
-    mode = request.args.get('mode')
-    if not mode:
-        return jsonify({'type': 'error', 'message': 'Missing mode parameter'}), 400
-    if mode == 'demo':
-        # Reset mock DB: remove all pods, reset resources
-        try:
-            data = load_data()
-            for server in data:
-                server['pods'] = []
-                if 'resources' in server and 'total' in server['resources']:
-                    server['resources']['available'] = dict(server['resources']['total'])
-            save_data(data)
-            # Also reset in-memory mock data
-            from providers.mock_data_provider import mock_data_provider
-            mock_data_provider.reset_demo_data()
-            return jsonify({'type': 'success', 'message': 'Mock Demo mode reset successfully.\n\tAll pods deleted and resources reset.'}), 200
-        except Exception as e:
-            return jsonify({'type': 'error', 'message': f'Error: Reset failed.\n\t{str(e)}'}), 500
-    elif mode == 'local-k8s':
-        # Delete all pods from local Kubernetes cluster
-        try:
-            servers = local_kubernetes_provider.get_servers_with_pods()
-            pod_names = []
-            for server in servers:
-                for pod in server.get('pods', []):
-                    pod_names.append((pod.get('pod_id'), pod.get('namespace', 'default')))
-            errors = []
-            for pod_name, namespace in pod_names:
-                try:
-                    delete_pod_k8s({'pod_id': pod_name, 'namespace': namespace})
-                except Exception as e:
-                    errors.append(f"Pod {pod_name}: {str(e)}")
-            if errors:
-                details = "\n".join(f"\t{err}" for err in errors)
-                return jsonify({'type': 'error', 'message': f'Error: Local Kubernetes reset completed with errors.\n{details}'}), 207
-            else:
-                return jsonify({'type': 'success', 'message': 'Local Kubernetes mode reset successfully.\n\tAll pods deleted.'}), 200
-        except Exception as e:
-            return jsonify({'type': 'error', 'message': f'Error: Failed to reset local Kubernetes mode.\n\t{str(e)}'}), 500
-    elif mode == 'cloud-k8s':
-        return jsonify({'type': 'error', 'message': 'Reset not allowed. Mode not enabled yet.'}), 501
-    else:
-        return jsonify({'type': 'error', 'message': 'Invalid mode parameter. Use "demo" or "local-k8s".'}), 400
+
+
+
+
+
+
 
 
 if __name__ == '__main__':

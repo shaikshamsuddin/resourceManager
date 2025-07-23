@@ -18,34 +18,6 @@
         "environment": "production",
         "description": "Azure VM with MicroK8s cluster"
       }
-    },
-    {
-      "id": "demo-server-01",
-      "name": "Demo Server Alpha",
-      "type": "mock",
-      "environment": "demo",
-      "connection_coordinates": {
-        "method": "mock"
-      },
-      "metadata": {
-        "location": "Demo Environment",
-        "environment": "demo",
-        "description": "Mock server for demonstration purposes"
-      }
-    },
-    {
-      "id": "demo-server-02", 
-      "name": "Demo Server Beta",
-      "type": "mock",
-      "environment": "demo",
-      "connection_coordinates": {
-        "method": "mock"
-      },
-      "metadata": {
-        "location": "Demo Environment",
-        "environment": "demo",
-        "description": "Mock server for demonstration purposes"
-      }
     }
   ],
   "config": {

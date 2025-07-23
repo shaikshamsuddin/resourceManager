@@ -29,66 +29,7 @@ body {
   gap: 16px;
 }
 
-.mode-icon-container {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
-}
 
-.mode-icon-container:hover {
-  background-color: rgba(0, 0, 0, 0.08);
-  border-color: rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.mode-icon-container:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
-.mode-selector-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mode-selector-icon mat-icon {
-  color: #666;
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-  opacity: 0.8;
-  transition: all 0.2s ease;
-}
-
-.mode-icon-container:hover .mode-selector-icon mat-icon {
-  color: #333;
-  opacity: 1;
-  transform: scale(1.05);
-}
-
-.mode-icon {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255,255,255,0.3);
-}
-
-.mode-icon mat-icon {
-  color: white;
-  font-size: 12px;
-  width: 12px;
-  height: 12px;
-}
 
 .dashboard-title {
   font-size: 2.6rem;
@@ -538,8 +479,8 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
 }
 
 /* Common LED styles for both consistency and cluster status */
-.consistency-led,
-.cluster-status-led {
+.resource-integrity-led,
+.azure-vm-status-led {
   display: inline-block;
   width: 10px;
   height: 10px;
@@ -943,12 +884,4 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
 .server-item-pods {
   font-size: 12px;
   color: #888;
-}
-
-.mode-label {
-  font-size: 14px;
-  font-weight: 600;
-  margin-left: 8px;
-  color: #333;
-  vertical-align: middle;
 }

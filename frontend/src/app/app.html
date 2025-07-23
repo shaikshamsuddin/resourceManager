@@ -11,45 +11,34 @@
     </span>
   </div>
   <div class="status-leds">
-    <!-- Data Consistency LED - Always show -->
-    <div class="led-container" (click)="onConsistencyLedClick()" [title]="consistencyMessage || 'Data consistency status unknown'">
-      <mat-icon class="led-icon">storage</mat-icon>
-      <span class="consistency-led" [ngClass]="{
-        'led-green': consistencyMessage === 'all data seems consistent', 
-        'led-red': consistencyMessage && consistencyMessage !== 'all data seems consistent',
-        'led-grey': !consistencyMessage
+    <!-- Resource Integrity LED - Always show -->
+    <div class="led-container" (click)="onResourceIntegrityLedClick()" [title]="resourceIntegrityMessage || 'Resource integrity status unknown'">
+      <mat-icon class="led-icon">verified</mat-icon>
+      <span class="resource-integrity-led" [ngClass]="{
+        'led-green': resourceIntegrityMessage === 'Azure VM resource allocation is valid', 
+        'led-red': resourceIntegrityMessage && resourceIntegrityMessage !== 'Azure VM resource allocation is valid',
+        'led-grey': !resourceIntegrityMessage
       }"></span>
     </div>
     
-    <!-- Kubernetes Cluster LED - Only show for real K8s modes -->
+    <!-- Azure VM Connection LED -->
     <div class="led-container" 
-         *ngIf="isRealKubernetesMode()"
-         (click)="onClusterStatusClick()" 
-         [title]="'Kubernetes Cluster: ' + clusterStatus">
-      <mat-icon class="led-icon">hub</mat-icon>
-      <span class="cluster-status-led" [ngClass]="{
-        'led-green': clusterStatus === 'healthy', 
-        'led-yellow': clusterStatus === 'degraded',
-        'led-red': clusterStatus === 'unhealthy' || clusterStatus === 'connection_failed' || clusterStatus === 'auth_failed' || clusterStatus === 'not_running',
-        'led-grey': clusterStatus === 'unknown' || !clusterStatus
+         (click)="onAzureVMStatusClick()" 
+         [title]="'Azure VM Connection: ' + azureVMStatus">
+      <mat-icon class="led-icon">cloud</mat-icon>
+      <span class="azure-vm-status-led" [ngClass]="{
+        'led-green': azureVMStatus === 'connected', 
+        'led-yellow': azureVMStatus === 'slow_response',
+        'led-red': azureVMStatus === 'connection_failed' || azureVMStatus === 'server_unavailable' || azureVMStatus === 'auth_failed',
+        'led-grey': azureVMStatus === 'unknown' || !azureVMStatus
       }"></span>
     </div>
     
-    <!-- Mode Selector -->
-    <div class="mode-icon-container" (click)="toggleModeSelector()" matTooltip="Click to change mode">
-      <div class="mode-selector-icon">
-        <mat-icon>settings</mat-icon>
-      </div>
-      <div class="mode-icon" [style.background-color]="currentModeConfig?.color">
-        <mat-icon>{{ currentModeConfig?.icon }}</mat-icon>
-      </div>
-      <span class="mode-label">{{ currentModeConfig?.name }}</span>
-    </div>
+
   </div>
 </div>
 
-<!-- Mode Selector -->
-<app-mode-selector *ngIf="showModeSelector" (modeChanged)="onModeChanged($event)" (resetResult)="onModeSelectorMessage($event)"></app-mode-selector>
+
 
 <!-- 1. Resource Information Card (Ribbon) -->
 <mat-card class="resource-info-ribbon">

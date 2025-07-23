@@ -144,59 +144,7 @@ class ClusterHealthMonitor:
         except Exception as e:
             connection_attempts.append(f"Initial attempt: {str(e)}")
             
-            # Second attempt: Try to detect and update port automatically
-            try:
-                from constants import Ports
-                detected_port = Ports.detect_minikube_port()
-                
-                if detected_port:
-                    self.logger.info(f"Detected minikube port: {detected_port}")
-                    
-                    # Try to reinitialize with detected port
-                    k8s_client.initialize()
-                    k8s_client.core_v1.list_namespace()
-                    
-                    latency = int((time.time() - start_time) * 1000)
-                    return HealthCheckResult(
-                        check_type=HealthCheckType.CLUSTER_CONNECTIVITY.value,
-                        status=HealthStatus.PASS.value,
-                        details=f"Connected after port detection (port: {detected_port})",
-                        latency_ms=latency
-                    )
-                else:
-                    connection_attempts.append("Port detection failed")
-                    
-            except Exception as port_error:
-                connection_attempts.append(f"Port detection attempt: {str(port_error)}")
-            
-            # Third attempt: Try auto-fix if we have consecutive failures
-            if self._consecutive_failures >= 2:  # Only try auto-fix after 2 consecutive failures
-                try:
-                    from auto_fix_minikube import MinikubeAutoFix
-                    fixer = MinikubeAutoFix()
-                    
-                    if fixer.auto_fix():
-                        self.logger.info("Auto-fix successful, retrying connection...")
-                        
-                        # Wait a bit for minikube to be ready
-                        if fixer.wait_for_ready(timeout=30):
-                            k8s_client.initialize()
-                            k8s_client.core_v1.list_namespace()
-                            
-                            latency = int((time.time() - start_time) * 1000)
-                            return HealthCheckResult(
-                                check_type=HealthCheckType.CLUSTER_CONNECTIVITY.value,
-                                status=HealthStatus.PASS.value,
-                                details="Connected after auto-fix",
-                                latency_ms=latency
-                            )
-                        else:
-                            connection_attempts.append("Auto-fix succeeded but cluster not ready")
-                    else:
-                        connection_attempts.append("Auto-fix failed")
-                        
-                except Exception as auto_fix_error:
-                    connection_attempts.append(f"Auto-fix attempt: {str(auto_fix_error)}")
+            # No additional attempts for minikube since we're using Azure VM cluster
         
         # If all attempts fail
         latency = int((time.time() - start_time) * 1000)

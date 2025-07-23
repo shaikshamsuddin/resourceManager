@@ -77,32 +77,6 @@ else
     print_warning "Backend PID file not found"
 fi
 
-# Step 3: Stop Minikube (optional - uncomment if you want to stop it)
-print_status "Step 3: Stopping Minikube..."
-if minikube status --format='{{.Host}}' 2>/dev/null | grep -q "Running"; then
-    print_status "Stopping Minikube..."
-    minikube stop
-    print_success "Minikube stopped"
-else
-    print_warning "Minikube is not running"
-fi
-
-# Step 4: Stop Docker (optional - uncomment if you want to stop it)
-# print_status "Step 4: Stopping Docker..."
-# if docker info >/dev/null 2>&1; then
-#     print_status "Stopping Docker..."
-#     if [[ "$OSTYPE" == "darwin"* ]]; then
-#         # macOS
-#         osascript -e 'quit app "Docker"'
-#     else
-#         # Linux
-#         sudo systemctl stop docker
-#     fi
-#     print_success "Docker stopped"
-# else
-#     print_warning "Docker is not running"
-# fi
-
 # Clean up
 print_status "Cleaning up..."
 rm -f .service_pids
@@ -113,6 +87,5 @@ echo "🎉 Resource Manager Shutdown Complete!"
 echo "======================================"
 print_success "All services stopped successfully!"
 echo ""
-print_status "Note: Docker is still running. To stop Docker, run:"
-print_status "  macOS: osascript -e 'quit app \"Docker\"'"
-print_status "  Linux: sudo systemctl stop docker" 
+print_status "Note: Azure VM Kubernetes cluster remains running."
+print_status "To stop the cluster, you would need to stop the Azure VM itself." 

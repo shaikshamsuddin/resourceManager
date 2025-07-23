@@ -7,7 +7,7 @@ import os
 from typing import Optional, Dict, Any
 
 from constants import (
-    Environment, AuthMethod, DefaultValues, ConfigKeys,
+    AuthMethod, DefaultValues, ConfigKeys,
     KubernetesConstants, ErrorMessages
 )
 
@@ -15,45 +15,11 @@ from constants import (
 class Config:
     """Base configuration class."""
     
-    # Environment detection - no default mode
-    @classmethod
-    def get_environment(cls):
-        """Get current environment dynamically."""
-        env_value = os.getenv(ConfigKeys.ENVIRONMENT)
-        if env_value is None:
-            # No environment set - return None to indicate no default
-            return None
-        return Environment(env_value)
-    
-    @classmethod
-    def get_environment_value(cls):
-        """Get current environment value dynamically."""
-        env = cls.get_environment()
-        if env is None:
-            # No environment set - return None
-            return None
-        return env.value
-    
-    @classmethod
-    def is_debug(cls):
-        """Check if in debug mode dynamically."""
-        env = cls.get_environment()
-        if env is None:
-            return False
-        return env == Environment.DEMO
-    
     # Kubernetes configuration
     KUBERNETES_CONFIG = {
-        Environment.DEMO.value: {
-            'auth_method': AuthMethod.LOCAL_KUBECONFIG.value,
-            'default_image': DefaultValues.DEFAULT_IMAGE_DEV,
-            'namespace_prefix': DefaultValues.NAMESPACE_PREFIX_DEV
-        },
-        Environment.LIVE.value: {
-            'auth_method': AuthMethod.LOCAL_KUBECONFIG.value,
-            'default_image': DefaultValues.DEFAULT_IMAGE_DEV,
-            'namespace_prefix': DefaultValues.NAMESPACE_PREFIX_DEV
-        }
+        'auth_method': AuthMethod.LOCAL_KUBECONFIG.value,
+        'default_image': DefaultValues.DEFAULT_IMAGE_DEV,
+        'namespace_prefix': DefaultValues.NAMESPACE_PREFIX_DEV
     }
     
     # Azure configuration (for production and Azure VM)
@@ -72,37 +38,21 @@ class Config:
     
     # API configuration
     API_CONFIG = {
-        Environment.DEMO.value: {
-            'require_image_url': False,
-            'require_k8s_auth': False,
-            'enable_swagger': True,
-            'cors_origins': ['http://localhost:4200', 'http://127.0.0.1:4200']
-        },
-        Environment.LIVE.value: {
-            'require_image_url': False,
-            'require_k8s_auth': False,
-            'enable_swagger': True,
-            'cors_origins': ['http://localhost:4200', 'http://127.0.0.1:4200']
-        }
+        'require_image_url': False,
+        'require_k8s_auth': False,
+        'enable_swagger': True,
+        'cors_origins': ['http://localhost:4200', 'http://127.0.0.1:4200']
     }
     
     @classmethod
     def get_kubernetes_config(cls) -> Dict[str, Any]:
-        """Get Kubernetes configuration for current environment."""
-        env_value = cls.get_environment_value()
-        if env_value is None:
-            # No environment set - return live config as fallback
-            return cls.KUBERNETES_CONFIG[Environment.LIVE.value]
-        return cls.KUBERNETES_CONFIG.get(env_value, cls.KUBERNETES_CONFIG[Environment.LIVE.value])
+        """Get Kubernetes configuration."""
+        return cls.KUBERNETES_CONFIG
     
     @classmethod
     def get_api_config(cls) -> Dict[str, Any]:
-        """Get API configuration for current environment."""
-        env_value = cls.get_environment_value()
-        if env_value is None:
-            # No environment set - return live config as fallback
-            return cls.API_CONFIG[Environment.LIVE.value]
-        return cls.API_CONFIG.get(env_value, cls.API_CONFIG[Environment.LIVE.value])
+        """Get API configuration."""
+        return cls.API_CONFIG
     
     @classmethod
     def get_azure_config(cls) -> Dict[str, Any]:
@@ -112,26 +62,14 @@ class Config:
     @classmethod
     def is_production(cls) -> bool:
         """Check if running in production environment."""
-        env = cls.get_environment()
-        if env is None:
-            return False
-        return env == Environment.LIVE
+        return True
     
     @classmethod
     def is_development(cls) -> bool:
         """Check if running in development environment."""
-        env = cls.get_environment()
-        if env is None:
-            return False
-        return env == Environment.DEMO
+        return False
     
-    @classmethod
-    def is_mock_demo(cls) -> bool:
-        """Check if running in local mock demo environment."""
-        env = cls.get_environment()
-        if env is None:
-            return False
-        return env == Environment.DEMO
+
     
     @classmethod
     def get_default_image(cls) -> str:

@@ -68,63 +68,29 @@ wait_for_service() {
 # Check prerequisites
 print_status "Checking prerequisites..."
 
-# Check if Docker is installed
-if ! command_exists docker; then
-    print_error "Docker is not installed. Please install Docker first."
-    exit 1
-fi
-
 # Check if kubectl is installed
 if ! command_exists kubectl; then
     print_error "kubectl is not installed. Please install kubectl first."
     exit 1
 fi
 
-# Check if minikube is installed
-if ! command_exists minikube; then
-    print_error "minikube is not installed. Please install minikube first."
-    exit 1
-fi
-
 print_success "All prerequisites are installed"
 
-# Step 1: Start Docker
-print_status "Step 1: Starting Docker..."
-if ! docker info >/dev/null 2>&1; then
-    print_status "Docker is not running. Starting Docker..."
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS
-        open -a Docker
-        print_status "Docker app started. Waiting for Docker to be ready..."
-        while ! docker info >/dev/null 2>&1; do
-            sleep 2
-        done
-    else
-        # Linux
-        sudo systemctl start docker
-    fi
-    print_success "Docker is now running"
+# Step 1: Verify Azure VM Kubernetes Cluster Connection
+print_status "Step 1: Verifying Azure VM Kubernetes Cluster Connection..."
+if [ -z "$AZURE_VM_IP" ] || [ -z "$AZURE_VM_KUBECONFIG" ]; then
+    print_warning "Azure VM environment variables not set. Using default kubeconfig."
+    print_status "To use Azure VM cluster, set:"
+    print_status "  export AZURE_VM_IP=your_azure_vm_ip"
+    print_status "  export AZURE_VM_KUBECONFIG=./azure_vm_kubeconfig_updated"
 else
-    print_success "Docker is already running"
+    print_success "Azure VM environment variables detected:"
+    print_status "  AZURE_VM_IP: $AZURE_VM_IP"
+    print_status "  AZURE_VM_KUBECONFIG: $AZURE_VM_KUBECONFIG"
 fi
 
-# Step 2: Start Minikube
-print_status "Step 2: Starting Minikube..."
-if ! minikube status --format='{{.Host}}' 2>/dev/null | grep -q "Running"; then
-    print_status "Minikube is not running. Starting Minikube..."
-    minikube start --driver=docker
-    print_success "Minikube started successfully"
-else
-    print_success "Minikube is already running"
-fi
-
-# Step 3: Configure kubectl to use minikube
-print_status "Step 3: Configuring kubectl..."
-minikube kubectl -- get nodes >/dev/null 2>&1
-print_success "kubectl configured for minikube"
-
-# Step 4: Start Backend
-print_status "Step 4: Starting Backend Service..."
+# Step 2: Start Backend
+print_status "Step 2: Starting Backend Service..."
 cd backend
 
 # Check if backend port is already in use
@@ -132,7 +98,10 @@ if port_in_use 5005; then
     print_warning "Port 5005 is already in use. Backend might already be running."
 else
     print_status "Starting backend on port 5005..."
-    # Start backend in background
+    # Start backend in background with environment variables
+    AZURE_VM_IP=${AZURE_VM_IP:-4.246.178.26} \
+    AZURE_VM_KUBECONFIG=${AZURE_VM_KUBECONFIG:-./azure_vm_kubeconfig_updated} \
+    ENVIRONMENT=${ENVIRONMENT:-live} \
     python app.py > ../backend.log 2>&1 &
     BACKEND_PID=$!
     echo $BACKEND_PID > ../backend.pid
@@ -148,8 +117,8 @@ fi
 
 cd ..
 
-# Step 5: Start Frontend
-print_status "Step 5: Starting Frontend Service..."
+# Step 3: Start Frontend
+print_status "Step 3: Starting Frontend Service..."
 cd frontend
 
 # Check if frontend port is already in use
@@ -173,12 +142,11 @@ fi
 
 cd ..
 
-# Step 6: Display final status
+# Step 4: Display final status
 echo ""
 echo "🎉 Resource Manager Startup Complete!"
 echo "====================================="
-print_success "Docker: Running"
-print_success "Minikube: Running"
+print_success "Azure VM Kubernetes Cluster: Connected"
 print_success "Backend: http://localhost:5005"
 print_success "Frontend: http://localhost:4200"
 echo ""

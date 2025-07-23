@@ -1,6 +1,6 @@
 """
 Local Kubernetes Provider
-This module handles local Kubernetes resource management (minikube, local clusters).
+This module handles local Kubernetes resource management (local clusters).
 """
 
 import json
@@ -18,7 +18,7 @@ from utils import map_kubernetes_status_to_user_friendly
 
 
 class LocalKubernetesProvider:
-    """Manages local Kubernetes resources (minikube, local clusters, or remote clusters via kubeconfig)."""
+    """Manages local Kubernetes resources (local clusters, or remote clusters via kubeconfig)."""
     
     def __init__(self):
         """Initialize Kubernetes client (local or remote)."""
@@ -388,7 +388,7 @@ class LocalKubernetesProvider:
             Access URL string
         """
         try:
-            # For local Kubernetes, use minikube service URL
+            # For Azure VM Kubernetes, use node port
             node_port = service.spec.ports[0].node_port
             return f"http://localhost:{node_port}"
         except Exception:

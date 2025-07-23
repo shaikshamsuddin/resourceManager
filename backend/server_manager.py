@@ -10,7 +10,7 @@ from pathlib import Path
 
 from constants import ErrorMessages
 from providers.kubernetes_provider import LocalKubernetesProvider
-from providers.demo_data_provider import demo_data_provider
+from providers.cloud_kubernetes_provider import CloudKubernetesProvider
 
 
 class ServerManager:
@@ -52,13 +52,20 @@ class ServerManager:
                     print(f"❌ Failed to initialize provider for {server_id}: {e}")
     
     def _create_provider(self, server_config: Dict):
-        """Create appropriate provider based on server type."""
+        """Create appropriate provider based on server type and connection method."""
         server_type = server_config.get("type")
+        connection_coords = server_config.get("connection_coordinates", {})
+        connection_method = connection_coords.get("method")
         
         if server_type == "kubernetes":
-            return LocalKubernetesProvider()
-        elif server_type == "mock":
-            return demo_data_provider
+            # Use CloudKubernetesProvider for Azure VM or cloud connections
+            if connection_method == "kubeconfig" and connection_coords.get("host"):
+                print(f"Using CloudKubernetesProvider for {server_config.get('id')} with kubeconfig")
+                return CloudKubernetesProvider()
+            else:
+                # Use LocalKubernetesProvider for local connections
+                print(f"Using LocalKubernetesProvider for {server_config.get('id')}")
+                return LocalKubernetesProvider()
         else:
             print(f"Unknown server type: {server_type}")
             return None
@@ -79,18 +86,14 @@ class ServerManager:
             return self.server_providers[server_id]["provider"]
         return None
     
-    def get_all_servers_with_pods(self, environment: str = None) -> List[Dict]:
-        """Get all servers with their pods data, optionally filtered by environment."""
+    def get_all_servers_with_pods(self) -> List[Dict]:
+        """Get all servers with their pods data."""
         all_servers = []
         
         for server_id, server_info in self.server_providers.items():
             try:
                 provider = server_info["provider"]
                 config = server_info["config"]
-                
-                # Filter by environment if specified
-                if environment and config.get("environment") != environment:
-                    continue
                 
                 # Get live data from provider
                 servers_data = provider.get_servers_with_pods()
