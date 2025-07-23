@@ -67,127 +67,6 @@ export class App {
     this.updateCurrentModeDisplay();
   }
 
-  onModeChanged(mode: any) {
-    // Send mode change to backend
-    this.http.post(ApiConfig.getModeUrl(), { mode: mode }).subscribe({
-      next: (response: any) => {
-        console.log('Mode changed successfully:', response);
-        // Update mode display
-        this.updateCurrentModeDisplay();
-        // Refresh data when mode changes
-        this.fetchServers();
-        this.checkConsistency();
-        
-        // Handle cluster status polling based on new mode
-        if (this.isRealKubernetesMode()) {
-          this.startClusterStatusPolling();
-        } else {
-          // Stop cluster status polling if switching to demo mode
-          if (this.clusterStatusInterval) {
-            clearInterval(this.clusterStatusInterval);
-            this.clusterStatusInterval = null;
-          }
-          this.clusterStatus = 'unknown';
-        }
-      },
-      error: (error) => {
-        console.error('Failed to change mode:', error);
-        // Still refresh data even if mode change failed
-        this.fetchServers();
-        this.checkConsistency();
-      }
-    });
-  }
-
-  updateCurrentModeDisplay() {
-    this.currentModeConfig = ModeManager.getCurrentModeConfig();
-    console.log('Current mode config:', this.currentModeConfig);
-    console.log('Current servers:', this.servers);
-    
-    // Show mode selector if no mode is selected OR if no servers are available (empty array)
-    if (!this.currentModeConfig || this.servers.length === 0) {
-      console.log('No mode selected or no servers available, showing mode selector');
-      this.showModeSelector = true;
-    } else {
-      console.log('Mode selected and servers available, hiding mode selector');
-      this.showModeSelector = false;
-    }
-  }
-
-  isRealKubernetesMode(): boolean {
-    return ModeManager.isRealKubernetesMode();
-  }
-
-  toggleModeSelector() {
-    this.showModeSelector = !this.showModeSelector;
-  }
-
-  getCurrentMode() {
-    // Get current mode from backend
-    this.http.get(ApiConfig.getModeUrl()).subscribe({
-      next: (response: any) => {
-        console.log('Current mode from backend:', response);
-        
-        // If no current mode is set, try to load the last saved mode
-        if (!response.current_mode) {
-          this.loadLastSavedMode();
-        } else {
-          // Update mode display after getting backend response
-          this.updateCurrentModeDisplay();
-        }
-      },
-      error: (error) => {
-        console.error('Failed to get current mode:', error);
-        // Try to load last saved mode as fallback
-        this.loadLastSavedMode();
-      }
-    });
-  }
-
-  loadLastSavedMode() {
-    // Get last saved mode from backend
-    this.http.get(ApiConfig.getLastModeUrl()).subscribe({
-      next: (response: any) => {
-        console.log('Last saved mode:', response);
-        
-        if (response.last_mode && response.last_mode !== 'null') {
-          // Restore the last saved mode
-          this.restoreLastMode(response.last_mode);
-        } else {
-          // No last mode saved, update display to show mode selector
-          this.updateCurrentModeDisplay();
-        }
-      },
-      error: (error) => {
-        console.error('Failed to load last saved mode:', error);
-        // Still update mode display even on error
-        this.updateCurrentModeDisplay();
-      }
-    });
-  }
-
-  restoreLastMode(mode: string) {
-    // Restore the last saved mode by sending it to the backend
-    this.http.post(ApiConfig.getModeUrl(), { mode: mode }).subscribe({
-      next: (response: any) => {
-        console.log('Last mode restored successfully:', response);
-        this.updateCurrentModeDisplay();
-        this.fetchServers();
-        this.checkConsistency();
-        
-        // Handle cluster status polling based on restored mode
-        if (this.isRealKubernetesMode()) {
-          this.startClusterStatusPolling();
-        }
-      },
-      error: (error) => {
-        console.error('Failed to restore last mode:', error);
-        // Still update mode display even if restoration failed
-        this.updateCurrentModeDisplay();
-      }
-    });
-  }
-
   ngOnInit() {
     this.startConsistencyPolling();
     this.startModePolling();
@@ -289,19 +168,21 @@ export class App {
   }
 
   fetchServers() {
+    // Get data based on environment - using unified backend API
     this.http.get<any[]>(ApiConfig.getServersUrl()).subscribe({
-      next: (data) => {
-        this.servers = data;
+      next: (response) => {
+        console.log('Fetched servers:', response);
+        // Populate servers array with all available servers for the selection card
+        this.servers = response;
+        // Don't auto-select a server - let user choose from the card
         if (this.servers.length > 0 && !this.selectedServer) {
+          // Only auto-select if no server is currently selected
           this.selectedServer = this.servers[0];
         }
-        // Update mode display after fetching servers
-        this.updateCurrentModeDisplay();
       },
-      error: () => {
-        // Handle error silently or show alert
-        // Still update mode display even on error
-        this.updateCurrentModeDisplay();
+      error: (error) => {
+        console.error('Error fetching servers:', error);
+        this.servers = [];
       }
     });
   }
@@ -309,7 +190,7 @@ export class App {
   deletePod(pod: any) {
     if (!this.selectedServer) return;
     const payload = {
-      ServerName: this.selectedServer.id,
+      server_id: this.selectedServer.server_id || this.selectedServer.id,
       PodName: pod.pod_id
     };
     this.http.post(ApiConfig.getDeletePodUrl(), payload).subscribe({
@@ -332,8 +213,6 @@ export class App {
     });
   }
 
-
-
   openAddPodDialog() {
     if (!this.selectedServer) {
       this.showAlert(
@@ -347,35 +226,35 @@ export class App {
     const dialogRef = this.dialog.open(AddPodDialogComponent, {
       width: '480px',
       data: {
-        serverId: this.selectedServer.id,
-        serverName: this.selectedServer.name,
+        serverId: this.selectedServer.server_id || this.selectedServer.id,
+        serverName: this.selectedServer.server_name || this.selectedServer.name,
         serverResources: this.selectedServer.resources,
         existingPods: this.selectedServer.pods || []
       }
     });
 
     dialogRef.componentInstance.podCreated.subscribe((pod: any) => {
-      this.deployPod(pod, this.selectedServer.id);
+      this.deployPod(pod, this.selectedServer.server_id || this.selectedServer.id);
     });
   }
 
   deployPod(podData: any, serverId: string) {
-    const payload = { ...podData, ServerName: serverId };
+    const payload = { ...podData, server_id: serverId };
     this.http.post(ApiConfig.getCreatePodUrl(), payload).subscribe({
       next: () => {
         this.showAlert(
           'success',
           'Deployment Successful',
-          `Pod "${payload.PodName}" has been successfully deployed.`
+          `Pod "${podData.PodName}" has been successfully deployed to the selected server.`
         );
         this.fetchServers();
       },
       error: (err) => {
-        const errorMsg = err?.error?.error || 'Failed to deploy pod.';
+        const errorMsg = err?.error?.error || 'An error occurred during deployment.';
         this.showAlert(
           'error',
           'Deployment Failed',
-          `${errorMsg} Please verify the configuration and try again.`
+          `${errorMsg} Please check the server resources and try again.`
         );
       }
     });
@@ -496,13 +375,8 @@ export class App {
 
   get formattedPodMessage(): string {
     return this.podMessage
-      ? this.podMessage.replace(/\n/g, '<br>').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;')
+      ? this.podMessage.replace(/\n/g, '<br>')
       : '';
-  }
-
-
-  selectServer(server: any) {
-    this.selectedServer = server;
   }
 
   onConsistencyLedClick() {
@@ -631,6 +505,139 @@ export class App {
       'unknown': 'Unknown'
     };
     return statusNames[status] || 'Unknown';
+  }
+
+  onModeChanged(mode: any) {
+    // Send mode change to backend
+    this.http.post(ApiConfig.getModeUrl(), { mode: mode }).subscribe({
+      next: (response: any) => {
+        console.log('Mode changed successfully:', response);
+        // Update mode display
+        this.updateCurrentModeDisplay();
+        // Refresh data when mode changes
+        this.fetchServers();
+        this.checkConsistency();
+        
+        // Handle cluster status polling based on new mode
+        if (this.isRealKubernetesMode()) {
+          this.startClusterStatusPolling();
+        } else {
+          // Stop cluster status polling if switching to demo mode
+          if (this.clusterStatusInterval) {
+            clearInterval(this.clusterStatusInterval);
+            this.clusterStatusInterval = null;
+          }
+          this.clusterStatus = 'unknown';
+        }
+      },
+      error: (error) => {
+        console.error('Failed to change mode:', error);
+        // Still refresh data even if mode change failed
+        this.fetchServers();
+        this.checkConsistency();
+      }
+    });
+  }
+
+  updateCurrentModeDisplay() {
+    const currentMode = ModeManager.getCurrentMode();
+    this.currentModeConfig = ModeManager.getCurrentModeConfig();
+  }
+
+  isRealKubernetesMode(): boolean {
+    return ModeManager.getCurrentMode() === ResourceManagerMode.LIVE;
+  }
+
+  toggleModeSelector() {
+    this.showModeSelector = !this.showModeSelector;
+  }
+
+  selectServer(server: any) {
+    this.selectedServer = server;
+    console.log('Selected server:', server);
+    
+    // Show a brief message to confirm selection
+    this.showAlert(
+      'info',
+      'Server Selected',
+      `You are now managing: ${server.server_name || server.name}`
+    );
+  }
+
+  getCurrentMode() {
+    this.http.get<any>(ApiConfig.getModeUrl()).subscribe({
+      next: (response: any) => {
+        console.log('Current mode response:', response);
+        
+        if (response.current_mode) {
+          // Backend has a mode set
+          ModeManager.setCurrentMode(response.current_mode as ResourceManagerMode);
+          this.updateCurrentModeDisplay();
+          
+          // Start appropriate polling based on mode
+          if (this.isRealKubernetesMode()) {
+            this.startClusterStatusPolling();
+          }
+        } else {
+          // Backend has no mode set - check for last saved mode
+          this.loadLastSavedMode();
+        }
+      },
+      error: (error) => {
+        console.error('Failed to get current mode:', error);
+        // Check for last saved mode as fallback
+        this.loadLastSavedMode();
+      }
+    });
+  }
+
+  loadLastSavedMode() {
+    this.http.get<any>(ApiConfig.getLastModeUrl()).subscribe({
+      next: (response: any) => {
+        console.log('Last saved mode response:', response);
+        
+        if (response.last_mode) {
+          // Restore the last saved mode
+          this.restoreLastMode(response.last_mode);
+        } else {
+          // No saved mode - show mode selector
+          this.showModeSelector = true;
+        }
+      },
+      error: (error) => {
+        console.error('Failed to get last saved mode:', error);
+        // Show mode selector as fallback
+        this.showModeSelector = true;
+      }
+    });
+  }
+
+  restoreLastMode(mode: string) {
+    console.log('Restoring last mode:', mode);
+    
+    // Set the mode in the mode manager
+    ModeManager.setCurrentMode(mode as ResourceManagerMode);
+    this.updateCurrentModeDisplay();
+    
+    // Send mode to backend
+    this.http.post(ApiConfig.getModeUrl(), { mode: mode }).subscribe({
+      next: (response: any) => {
+        console.log('Mode restored successfully:', response);
+        this.showModeSelector = false;
+        this.fetchServers();
+        this.checkConsistency();
+        
+        // Start appropriate polling based on mode
+        if (this.isRealKubernetesMode()) {
+          this.startClusterStatusPolling();
+        }
+      },
+      error: (error) => {
+        console.error('Failed to restore mode:', error);
+        // Show mode selector if restoration failed
+        this.showModeSelector = true;
+      }
+    });
   }
 
   // Add this method to handle mode selector resetResult event

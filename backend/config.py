@@ -40,24 +40,19 @@ class Config:
         env = cls.get_environment()
         if env is None:
             return False
-        return env == Environment.DEVELOPMENT
+        return env == Environment.DEMO
     
     # Kubernetes configuration
     KUBERNETES_CONFIG = {
-        Environment.LOCAL_MOCK_DB.value: {
+        Environment.DEMO.value: {
             'auth_method': AuthMethod.LOCAL_KUBECONFIG.value,
             'default_image': DefaultValues.DEFAULT_IMAGE_DEV,
             'namespace_prefix': DefaultValues.NAMESPACE_PREFIX_DEV
         },
-        Environment.DEVELOPMENT.value: {
+        Environment.LIVE.value: {
             'auth_method': AuthMethod.LOCAL_KUBECONFIG.value,
             'default_image': DefaultValues.DEFAULT_IMAGE_DEV,
             'namespace_prefix': DefaultValues.NAMESPACE_PREFIX_DEV
-        },
-        Environment.PRODUCTION.value: {
-            'auth_method': AuthMethod.AZURE_AKS.value,
-            'default_image': DefaultValues.DEFAULT_IMAGE_PROD,
-            'namespace_prefix': DefaultValues.NAMESPACE_PREFIX_PROD
         }
     }
     
@@ -77,23 +72,17 @@ class Config:
     
     # API configuration
     API_CONFIG = {
-        Environment.LOCAL_MOCK_DB.value: {
+        Environment.DEMO.value: {
             'require_image_url': False,
             'require_k8s_auth': False,
             'enable_swagger': True,
             'cors_origins': ['http://localhost:4200', 'http://127.0.0.1:4200']
         },
-        Environment.DEVELOPMENT.value: {
+        Environment.LIVE.value: {
             'require_image_url': False,
             'require_k8s_auth': False,
             'enable_swagger': True,
             'cors_origins': ['http://localhost:4200', 'http://127.0.0.1:4200']
-        },
-        Environment.PRODUCTION.value: {
-            'require_image_url': True,
-            'require_k8s_auth': False,  # Handled by Azure
-            'enable_swagger': False,
-            'cors_origins': os.getenv(ConfigKeys.CORS_ORIGINS, '').split(',') if os.getenv(ConfigKeys.CORS_ORIGINS) else []
         }
     }
     
@@ -102,18 +91,18 @@ class Config:
         """Get Kubernetes configuration for current environment."""
         env_value = cls.get_environment_value()
         if env_value is None:
-            # No environment set - return development config as fallback
-            return cls.KUBERNETES_CONFIG[Environment.DEVELOPMENT.value]
-        return cls.KUBERNETES_CONFIG.get(env_value, cls.KUBERNETES_CONFIG[Environment.DEVELOPMENT.value])
+            # No environment set - return live config as fallback
+            return cls.KUBERNETES_CONFIG[Environment.LIVE.value]
+        return cls.KUBERNETES_CONFIG.get(env_value, cls.KUBERNETES_CONFIG[Environment.LIVE.value])
     
     @classmethod
     def get_api_config(cls) -> Dict[str, Any]:
         """Get API configuration for current environment."""
         env_value = cls.get_environment_value()
         if env_value is None:
-            # No environment set - return development config as fallback
-            return cls.API_CONFIG[Environment.DEVELOPMENT.value]
-        return cls.API_CONFIG.get(env_value, cls.API_CONFIG[Environment.DEVELOPMENT.value])
+            # No environment set - return live config as fallback
+            return cls.API_CONFIG[Environment.LIVE.value]
+        return cls.API_CONFIG.get(env_value, cls.API_CONFIG[Environment.LIVE.value])
     
     @classmethod
     def get_azure_config(cls) -> Dict[str, Any]:
@@ -126,7 +115,7 @@ class Config:
         env = cls.get_environment()
         if env is None:
             return False
-        return env == Environment.PRODUCTION
+        return env == Environment.LIVE
     
     @classmethod
     def is_development(cls) -> bool:
@@ -134,7 +123,7 @@ class Config:
         env = cls.get_environment()
         if env is None:
             return False
-        return env == Environment.DEVELOPMENT
+        return env == Environment.DEMO
     
     @classmethod
     def is_mock_demo(cls) -> bool:
@@ -142,7 +131,7 @@ class Config:
         env = cls.get_environment()
         if env is None:
             return False
-        return env == Environment.LOCAL_MOCK_DB
+        return env == Environment.DEMO
     
     @classmethod
     def get_default_image(cls) -> str:

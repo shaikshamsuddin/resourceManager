@@ -11,102 +11,63 @@ import re
 
 
 class Environment(Enum):
-    """Environment types."""
-    DEVELOPMENT = "development"
-    PRODUCTION = "production"
-    STAGING = "staging"
-    TESTING = "testing"
-    LOCAL_MOCK_DB = "local-mock-db"  # Demo mode with mock data
-
+    DEMO = "demo"
+    LIVE = "live"
 
 class Mode(Enum):
-    """Application modes for different environments."""
-    DEMO = "demo"                    # Local Mock Demo mode
-    LOCAL_KUBERNETES = "local-k8s"   # Local Kubernetes mode (minikube)
-    CLOUD_KUBERNETES = "cloud-k8s"   # Cloud Kubernetes mode (Azure AKS)
-
+    DEMO = "demo"
+    LIVE = "live"
 
 class ModeConfig:
-    """Mode configuration and mapping utilities."""
-    
-    # Mode to environment mapping
     MODE_TO_ENVIRONMENT = {
-        Mode.DEMO.value: Environment.LOCAL_MOCK_DB.value,
-        Mode.LOCAL_KUBERNETES.value: Environment.DEVELOPMENT.value,
-        Mode.CLOUD_KUBERNETES.value: Environment.PRODUCTION.value
+        Mode.DEMO.value: Environment.DEMO.value,
+        Mode.LIVE.value: Environment.LIVE.value
     }
-    
-    # Environment to mode mapping (reverse)
     ENVIRONMENT_TO_MODE = {
-        Environment.LOCAL_MOCK_DB.value: Mode.DEMO.value,
-        Environment.DEVELOPMENT.value: Mode.LOCAL_KUBERNETES.value,
-        Environment.PRODUCTION.value: Mode.CLOUD_KUBERNETES.value
+        Environment.DEMO.value: Mode.DEMO.value,
+        Environment.LIVE.value: Mode.LIVE.value
     }
-    
-    # Mode display names
     MODE_DISPLAY_NAMES = {
-        Mode.DEMO.value: "Local Mock Demo",
-        Mode.LOCAL_KUBERNETES.value: "Local Kubernetes",
-        Mode.CLOUD_KUBERNETES.value: "Cloud Kubernetes"
+        Mode.DEMO.value: "Demo Mode",
+        Mode.LIVE.value: "Live Mode"
     }
-    
-    # Mode descriptions
     MODE_DESCRIPTIONS = {
         Mode.DEMO.value: "Demo mode with realistic mock data",
-        Mode.LOCAL_KUBERNETES.value: "Local Kubernetes cluster (minikube)",
-        Mode.CLOUD_KUBERNETES.value: "Cloud Kubernetes cluster (Azure AKS, Azure VM, GKE)"
+        Mode.LIVE.value: "Live mode managing all real servers via master.json"
     }
-    
-    # Mode capabilities
     MODE_CAPABILITIES = {
         Mode.DEMO.value: {
             "real_kubernetes": False,
             "port_management": False,
             "service_creation": False,
-            "external_access": False
+            "external_access": False,
+            "multi_server": False
         },
-        Mode.LOCAL_KUBERNETES.value: {
+        Mode.LIVE.value: {
             "real_kubernetes": True,
             "port_management": True,
             "service_creation": True,
-            "external_access": True
-        },
-        Mode.CLOUD_KUBERNETES.value: {
-            "real_kubernetes": True,
-            "port_management": True,
-            "service_creation": True,
-            "external_access": True
+            "external_access": True,
+            "multi_server": True
         }
     }
-    
     @classmethod
     def get_environment_for_mode(cls, mode: str) -> str:
-        """Get environment for a given mode."""
-        return cls.MODE_TO_ENVIRONMENT.get(mode, Environment.LOCAL_MOCK_DB.value)
-    
+        return cls.MODE_TO_ENVIRONMENT.get(mode, Environment.DEMO.value)
     @classmethod
     def get_mode_for_environment(cls, environment: str) -> str:
-        """Get mode for a given environment."""
         return cls.ENVIRONMENT_TO_MODE.get(environment, Mode.DEMO.value)
-    
     @classmethod
     def get_display_name(cls, mode: str) -> str:
-        """Get display name for a mode."""
         return cls.MODE_DISPLAY_NAMES.get(mode, "Unknown Mode")
-    
     @classmethod
     def get_description(cls, mode: str) -> str:
-        """Get description for a mode."""
         return cls.MODE_DESCRIPTIONS.get(mode, "Unknown mode")
-    
     @classmethod
     def get_capabilities(cls, mode: str) -> dict:
-        """Get capabilities for a mode."""
         return cls.MODE_CAPABILITIES.get(mode, {})
-    
     @classmethod
     def supports_feature(cls, mode: str, feature: str) -> bool:
-        """Check if a mode supports a specific feature."""
         capabilities = cls.get_capabilities(mode)
         return capabilities.get(feature, False)
 
