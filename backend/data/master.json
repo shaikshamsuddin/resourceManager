@@ -1,0 +1,72 @@
+{
+  "servers": [
+    {
+      "id": "azure-vm-01",
+      "name": "Azure VM MicroK8s",
+      "type": "kubernetes",
+      "environment": "live",
+      "connection_coordinates": {
+        "method": "kubeconfig",
+        "host": "4.246.178.26",
+        "port": 16443,
+        "username": "azureuser",
+        "kubeconfig_path": "./azure_vm_kubeconfig_updated",
+        "insecure_skip_tls_verify": true
+      },
+      "metadata": {
+        "location": "Azure East US",
+        "environment": "production",
+        "description": "Azure VM with MicroK8s cluster"
+      }
+    },
+    {
+      "id": "local-minikube",
+      "name": "Local Development",
+      "type": "kubernetes",
+      "environment": "live",
+      "connection_coordinates": {
+        "method": "local",
+        "kubeconfig_path": "~/.kube/config"
+      },
+      "metadata": {
+        "location": "local",
+        "environment": "development",
+        "description": "Local minikube cluster"
+      }
+    },
+    {
+      "id": "demo-server-01",
+      "name": "Demo Server Alpha",
+      "type": "mock",
+      "environment": "demo",
+      "connection_coordinates": {
+        "method": "mock"
+      },
+      "metadata": {
+        "location": "Demo Environment",
+        "environment": "demo",
+        "description": "Mock server for demonstration purposes"
+      }
+    },
+    {
+      "id": "demo-server-02", 
+      "name": "Demo Server Beta",
+      "type": "mock",
+      "environment": "demo",
+      "connection_coordinates": {
+        "method": "mock"
+      },
+      "metadata": {
+        "location": "Demo Environment",
+        "environment": "demo",
+        "description": "Mock server for demonstration purposes"
+      }
+    }
+  ],
+  "config": {
+    "default_server": "azure-vm-01",
+    "refresh_interval": 30,
+    "timeout": 30,
+    "max_retries": 3
+  }
+} 

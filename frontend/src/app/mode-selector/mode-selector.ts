@@ -338,9 +338,9 @@ export class ModeSelectorComponent {
   }
   onResetMode(mode: ResourceManagerMode, event: MouseEvent): void {
     event.stopPropagation();
-    const modeLabel = mode === ResourceManagerMode.DEMO ? 'Local Mock Demo' : (mode === ResourceManagerMode.LOCAL_K8S ? 'Local Kubernetes' : 'Cloud Kubernetes');
+    const modeLabel = mode === ResourceManagerMode.DEMO ? 'Demo Mode' : 'Live Mode';
     if (confirm(`Are you sure you want to reset all data for ${modeLabel}? This will delete all pods and reset resources.`)) {
-      const modeParam = mode === ResourceManagerMode.DEMO ? 'demo' : (mode === ResourceManagerMode.LOCAL_K8S ? 'local-k8s' : 'cloud-k8s');
+      const modeParam = mode === ResourceManagerMode.DEMO ? 'demo' : 'live';
       this.http.post(`/reset-mode?mode=${modeParam}`, {}).subscribe({
         next: (res: any) => {
           this.resetResult.emit({ type: res.type || 'success', message: res.message || res.error || 'Reset completed.' });

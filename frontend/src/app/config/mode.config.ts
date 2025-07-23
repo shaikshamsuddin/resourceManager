@@ -4,9 +4,8 @@
  */
 
 export enum ResourceManagerMode {
-  DEMO = 'demo',                    // Mock data for showcasing
-  LOCAL_K8S = 'local-k8s',          // Local Kubernetes (minikube)
-  CLOUD_K8S = 'cloud-k8s'          // Cloud Kubernetes (Azure/GCP/AWS)
+  DEMO = 'demo',
+  LIVE = 'live'
 }
 
 export interface ModeConfig {
@@ -22,42 +21,30 @@ export interface ModeConfig {
 export const MODE_CONFIGS: Record<ResourceManagerMode, ModeConfig> = {
   [ResourceManagerMode.DEMO]: {
     id: ResourceManagerMode.DEMO,
-    name: 'Local Mock Demo',
-    description: 'Showcase functionality with realistic mock data',
+    name: 'Demo Mode',
+    description: 'Work with realistic demo servers and mock data',
     icon: 'play_circle',
     color: '#4CAF50',
-    backendEnv: 'local-mock-db',
+    backendEnv: 'demo',
     features: [
+      'Demo servers only',
       'Realistic mock data',
       'Full UI functionality',
-      'No Kubernetes required',
-      'Perfect for demos'
+      'No real Kubernetes required',
+      'Perfect for demos and testing'
     ]
   },
-  [ResourceManagerMode.LOCAL_K8S]: {
-    id: ResourceManagerMode.LOCAL_K8S,
-    name: 'Local Kubernetes',
-    description: 'Real Kubernetes cluster (minikube)',
-    icon: 'computer',
-    color: '#2196F3',
-    backendEnv: 'development',
-    features: [
-      'Real Kubernetes pods',
-      'Local resource management',
-      'Minikube integration',
-      'Full cluster operations'
-    ]
-  },
-  [ResourceManagerMode.CLOUD_K8S]: {
-    id: ResourceManagerMode.CLOUD_K8S,
-    name: 'Cloud Kubernetes',
-    description: 'Production cloud clusters (Azure/GCP/AWS)',
+  [ResourceManagerMode.LIVE]: {
+    id: ResourceManagerMode.LIVE,
+    name: 'Live Mode',
+    description: 'Work with real Kubernetes clusters and infrastructure',
     icon: 'cloud',
-    color: '#FF9800',
-    backendEnv: 'production',
+    color: '#2196F3',
+    backendEnv: 'live',
     features: [
-      'Production clusters',
-      'Cloud resource management',
+      'Real clusters only',
+      'Live resource management',
+      'Production/Dev clusters',
       'Enterprise features',
       'Scalable infrastructure'
     ]
@@ -131,8 +118,7 @@ export class ModeManager {
    * Check if current mode uses real Kubernetes
    */
   static isRealKubernetesMode(): boolean {
-    return this.currentMode === ResourceManagerMode.LOCAL_K8S || 
-           this.currentMode === ResourceManagerMode.CLOUD_K8S;
+    return this.currentMode === ResourceManagerMode.LIVE;
   }
 
   /**

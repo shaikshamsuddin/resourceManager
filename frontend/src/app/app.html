@@ -43,6 +43,7 @@
       <div class="mode-icon" [style.background-color]="currentModeConfig?.color">
         <mat-icon>{{ currentModeConfig?.icon }}</mat-icon>
       </div>
+      <span class="mode-label">{{ currentModeConfig?.name }}</span>
     </div>
   </div>
 </div>
@@ -81,10 +82,11 @@
 <mat-card class="choose-server-card">
   <div class="choose-server-title">Choose a Server to Deploy Pod</div>
   <div class="choose-server-row">
-    <mat-card *ngFor="let server of servers" class="server-sub-card" [class.selected]="server === selectedServer" (click)="selectServer(server)">
-      <div class="server-name">{{ server.name }}</div>
-      <div class="server-ip">{{ server.ip || 'N/A' }}</div>
+    <mat-card *ngFor="let server of servers" class="server-sub-card" [class.selected]="server.server_id === selectedServer?.server_id || server.id === selectedServer?.id" (click)="selectServer(server)">
+      <div class="server-name">{{ server.server_name || server.name }}</div>
+      <div class="server-ip">{{ server.metadata?.location || server.ip || 'N/A' }}</div>
       <div class="server-status" [class.online]="server.status === 'Online'" [class.offline]="server.status === 'Offline'">{{ server.status || 'Online' }}</div>
+      <div class="server-pods" *ngIf="server.pods">{{ server.pods.length }} pods</div>
     </mat-card>
   </div>
 </mat-card>
@@ -92,16 +94,16 @@
 <!-- 3. Server Overview Card -->
 <mat-card class="overview-card">
   <div class="overview-title">Server Overview</div>
-  <div class="overview-desc">Detailed status and resource utilization of all Kubernetes servers.</div>
+  <div class="overview-desc">Detailed status and resource utilization of the selected Kubernetes server.</div>
   <div style="max-height: 400px; overflow: auto;">
-    <table mat-table [dataSource]="servers" class="mat-elevation-z1">
+    <table mat-table [dataSource]="selectedServer ? [selectedServer] : []" class="mat-elevation-z1">
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef> Server Name </th>
-        <td mat-cell *matCellDef="let s">{{ s.name }}</td>
+        <td mat-cell *matCellDef="let s">{{ s.server_name || s.name }}</td>
       </ng-container>
       <ng-container matColumnDef="ip">
-        <th mat-header-cell *matHeaderCellDef> IP Address </th>
-        <td mat-cell *matCellDef="let s">{{ s.ip || 'N/A' }}</td>
+        <th mat-header-cell *matHeaderCellDef> Location </th>
+        <td mat-cell *matCellDef="let s">{{ s.metadata?.location || s.ip || 'N/A' }}</td>
       </ng-container>
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef> Status </th>

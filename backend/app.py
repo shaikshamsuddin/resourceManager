@@ -21,8 +21,7 @@ from utils import (
     update_pod_mdem
 )
 from providers.mock_data_provider import mock_data_provider
-from providers.kubernetes_provider import local_kubernetes_provider
-from providers.cloud_kubernetes_provider import cloud_kubernetes_provider
+from server_manager import server_manager
 from health_monitor import health_monitor
 from constants import Ports, PodStatus, Environment, Mode, ModeConfig, ConfigKeys
 
@@ -181,19 +180,27 @@ def index():
     '''
 
 @app.route('/servers', methods=['GET'])
-def get_servers_mdem():
+def get_servers():
     """
-    List all servers and pods (real Kubernetes data or mock data, depending on mode or query param)
+    List all servers and pods from all configured clusters
     ---
     tags:
       - Servers
+    parameters:
+      - in: query
+        name: server_id
+        type: string
+        required: false
+        description: Specific server ID to get data for
     responses:
       200:
-        description: List of all servers and their pods from Kubernetes
+        description: List of all servers and their pods
         examples:
           application/json:
-            - id: node-01
-              name: minikube
+            - server_id: azure-vm-01
+              server_name: Azure VM MicroK8s
+              server_type: kubernetes
+              status: Online
               resources:
                 total: { gpus: 0, ram_gb: 8, storage_gb: 60 }
                 available: { gpus: 0, ram_gb: 6, storage_gb: 58 }
@@ -206,129 +213,117 @@ def get_servers_mdem():
             details: "<details>"
     """
     try:
-        # Accept ?mode=demo|local-k8s|cloud-k8s
-        mode_param = request.args.get('mode')
-        if mode_param:
-            mode = mode_param
+        # Get current environment to filter servers
+        current_env = Config.get_environment_value()
+        if current_env == 'unified':
+            current_env = 'live'
+        
+        # Check if specific server is requested
+        server_id = request.args.get('server_id')
+        
+        if server_id:
+            # Get specific server data
+            server_data = server_manager.get_server_with_pods(server_id)
+            if server_data:
+                # Check if server matches current environment
+                if current_env and server_data.get("environment") != current_env:
+                    return jsonify({'error': f'Server {server_id} not available in current mode'}), 404
+                return jsonify([server_data]), 200
+            else:
+                return jsonify({'error': f'Server {server_id} not found'}), 404
         else:
-            # Use current mode from config
-            env = Config.get_environment_value()
-            if env is None:
-                # No environment set - return empty response
-                return jsonify([]), 200
-            mode = ModeConfig.get_mode_for_environment(env)
-
-        # Validate mode
-        valid_modes = [Mode.DEMO.value, Mode.LOCAL_KUBERNETES.value, Mode.CLOUD_KUBERNETES.value]
-        if mode not in valid_modes:
-            return jsonify({'type': 'error', 'message': f'Invalid mode: {mode}'}), 400
-
-        if mode == Mode.DEMO.value:
-            servers = mock_data_provider.get_servers_with_pods_mdem()
-        elif mode == Mode.LOCAL_KUBERNETES.value:
-            servers = local_kubernetes_provider.get_servers_with_pods()
-        elif mode == Mode.CLOUD_KUBERNETES.value:
-            servers = cloud_kubernetes_provider.get_servers_with_pods()
-        else:
-            servers = []
-        return jsonify(servers), 200
+            # Get all servers data filtered by environment
+            servers = server_manager.get_all_servers_with_pods(environment=current_env)
+            return jsonify(servers), 200
+            
     except Exception as e:
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @app.route('/create', methods=['POST'])
-def create_pod_mdem():
+def create_pod():
+    """
+    Create a new pod on a specific server
+    ---
+    tags:
+      - Pods
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            server_id:
+              type: string
+              description: Server ID to create pod on
+            PodName:
+              type: string
+            Resources:
+              type: object
+            Owner:
+              type: string
+    responses:
+      200:
+        description: Pod created successfully
+      400:
+        description: Validation error
+      404:
+        description: Server not found
+      500:
+        description: Server error
+    """
     try:
         req = request.json
         if req is None:
             return jsonify({'error': 'Invalid JSON data'}), 400
-        # Get required fields based on environment
-        required_fields = ["ServerName", "PodName", "Resources"]
-        if Config.require_image_url():
-            required_fields.append("image_url")
-        errors = []
-        missing = [f for f in required_fields if f not in req or not req[f]]
-        if missing:
-            errors.append(f"Missing required field: {', '.join(missing)}")
-
+        
+        # Get server_id from request
+        server_id = req.get('server_id')
+        if not server_id:
+            return jsonify({'error': 'server_id is required'}), 400
+        
+        # Validate pod name
         pod_name = req.get('PodName', '')
         if not isinstance(pod_name, str) or not pod_name:
-            errors.append("Pod name is required.")
-        else:
-            if not pod_name.islower():
-                errors.append("Pod name must be lowercase.")
-            if "_" in pod_name:
-                errors.append("Pod name must not contain underscores.")
+            return jsonify({'error': 'Pod name is required'}), 400
         
-        server_id = req.get('ServerName')
+        if not pod_name.islower():
+            return jsonify({'error': 'Pod name must be lowercase'}), 400
+        
+        if "_" in pod_name:
+            return jsonify({'error': 'Pod name must not contain underscores'}), 400
+        
+        # Validate resources
         resources = req.get('Resources', {})
-        owner = req.get('Owner', 'unknown')
-        
-        # Get data based on environment
-        if Config.get_environment_value() == Environment.LOCAL_MOCK_DB.value:
-            servers = mock_data_provider.get_servers_with_pods_mdem()
-        elif Config.get_environment_value() == Environment.DEVELOPMENT.value:
-            servers = local_kubernetes_provider.get_servers_with_pods()
-        elif Config.get_environment_value() == Environment.PRODUCTION.value:
-            servers = cloud_kubernetes_provider.get_servers_with_pods()
-        else:
-            servers = mock_data_provider.get_servers_with_pods_mdem()
-        
-        server = next((s for s in servers if s['id'] == server_id), None)
-        if not server:
-            return jsonify({'error': f"Server '{server_id}' not found."}), 404
-            
         if not isinstance(resources, dict):
             return jsonify({'error': 'Resources must be a dictionary/object'}), 400
-            
-        ok, err = validate_resource_request(server, resources)
+        
+        # Get server data for validation
+        server_data = server_manager.get_server_with_pods(server_id)
+        if not server_data:
+            return jsonify({'error': f"Server '{server_id}' not found"}), 404
+        
+        # Validate resource request
+        ok, err = validate_resource_request(server_data, resources)
         if not ok:
-            errors.append(err)
-            return jsonify({'type': 'error', 'message': "\n".join(errors)}), 400
-            
-        # Validate resources against real Kubernetes node
-        if not isinstance(server.get('resources'), dict):
-            errors.append('Server resources not available')
-            return jsonify({'type': 'error', 'message': "\n".join(errors)}), 400
-            
-        # Check if resources are available
-        available = server['resources'].get('available', {})
-        for key in ['gpus', 'ram_gb', 'storage_gb']:
-            if resources.get(key, 0) > available.get(key, 0):
-                errors.append(f"Insufficient {key}: requested {resources.get(key, 0)}, available {available.get(key, 0)}")
-                return jsonify({'type': 'error', 'message': "\n".join(errors)}), 400
+            return jsonify({'error': err}), 400
         
-        # Create pod object with port configuration
-        pod = create_pod_mdem_util({
-            'PodName': pod_name,
-            'Resources': resources,
-            'Owner': owner,
-            'container_port': req.get('container_port', 80),
-            'service_port': req.get('service_port', 80),
-            'expose_service': req.get('expose_service', False)
-        }, server_id)
+        # Create pod using server manager
+        result = server_manager.create_pod(server_id, req)
         
-        try:
-            if Config.get_environment_value() == Environment.LOCAL_MOCK_DB.value:
-                # Add to mock data
-                if mock_data_provider.add_pod_mdem(server_id, pod):
-                    return jsonify({'type': 'success', 'message': 'Pod created', 'pod': pod}), 200
-                else:
-                    return jsonify({'error': 'Failed to add pod to mock data'}), 500
-            else:
-                # Create real Kubernetes resources
-                create_pod_k8s(pod)
-                return jsonify({'type': 'success', 'message': 'Pod created', 'pod': pod}), 200
+        if 'error' in result:
+            return jsonify(result), 500
+        else:
+            return jsonify({'type': 'success', 'message': 'Pod created', 'pod': result}), 200
             
-        except Exception as e:
-            return jsonify({'error': f'Pod creation error: {str(e)}'}), 500
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
 
 @app.route('/delete', methods=['POST'])
-def delete_pod_mdem():
+def delete_pod():
     """
-    Delete a pod
+    Delete a pod from a specific server
     ---
     tags:
       - Pods
@@ -339,98 +334,54 @@ def delete_pod_mdem():
         schema:
           type: object
           properties:
+            server_id:
+              type: string
+              description: Server ID to delete pod from
             PodName:
               type: string
     responses:
       200:
-        description: Pod deleted
-        examples:
-          application/json:
-            message: Pod deleted
+        description: Pod deleted successfully
       400:
-        description: Missing fields
-        examples:
-          application/json:
-            error: "Missing required field: PodName"
+        description: Validation error
       404:
         description: Pod not found
-        examples:
-          application/json:
-            error: "Pod 'testpod123' not found on any server."
       500:
         description: Server error
-        examples:
-          application/json:
-            error: "Server error"
-            details: "<details>"
     """
     try:
         req = request.json
         if req is None:
             return jsonify({'error': 'Invalid JSON data'}), 400
-        required_fields = ["PodName"]
-        missing = [f for f in required_fields if f not in req or not req[f]]
-        if missing:
-            return jsonify({'error': f"Missing required field: {', '.join(missing)}"}), 400
-        pod_name = req['PodName']
         
-        # Handle deletion based on environment
-        if Config.get_environment_value() == Environment.LOCAL_MOCK_DB.value:
-            # Delete from mock data
-            if mock_data_provider.remove_pod_mdem(pod_name):
-                return jsonify({'type': 'success', 'message': 'Pod deleted'}), 200
+        # Get server_id and pod_name from request
+        server_id = req.get('server_id')
+        pod_name = req.get('PodName')
+        
+        if not server_id:
+            return jsonify({'error': 'server_id is required'}), 400
+        
+        if not pod_name:
+            return jsonify({'error': 'PodName is required'}), 400
+        
+        # Delete pod using server manager
+        result = server_manager.delete_pod(server_id, pod_name)
+        
+        if 'error' in result:
+            if 'not found' in result['error'].lower():
+                return jsonify(result), 404
             else:
-                return jsonify({'error': f"Pod '{pod_name}' not found on any server."}), 404
+                return jsonify(result), 500
         else:
-            # Delete from real Kubernetes
-            try:
-                # Try to find the pod in the cluster to get its namespace
-                current_env = Config.get_environment_value()
-                if current_env == Environment.DEVELOPMENT.value:
-                    servers = local_kubernetes_provider.get_servers_with_pods()
-                elif current_env == Environment.PRODUCTION.value:
-                    servers = cloud_kubernetes_provider.get_servers_with_pods()
-                else:
-                    servers = []
-                
-                # Find the pod and its namespace
-                pod_found = False
-                pod_namespace = 'default'  # Default namespace
-                
-                for server in servers:
-                    for pod in server.get('pods', []):
-                        if pod.get('pod_id') == pod_name:
-                            pod_found = True
-                            # Use the namespace from pod data if available
-                            pod_namespace = pod.get('namespace', 'default')
-                            break
-                    if pod_found:
-                        break
-                
-                if not pod_found:
-                    return jsonify({'type': 'error', 'message': f"Pod '{pod_name}' not found in cluster."}), 404
-                
-                # Delete the pod with the correct namespace
-                delete_pod_k8s({
-                    'pod_id': pod_name,
-                    'namespace': pod_namespace
-                })
-                return jsonify({'type': 'success', 'message': f'Pod {pod_name} deleted from namespace {pod_namespace}\n\tStatus: Success'}), 200
-            except Exception as e:
-                error_msg = str(e)
-                if "not found" in error_msg.lower():
-                    return jsonify({'type': 'error', 'message': f"Pod '{pod_name}' not found in cluster."}), 404
-                elif "pending" in error_msg.lower() or "terminating" in error_msg.lower():
-                    return jsonify({'type': 'error', 'message': f"Pod '{pod_name}' is in a state that prevents deletion. Please wait for it to stabilize or try again later."}), 400
-                else:
-                    return jsonify({'type': 'error', 'message': f'Kubernetes deletion error: {error_msg}'}), 500
+            return jsonify({'type': 'success', 'message': 'Pod deleted'}), 200
+            
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
 @app.route('/update', methods=['POST'])
-def update_pod_mdem():
+def update_pod():
     """
-    Update a pod
+    Update a pod on a specific server
     ---
     tags:
       - Pods
@@ -441,125 +392,51 @@ def update_pod_mdem():
         schema:
           type: object
           properties:
-            ServerName:
+            server_id:
               type: string
+              description: Server ID to update pod on
             PodName:
               type: string
             Resources:
               type: object
-              properties:
-                gpus:
-                  type: integer
-                ram_gb:
-                  type: integer
-                storage_gb:
-                  type: integer
-            image_url:
-              type: string
-            machine_ip:
-              type: string
             Owner:
               type: string
     responses:
       200:
-        description: Pod updated
-        examples:
-          application/json:
-            message: Pod updated
-            pod:
-              pod_id: testpod123
-              owner: test-team
-              status: running
-              timestamp: 2024-07-01T12:00:00Z
-              requested:
-                gpus: 1
-                ram_gb: 64
-                storage_gb: 100
-              image_url: https://docker.io/library/nginx:latest
-              registery_url: docker.io
-              image_name: library/nginx
-              image_tag: latest
+        description: Pod updated successfully
       400:
-        description: Missing fields or validation error
-        examples:
-          application/json:
-            error: "Missing required field: PodName"
+        description: Validation error
       404:
-        description: Server or Pod not found
-        examples:
-          application/json:
-            error: "Pod 'testpod123' not found on server 'server-01'."
+        description: Pod not found
       500:
         description: Server error
-        examples:
-          application/json:
-            error: "Server error"
-            details: "<details>"
     """
     try:
         req = request.json
         if req is None:
             return jsonify({'error': 'Invalid JSON data'}), 400
-        required_fields = ["ServerName", "PodName"]
-        missing = [f for f in required_fields if f not in req or not req[f]]
-        if missing:
-            return jsonify({'error': f"Missing required field: {', '.join(missing)}"}), 400
-
-        server_id = req['ServerName']
-        pod_name = req['PodName']
-        data = load_data()
         
-        # Find server and pod
-        server = next((s for s in data if s['id'] == server_id), None)
-        if not server:
-            return jsonify({'error': f"Server '{server_id}' not found."}), 404
+        # Get server_id and pod_name from request
+        server_id = req.get('server_id')
+        pod_name = req.get('PodName')
         
-        pod = next((p for p in server['pods'] if p['pod_id'] == pod_name), None)
-        if not pod:
-            return jsonify({'error': f"Pod '{pod_name}' not found on server '{server_id}'."}), 404
-
-        # Handle resource updates
-        if 'Resources' in req and isinstance(req['Resources'], dict):
-            old_resources = pod.get('requested', {})
-            new_resources = req['Resources']
-            
-            # Return old resources to available pool
-            for key in ['gpus', 'ram_gb', 'storage_gb']:
-                server['resources']['available'][key] += old_resources.get(key, 0)
-            
-            # Validate new resource request
-            ok, err = validate_resource_request(server, new_resources)
-            if not ok:
-                # Restore old resources if validation fails
-                for key in ['gpus', 'ram_gb', 'storage_gb']:
-                    server['resources']['available'][key] -= old_resources.get(key, 0)
-                return jsonify({'type': 'error', 'message': err.replace(' | ', '\n')}), 400
-            
-            # Allocate new resources
-            for key in ['gpus', 'ram_gb', 'storage_gb']:
-                server['resources']['available'][key] -= new_resources.get(key, 0)
-            
-            # Update pod's requested resources
-            pod['requested'] = new_resources
-
-        # Update other fields
-        if 'Owner' in req:
-            pod['owner'] = req['Owner']
+        if not server_id:
+            return jsonify({'error': 'server_id is required'}), 400
         
-        # Image URL handling removed - using default nginx:latest
-
-        # Update timestamp using utility function
-        updated_pod = update_pod_mdem({
-            'PodName': pod_name,
-            'Resources': pod['requested'],
-            'image_url': pod['image_url'],
-            'Owner': pod['owner']
-        }, server_id)
-        pod['timestamp'] = updated_pod['timestamp']
-
-        save_data(data)
-        return jsonify({'type': 'success', 'message': 'Pod updated', 'pod': pod}), 200
-
+        if not pod_name:
+            return jsonify({'error': 'PodName is required'}), 400
+        
+        # Update pod using server manager
+        result = server_manager.update_pod(server_id, req)
+        
+        if 'error' in result:
+            if 'not found' in result['error'].lower():
+                return jsonify(result), 404
+            else:
+                return jsonify(result), 500
+        else:
+            return jsonify({'type': 'success', 'message': 'Pod updated', 'pod': result}), 200
+            
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
