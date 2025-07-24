@@ -22,7 +22,6 @@ export interface ServerConfigData {
   password?: string;
   name?: string;
   environment?: string;
-  port?: number;
   location?: string;
   description?: string;
   configured_by?: string;
@@ -128,10 +127,12 @@ export interface ServerConfigData {
             <ul>
               <li>Connect to your Azure VM using SSH</li>
               <li>Fetch the Kubernetes configuration (kubeconfig)</li>
+              <li>Extract server address and port from the kubeconfig</li>
               <li>Update server addresses and connection details</li>
               <li>Save configuration files and update the system</li>
               <li>Test the connection to verify everything works</li>
             </ul>
+            <p><strong>Note:</strong> The port number will be automatically extracted from the kubeconfig file - no need to specify it manually.</p>
           </div>
         </div>
 
@@ -544,10 +545,10 @@ export class ServerConfigDialogComponent implements OnInit {
     
     // Auto-generate server details based on VM IP
     const enhancedConfigData = {
-      ...configData,
+      host: configData.vm_ip,  // Map vm_ip to host for backend
+      username: configData.username,
+      password: configData.password,
       name: `Azure VM Kubernetes (${configData.vm_ip})`,
-      environment: 'live',
-      port: 16443,
       location: 'Azure VM',
       description: `Kubernetes cluster on Azure VM ${configData.vm_ip}`,
       configured_by: 'api'
@@ -558,7 +559,7 @@ export class ServerConfigDialogComponent implements OnInit {
         next: (response: any) => {
           this.isConfiguring = false;
           
-          if (response.status === 'success') {
+          if (response.type === 'success') {
             // Success: Close dialog and show success message
             this.showSnackBar('Server configured successfully!', 'success');
             this.dialogRef.close({

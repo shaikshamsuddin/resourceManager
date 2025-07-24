@@ -56,31 +56,100 @@ class CloudKubernetesProvider:
             raise
     
     def _load_kubeconfig_from_data(self, kubeconfig_data: Dict):
-        """Load kubeconfig from data dictionary."""
+        """Load kubeconfig from data dictionary with fallback authentication."""
         try:
             import tempfile
             import os
             
-            # Create temporary kubeconfig file
-            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.yaml') as temp_file:
-                import yaml
-                yaml.dump(kubeconfig_data, temp_file)
-                temp_file_path = temp_file.name
+            # First, try certificate-based authentication (primary method)
+            users = kubeconfig_data.get('users', [])
+            if users and len(users) > 0:
+                user = users[0].get('user', {})
+                if 'client-certificate-data' in user and 'client-key-data' in user:
+                    print("🔐 Attempting certificate-based authentication...")
+                    try:
+                        # Create temporary kubeconfig file for certificate-based auth
+                        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.yaml') as temp_file:
+                            import yaml
+                            yaml.dump(kubeconfig_data, temp_file)
+                            temp_file_path = temp_file.name
+                        
+                        # Load the kubeconfig
+                        k8s_config.load_kube_config(config_file=temp_file_path)
+                        
+                        # Create API clients with the loaded configuration
+                        self.core_v1 = client.CoreV1Api()
+                        self.apps_v1 = client.AppsV1Api()
+                        
+                        # Clean up temporary file
+                        os.unlink(temp_file_path)
+                        
+                        print("✅ Certificate-based authentication successful")
+                        return
+                        
+                    except Exception as cert_error:
+                        print(f"❌ Certificate-based authentication failed: {cert_error}")
+                        # Clean up temp file if it exists
+                        if 'temp_file_path' in locals():
+                            try:
+                                os.unlink(temp_file_path)
+                            except:
+                                pass
+                        # Continue to fallback authentication
             
-            # Load the kubeconfig
-            k8s_config.load_kube_config(config_file=temp_file_path)
+            # Fallback: Try username/password authentication
+            if users and len(users) > 0:
+                user = users[0].get('user', {})
+                if 'username' in user and 'password' in user:
+                    print("🔑 Attempting username/password authentication (fallback)...")
+                    try:
+                        self._load_kubeconfig_with_credentials(kubeconfig_data)
+                        print("✅ Username/password authentication successful")
+                        return
+                    except Exception as cred_error:
+                        print(f"❌ Username/password authentication failed: {cred_error}")
+                        raise Exception(f"Both certificate and username/password authentication failed")
             
-            # Create API clients with the loaded configuration
-            self.core_v1 = client.CoreV1Api()
-            self.apps_v1 = client.AppsV1Api()
-            
-            # Clean up temporary file
-            os.unlink(temp_file_path)
-            
-            print("Successfully loaded kubeconfig from data")
+            # If we get here, no valid authentication method found
+            raise Exception("No valid authentication method found in kubeconfig")
             
         except Exception as e:
             print(f"Failed to load kubeconfig from data: {e}")
+            raise
+    
+    def _load_kubeconfig_with_credentials(self, kubeconfig_data: Dict):
+        """Load kubeconfig with username/password authentication."""
+        try:
+            # Extract cluster and user info
+            clusters = kubeconfig_data.get('clusters', [])
+            users = kubeconfig_data.get('users', [])
+            
+            if not clusters or not users:
+                raise Exception("Invalid kubeconfig: missing clusters or users")
+            
+            cluster = clusters[0]
+            user = users[0]
+            
+            # Get connection details
+            server = cluster['cluster']['server']
+            username = user['user']['username']
+            password = user['user']['password']
+            
+            # Create configuration with basic auth
+            configuration = client.Configuration()
+            configuration.host = server
+            configuration.username = username
+            configuration.password = password
+            configuration.verify_ssl = False  # For Azure VM connections
+            
+            # Create API clients
+            self.core_v1 = client.CoreV1Api(api_client=client.ApiClient(configuration))
+            self.apps_v1 = client.AppsV1Api(api_client=client.ApiClient(configuration))
+            
+            print(f"Successfully loaded kubeconfig with credentials for {username}@{server}")
+            
+        except Exception as e:
+            print(f"Failed to load kubeconfig with credentials: {e}")
             raise
     
     def _load_kubeconfig_from_file(self, kubeconfig_path: str):

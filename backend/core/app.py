@@ -36,6 +36,9 @@ from config.constants import Ports, PodStatus, ConfigKeys, APP_CONFIG
 # Import server configuration API
 from core.server_configuration_api import server_config_bp
 
+# Import background refresh service
+from core.background_refresh_service import background_refresh_service
+
 app = Flask(__name__)
 
 # Configure CORS based on environment
@@ -555,6 +558,9 @@ def detailed_health_check():
 if __name__ == '__main__':
     # Start health monitoring
     health_monitor.start_monitoring()
+    
+    # Start background refresh service
+    background_refresh_service.start()
     
     # Get port from configuration
     port = Ports.get_backend_port()

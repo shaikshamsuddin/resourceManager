@@ -32,8 +32,12 @@ class ServerManager:
     
     def _initialize_providers(self):
         """Initialize providers for all configured servers."""
+        print(f"🔧 Initializing providers for {len(self.master_config.get('servers', []))} servers")
+        
         for server in self.master_config.get("servers", []):
             server_id = server.get("id")
+            print(f"🔧 Processing server: {server_id}")
+            
             if server_id:
                 try:
                     provider = self._create_provider(server)
@@ -42,13 +46,16 @@ class ServerManager:
                             "provider": provider,
                             "config": server
                         }
-                        print(f"✅ Created provider for server: {server_id} (lazy initialization)")
+                        print(f"✅ Created provider for server: {server_id}")
                     else:
                         print(f"⚠️  No provider created for server: {server_id}")
                 except Exception as e:
                     print(f"❌ Failed to create provider for {server_id}: {e}")
                     import traceback
                     traceback.print_exc()
+        
+        print(f"🔧 Total providers initialized: {len(self.server_providers)}")
+        print(f"🔧 Provider IDs: {list(self.server_providers.keys())}")
     
     def _create_provider(self, server_config: Dict):
         """Create appropriate provider based on server type and connection method."""
@@ -56,17 +63,34 @@ class ServerManager:
         connection_coords = server_config.get("connection_coordinates", {})
         connection_method = connection_coords.get("method")
         
+        print(f"🔧 Creating provider for server {server_config.get('id')}:")
+        print(f"   - Type: {server_type}")
+        print(f"   - Connection method: {connection_method}")
+        print(f"   - Host: {connection_coords.get('host')}")
+        
         if server_type == "kubernetes":
             # Use CloudKubernetesProvider for Azure VM or cloud connections
             if connection_method == "kubeconfig" and connection_coords.get("host"):
-                print(f"Using CloudKubernetesProvider for {server_config.get('id')} with kubeconfig")
-                return CloudKubernetesProvider(server_config)
+                print(f"✅ Using CloudKubernetesProvider for {server_config.get('id')} with kubeconfig")
+                try:
+                    provider = CloudKubernetesProvider(server_config)
+                    print(f"✅ CloudKubernetesProvider created successfully")
+                    return provider
+                except Exception as e:
+                    print(f"❌ Failed to create CloudKubernetesProvider: {e}")
+                    return None
             else:
                 # Use LocalKubernetesProvider for local connections
-                print(f"Using LocalKubernetesProvider for {server_config.get('id')}")
-                return LocalKubernetesProvider()
+                print(f"✅ Using LocalKubernetesProvider for {server_config.get('id')}")
+                try:
+                    provider = LocalKubernetesProvider()
+                    print(f"✅ LocalKubernetesProvider created successfully")
+                    return provider
+                except Exception as e:
+                    print(f"❌ Failed to create LocalKubernetesProvider: {e}")
+                    return None
         else:
-            print(f"Unknown server type: {server_type}")
+            print(f"❌ Unknown server type: {server_type}")
             return None
     
     def get_server_ids(self) -> List[str]:
@@ -181,11 +205,6 @@ class ServerManager:
             return provider.update_pod(pod_data)
         except Exception as e:
             return {"error": f"Failed to update pod: {e}"}
-    
-    def get_default_server_id(self) -> str:
-        """Get the default server ID."""
-        server_ids = self.get_server_ids()
-        return server_ids[0] if server_ids else ""
     
     def reload_config(self):
         """Reload the master configuration."""

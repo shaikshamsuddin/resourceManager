@@ -97,16 +97,36 @@ export class App {
 
   startAzureVMStatusPolling() {
     this.checkAzureVMStatus();
-    this.azureVMStatusInterval = setInterval(() => this.checkAzureVMStatus(), 30000);
+    
+    // Get refresh interval from backend configuration
+    this.http.get<any>(ApiConfig.getServerConfigRefreshConfigUrl()).subscribe({
+      next: (response) => {
+        const refreshInterval = response.data?.ui_refresh_interval || 5;
+        const autoRefreshEnabled = response.data?.auto_refresh_enabled !== false;
+        
+        if (autoRefreshEnabled) {
+          console.log(`Starting Azure VM status polling every ${refreshInterval} seconds`);
+          this.azureVMStatusInterval = setInterval(() => this.checkAzureVMStatus(), refreshInterval * 1000);
+        } else {
+          console.log('Azure VM status polling disabled by backend configuration');
+        }
+      },
+      error: (error) => {
+        console.error('Failed to get refresh configuration, using default 5s:', error);
+        // Fallback to 5 seconds if config fetch fails
+        this.azureVMStatusInterval = setInterval(() => this.checkAzureVMStatus(), 5000);
+      }
+    });
   }
 
   checkAzureVMStatus() {
-    // Check Azure VM connection by making a request to the servers endpoint
-    this.http.get<any[]>(ApiConfig.getServersUrl()).subscribe({
+    // Check Azure VM connection by making a request to the configuration endpoint
+    this.http.get<any>(ApiConfig.getServerConfigServersUrl()).subscribe({
       next: (res) => {
-        if (res && res.length > 0) {
+        const servers = res.data?.servers || res.data || [];
+        if (servers && servers.length > 0) {
           // Check if we can get server details and if the server is responsive
-          const server = res[0];
+          const server = servers[0];
           if (server.status === 'Online' || server.status === 'online') {
             this.azureVMStatus = 'connected';
           } else {
@@ -124,12 +144,12 @@ export class App {
   }
 
   fetchServers() {
-    // Get data based on environment - using unified backend API
-    this.http.get<any[]>(ApiConfig.getServersUrl()).subscribe({
+    // Get complete server data from configuration API (single source of truth)
+    this.http.get<any>(ApiConfig.getServerConfigServersUrl()).subscribe({
       next: (response) => {
-        console.log('Fetched servers:', response);
-        // Populate servers array with all available servers for the selection card
-        this.servers = response;
+        console.log('Fetched complete server data:', response);
+        this.servers = response.data || [];
+        
         // Don't auto-select a server - let user choose from the card
         if (this.servers.length > 0 && !this.selectedServer) {
           // Only auto-select if no server is currently selected
