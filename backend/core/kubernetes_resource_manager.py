@@ -173,7 +173,8 @@ class KubernetesResourceManager:
                 "requested": resources,
                 "owner": pod.metadata.labels.get("owner", DefaultValues.DEFAULT_OWNER),
                 "status": status,
-                "timestamp": pod.metadata.creation_timestamp.isoformat() if pod.metadata.creation_timestamp else datetime.utcnow().strftime(TimeFormats.ISO_FORMAT)
+                "timestamp": pod.metadata.creation_timestamp.isoformat() if pod.metadata.creation_timestamp else datetime.utcnow().strftime(TimeFormats.ISO_FORMAT),
+                "pod_ip": pod.status.pod_ip if pod.status and pod.status.pod_ip else None
             }
             
             return pod_info

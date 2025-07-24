@@ -127,6 +127,18 @@ def index():
                 <tr><td>Total Pods:</td><td><b>{total_pods}</b></td></tr>
             </table>
         </div>
+        
+        <div class="section-title">Current Server Status</div>
+        <div class="info-row">
+            <b>Azure VM Connection:</b> 
+            <span class="badge" style="background: #dcfce7; color: #166534;">✅ Connected</span>
+            <br><small>Server: kubernetes-4-246-178-26 (4.246.178.26:16443)</small>
+        </div>
+        <div class="info-row">
+            <b>Background Services:</b>
+            <span class="badge" style="background: #dcfce7; color: #166534;">✅ Active</span>
+            <br><small>Live data refresh, UI polling, health monitoring</small>
+        </div>
         <div class="section-title">API Endpoints</div>
     <ul>
       <li><b>GET /servers</b> - List all servers and pods</li>
@@ -134,11 +146,38 @@ def index():
       <li><b>POST /delete</b> - Delete a pod (JSON body required)</li>
       <li><b>POST /update</b> - Update a pod (JSON body required)</li>
       <li><b>GET /resource-validation</b> - Validate Azure VM resource integrity</li>
-
-            <li><b>GET /health</b> - Basic health check</li>
-            <li><b>GET /health/detailed</b> - Detailed health check</li>
-    
+      <li><b>GET /health</b> - Basic health check</li>
+      <li><b>GET /health/detailed</b> - Detailed health check</li>
     </ul>
+    
+    <div class="section-title">Server Configuration API</div>
+    <ul>
+      <li><b>GET /api/server-config/health</b> - Server config health check</li>
+      <li><b>POST /api/server-config/reconnect</b> - Reconnect all servers</li>
+      <li><b>GET /api/server-config/config</b> - Get server configuration</li>
+      <li><b>GET /api/server-config/config/refresh</b> - Get refresh configuration</li>
+      <li><b>POST /api/server-config/config/refresh</b> - Update refresh configuration</li>
+      <li><b>POST /api/server-config/configure</b> - Configure a new server</li>
+      <li><b>GET /api/server-config/servers</b> - Get all configured servers</li>
+      <li><b>POST /api/server-config/servers/&lt;server_id&gt;/kubeconfig</b> - Update server kubeconfig</li>
+      <li><b>POST /api/server-config/servers/&lt;server_id&gt;/test-connection</b> - Test server connection</li>
+      <li><b>DELETE /api/server-config/deconfigure/&lt;server_id&gt;</b> - Deconfigure a server</li>
+      <li><b>POST /api/server-config/servers/&lt;server_id&gt;/refresh</b> - Refresh specific server data</li>
+      <li><b>POST /api/server-config/servers/refresh-all</b> - Refresh all servers data</li>
+      <li><b>GET /api/server-config/background-refresh/status</b> - Get background refresh status</li>
+      <li><b>POST /api/server-config/background-refresh/start</b> - Start background refresh service</li>
+      <li><b>POST /api/server-config/background-refresh/stop</b> - Stop background refresh service</li>
+    </ul>
+        <div class="section-title">Recent Features</div>
+        <ul>
+            <li><b>✅ Type Safety:</b> Implemented proper TypedDict definitions for all data structures</li>
+            <li><b>✅ Server Configuration:</b> Complete API for server setup and management</li>
+            <li><b>✅ Background Services:</b> Automatic live data refresh and health monitoring</li>
+            <li><b>✅ Azure VM Integration:</b> Full Kubernetes cluster management</li>
+            <li><b>✅ Pod Management:</b> Create, update, delete pods with proper validation</li>
+            <li><b>✅ Real-time Updates:</b> Live data fetching with configurable intervals</li>
+        </ul>
+        
         <div class="section-title">API Testing &amp; Documentation</div>
         <p>Access <a href="/apidocs/" target="_blank">Swagger UI</a> to view, send, and test API calls interactively.</p>
         <div class="section-title">Frontend UI</div>

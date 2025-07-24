@@ -17,6 +17,7 @@ import { ServerManagementComponent } from './server-management/server-management
 
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ApiConfig } from './config/api.config';
 
 
@@ -33,8 +34,9 @@ import { ApiConfig } from './config/api.config';
     MatSelectModule,
     MatDividerModule,
     MatDialogModule,
-        MatTableModule,
+    MatTableModule,
     MatIconModule,
+    MatTooltipModule,
     AddPodDialogComponent,
     EditPodDialogComponent,
     ServerConfigDialogComponent,

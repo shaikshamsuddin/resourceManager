@@ -470,6 +470,20 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
   line-height: 16px;
 }
 
+.action-buttons .medium-icon-button {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  padding: 0;
+}
+
+.action-buttons .medium-icon-button mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+}
+
 .action-buttons button {
   opacity: 0.7;
   transition: opacity 0.2s;
@@ -775,6 +789,24 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
 .overview-card .mat-column-status {
   flex: 0 0 100px;
   justify-content: center;
+}
+
+.overview-card .mat-column-pod_ip {
+  flex: 0 0 150px;
+  min-width: 150px;
+}
+
+.pod-ip {
+  color: #1976d2;
+  font-family: monospace;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.no-ip {
+  color: #666;
+  font-style: italic;
+  font-size: 0.9em;
 }
 
 /* Server Selector Styles */

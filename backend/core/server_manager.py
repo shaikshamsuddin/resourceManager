@@ -8,7 +8,7 @@ import json
 from typing import Dict, List, Optional
 from kubernetes import client, config
 from providers.cloud_kubernetes_provider import CloudKubernetesProvider
-from providers.kubernetes_provider import LocalKubernetesProvider
+from config.types import MasterConfig, ServerConfig
 
 
 class ServerManager:
@@ -20,15 +20,18 @@ class ServerManager:
         self.server_providers = {}
         self._initialize_providers()
     
-    def _load_master_config(self) -> Dict:
+    def _load_master_config(self) -> MasterConfig:
         """Load master configuration from data/master.json."""
         try:
             config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
             with open(config_path, 'r') as f:
-                return json.load(f)
+                config_data = json.load(f)
+                from config.types import validate_master_config
+                return validate_master_config(config_data)
         except Exception as e:
             print(f"❌ Failed to load master config: {e}")
-            return {"servers": []}
+            from config.types import create_default_master_config
+            return create_default_master_config()
     
     def _initialize_providers(self):
         """Initialize providers for all configured servers."""
@@ -80,15 +83,10 @@ class ServerManager:
                     print(f"❌ Failed to create CloudKubernetesProvider: {e}")
                     return None
             else:
-                # Use LocalKubernetesProvider for local connections
-                print(f"✅ Using LocalKubernetesProvider for {server_config.get('id')}")
-                try:
-                    provider = LocalKubernetesProvider()
-                    print(f"✅ LocalKubernetesProvider created successfully")
-                    return provider
-                except Exception as e:
-                    print(f"❌ Failed to create LocalKubernetesProvider: {e}")
-                    return None
+                # No local provider support - only cloud/remote connections
+                print(f"❌ Unsupported connection method: {connection_method}")
+                print(f"   Only 'kubeconfig' with host is supported for Azure VM connections")
+                return None
         else:
             print(f"❌ Unknown server type: {server_type}")
             return None

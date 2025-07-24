@@ -513,7 +513,8 @@ class CloudKubernetesProvider:
                 "requested": resources,
                 "owner": pod.metadata.labels.get("owner", "unknown"),
                 "status": status,
-                "timestamp": pod.metadata.creation_timestamp.isoformat() if pod.metadata.creation_timestamp else datetime.now().isoformat()
+                "timestamp": pod.metadata.creation_timestamp.isoformat() if pod.metadata.creation_timestamp else datetime.now().isoformat(),
+                "pod_ip": pod.status.pod_ip if pod.status and pod.status.pod_ip else None
             }
         except Exception as e:
             print(f"Error extracting pod info: {e}")

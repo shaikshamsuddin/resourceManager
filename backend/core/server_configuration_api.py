@@ -10,20 +10,27 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify
 from typing import Dict, Optional
 
+from config.types import (
+    MasterConfig, ServerConfig, ServerConfigurationInput,
+    create_default_server_config, validate_master_config,
+    validate_server_config
+)
+
 # Create blueprint
 server_config_bp = Blueprint('server_config', __name__, url_prefix='/api/server-config')
 
-def _load_master_config() -> Dict:
+def _load_master_config() -> MasterConfig:
     """Load master configuration from file."""
     try:
         config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
         with open(config_path, 'r') as f:
-            return json.load(f)
+            config_data = json.load(f)
+            return validate_master_config(config_data)
     except Exception as e:
         print(f"Error loading master config: {e}")
-        return {"servers": [], "config": {}}
+        return create_default_master_config()
 
-def _save_master_config(config: Dict):
+def _save_master_config(config: MasterConfig):
     """Save master configuration to file."""
     try:
         config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
@@ -130,7 +137,7 @@ def _fetch_and_update_live_data(server_id: str) -> Dict:
     try:
         # Get the server configuration
         config = _load_master_config()
-        server = None
+        server: Optional[ServerConfig] = None
         for s in config.get('servers', []):
             if s.get('id') == server_id:
                 server = s
@@ -228,7 +235,20 @@ def _update_last_refresh():
 
 @server_config_bp.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint for server configuration API."""
+    """
+    Health check endpoint for server configuration API
+    ---
+    tags:
+      - Server Configuration
+    responses:
+      200:
+        description: Server configuration API health status
+        examples:
+          application/json:
+            type: "success"
+            code: "HEALTHY"
+            message: "Server configuration API is running"
+    """
     return jsonify({
         "type": "success",
         "code": "HEALTHY",
@@ -237,7 +257,25 @@ def health_check():
 
 @server_config_bp.route('/reconnect', methods=['POST'])
 def reconnect_servers():
-    """Reconnect a specific server by re-initializing its provider with the given details."""
+    """
+    Reconnect servers by reloading server manager config
+    ---
+    tags:
+      - Server Configuration
+    responses:
+      200:
+        description: Servers reconnected successfully
+        examples:
+          application/json:
+            status: "success"
+            message: "Servers reconnected successfully."
+      500:
+        description: Failed to reconnect servers
+        examples:
+          application/json:
+            status: "error"
+            message: "Failed to reconnect servers: <error_details>"
+    """
     try:
         data = request.get_json()
         if not data:
@@ -274,7 +312,32 @@ def reconnect_servers():
 
 @server_config_bp.route('/config', methods=['GET'])
 def get_config():
-    """Get server configuration."""
+    """
+    Get server configuration
+    ---
+    tags:
+      - Server Configuration
+    responses:
+      200:
+        description: Server configuration retrieved successfully
+        examples:
+          application/json:
+            type: "success"
+            code: "CONFIG_RETRIEVED"
+            message: "Server configuration retrieved successfully"
+            data:
+              servers: []
+              config:
+                ui_refresh_interval: 5
+                auto_refresh_enabled: true
+      500:
+        description: Failed to load configuration
+        examples:
+          application/json:
+            type: "error"
+            code: "CONFIG_LOAD_FAILED"
+            message: "Failed to load configuration: <error_details>"
+    """
     try:
         config = _load_master_config()
         return jsonify({
@@ -292,7 +355,34 @@ def get_config():
 
 @server_config_bp.route('/config/refresh', methods=['GET'])
 def get_refresh_config():
-    """Get current refresh configuration."""
+    """
+    Get current refresh configuration
+    ---
+    tags:
+      - Server Configuration
+    responses:
+      200:
+        description: Refresh configuration retrieved successfully
+        examples:
+          application/json:
+            type: "success"
+            code: "REFRESH_CONFIG_RETRIEVED"
+            message: "Refresh configuration retrieved"
+            data:
+              ui_refresh_interval: 5
+              auto_refresh_enabled: true
+              server_refresh_intervals:
+                kubernetes-4-246-178-26:
+                  name: "Azure VM Kubernetes"
+                  live_refresh_interval: 60
+      500:
+        description: Failed to get refresh configuration
+        examples:
+          application/json:
+            type: "error"
+            code: "REFRESH_CONFIG_FAILED"
+            message: "Failed to get refresh configuration: <error_details>"
+    """
     try:
         config = _load_master_config()
         refresh_config = config.get('config', {})
@@ -329,7 +419,50 @@ def get_refresh_config():
 
 @server_config_bp.route('/config/refresh', methods=['POST'])
 def update_refresh_config():
-    """Update refresh configuration."""
+    """
+    Update refresh configuration
+    ---
+    tags:
+      - Server Configuration
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            ui_refresh_interval:
+              type: integer
+              description: UI refresh interval in seconds
+            auto_refresh_enabled:
+              type: boolean
+              description: Whether auto refresh is enabled
+            server_refresh_intervals:
+              type: object
+              description: Per-server live refresh intervals
+    responses:
+      200:
+        description: Refresh configuration updated successfully
+        examples:
+          application/json:
+            type: "success"
+            code: "REFRESH_CONFIG_UPDATED"
+            message: "Refresh configuration updated successfully"
+      400:
+        description: Invalid data provided
+        examples:
+          application/json:
+            type: "error"
+            code: "INVALID_DATA"
+            message: "No data provided"
+      500:
+        description: Failed to update refresh configuration
+        examples:
+          application/json:
+            type: "error"
+            code: "REFRESH_CONFIG_UPDATE_FAILED"
+            message: "Failed to update refresh configuration: <error_details>"
+    """
     try:
         data = request.json
         if not data:
@@ -378,9 +511,70 @@ def update_refresh_config():
 
 @server_config_bp.route('/configure', methods=['POST'])
 def configure_new_server():
-    """Configure a new server."""
+    """
+    Configure a new server with provided credentials
+    ---
+    tags:
+      - Server Configuration
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - name
+            - host
+            - username
+            - password
+          properties:
+            name:
+              type: string
+              description: Server display name
+            host:
+              type: string
+              description: Server host/IP address
+            username:
+              type: string
+              description: Username for authentication
+            password:
+              type: string
+              description: Password for authentication
+            type:
+              type: string
+              description: Server type (auto-set to 'kubernetes')
+            environment:
+              type: string
+              description: Environment (auto-set to 'live')
+    responses:
+      200:
+        description: Server configured successfully
+        examples:
+          application/json:
+            type: "success"
+            code: "SERVER_CONFIGURED"
+            message: "Server configured successfully"
+            data:
+              server_id: "kubernetes-4-246-178-26"
+              pods_count: 1
+              status: "Online"
+      400:
+        description: Invalid configuration data
+        examples:
+          application/json:
+            type: "error"
+            code: "INVALID_CONFIG"
+            message: "Invalid configuration data: <details>"
+      500:
+        description: Failed to configure server
+        examples:
+          application/json:
+            type: "error"
+            code: "CONFIG_FAILED"
+            message: "Failed to configure server: <error_details>"
+    """
     try:
-        data = request.json
+        data: ServerConfigurationInput = request.json
         if not data:
             return jsonify({
                 "type": "error",
@@ -405,41 +599,22 @@ def configure_new_server():
         # Generate server ID from host
         server_id = f"{data['type']}-{data['host'].replace('.', '-')}"
         
-        # Extract port from kubeconfig or use default
-        # The kubeconfig will be generated with the standard Kubernetes port
-        default_port = 16443  # Default for your Azure VM setup
+        # Create server configuration using typed function
+        server_config = create_default_server_config(
+            server_id=server_id,
+            name=data['name'],
+            host=data['host'],
+            username=data['username'],
+            password=data['password']
+        )
         
-        # Create server configuration
-        server_config = {
-            "id": server_id,
-            "name": data['name'],
-            "type": data['type'],
-            "environment": data['environment'],
-            "live_refresh_interval": 60,  # Default live refresh interval for new servers
-            "connection_coordinates": {
-                "method": "kubeconfig",
-                "host": data['host'],
-                "port": default_port,
-                "username": data['username'],
-                "kubeconfig_path": f"{server_id}_kubeconfig",
-                "kubeconfig_data": _generate_kubeconfig_with_credentials(
-                    data['host'], 
-                    default_port, 
-                    data['username'], 
-                    data['password']
-                ),
-                "insecure_skip_tls_verify": True,
-                "password": data['password']
-            },
-            "metadata": {
-                "location": f"{data['type'].title()} Server",
-                "environment": data['environment'],
-                "description": f"{data['type'].title()} cluster on {data['host']}",
-                "setup_method": "api_automated",
-                "setup_timestamp": datetime.now().isoformat(),
-                "configured_by": "api"
-            }
-        }
+        # Update kubeconfig data
+        server_config['connection_coordinates']['kubeconfig_data'] = _generate_kubeconfig_with_credentials(
+            data['host'], 
+            16443,  # Default port
+            data['username'], 
+            data['password']
+        )
         
         # Load current config and add new server
         config = _load_master_config()
@@ -504,7 +679,48 @@ def configure_new_server():
 
 @server_config_bp.route('/servers', methods=['GET'])
 def get_servers():
-    """Get all configured servers with their complete data (pods, resources, etc.)."""
+    """
+    Get all configured servers with their complete data (pods, resources, etc.)
+    ---
+    tags:
+      - Server Configuration
+    responses:
+      200:
+        description: List of all configured servers with complete data
+        examples:
+          application/json:
+            type: "success"
+            code: "SERVERS_RETRIEVED"
+            message: "Servers retrieved successfully"
+            data:
+              - id: "kubernetes-4-246-178-26"
+                name: "Azure VM Kubernetes (4.246.178.26)"
+                type: "kubernetes"
+                environment: "live"
+                status: "Online"
+                pods:
+                  - pod_id: "paas-ai-baseline-engine-784f6c5b76-25n7m"
+                    namespace: "aidf-cli-setup"
+                    status: "online"
+                resources:
+                  total:
+                    cpus: 6
+                    ram_gb: 110
+                    storage_gb: 122
+                    gpus: 0
+                  available:
+                    cpus: 6
+                    ram_gb: 109
+                    storage_gb: 121
+                    gpus: 0
+      500:
+        description: Failed to retrieve servers
+        examples:
+          application/json:
+            type: "error"
+            code: "SERVERS_RETRIEVAL_FAILED"
+            message: "Failed to retrieve servers: <error_details>"
+    """
     try:
         config = _load_master_config()
         servers = config.get('servers', [])
@@ -642,7 +858,43 @@ def test_connection(server_id: str):
 
 @server_config_bp.route('/deconfigure/<server_id>', methods=['DELETE', 'OPTIONS'])
 def deconfigure_server(server_id: str):
-    """De-configure (remove) a server from the system."""
+    """
+    De-configure (remove) a server from the system
+    ---
+    tags:
+      - Server Configuration
+    parameters:
+      - in: path
+        name: server_id
+        required: true
+        type: string
+        description: ID of the server to deconfigure
+    responses:
+      200:
+        description: Server deconfigured successfully
+        examples:
+          application/json:
+            type: "success"
+            code: "SERVER_DECONFIGURED"
+            message: "Server deconfigured successfully"
+            data:
+              server_id: "kubernetes-4-246-178-26"
+              remaining_servers: 0
+      404:
+        description: Server not found
+        examples:
+          application/json:
+            type: "error"
+            code: "SERVER_NOT_FOUND"
+            message: "Server not found: <server_id>"
+      500:
+        description: Failed to deconfigure server
+        examples:
+          application/json:
+            type: "error"
+            code: "DECONFIG_FAILED"
+            message: "Failed to deconfigure server: <error_details>"
+    """
     # Handle CORS preflight request
     if request.method == 'OPTIONS':
         return '', 200
@@ -746,7 +998,32 @@ def refresh_all_servers():
 
 @server_config_bp.route('/background-refresh/status', methods=['GET'])
 def get_background_refresh_status():
-    """Get background refresh service status."""
+    """
+    Get background refresh service status
+    ---
+    tags:
+      - Server Configuration
+    responses:
+      200:
+        description: Background refresh service status
+        examples:
+          application/json:
+            type: "success"
+            code: "BACKGROUND_STATUS_RETRIEVED"
+            message: "Background refresh status retrieved"
+            data:
+              is_running: true
+              refresh_interval: 60
+              last_refresh: "2025-07-24T19:11:51.203489"
+              total_servers: 1
+      500:
+        description: Failed to get background refresh status
+        examples:
+          application/json:
+            type: "error"
+            code: "BACKGROUND_STATUS_FAILED"
+            message: "Failed to get background refresh status: <error_details>"
+    """
     try:
         from core.background_refresh_service import background_refresh_service
         
@@ -773,7 +1050,30 @@ def get_background_refresh_status():
 
 @server_config_bp.route('/background-refresh/start', methods=['POST'])
 def start_background_refresh():
-    """Start the background refresh service."""
+    """
+    Start the background refresh service
+    ---
+    tags:
+      - Server Configuration
+    responses:
+      200:
+        description: Background refresh service started successfully
+        examples:
+          application/json:
+            type: "success"
+            code: "BACKGROUND_REFRESH_STARTED"
+            message: "Background refresh service started successfully"
+            data:
+              is_running: true
+              refresh_interval: 60
+      500:
+        description: Failed to start background refresh service
+        examples:
+          application/json:
+            type: "error"
+            code: "BACKGROUND_REFRESH_START_FAILED"
+            message: "Failed to start background refresh service: <error_details>"
+    """
     try:
         from core.background_refresh_service import background_refresh_service
         
@@ -793,7 +1093,29 @@ def start_background_refresh():
 
 @server_config_bp.route('/background-refresh/stop', methods=['POST'])
 def stop_background_refresh():
-    """Stop the background refresh service."""
+    """
+    Stop the background refresh service
+    ---
+    tags:
+      - Server Configuration
+    responses:
+      200:
+        description: Background refresh service stopped successfully
+        examples:
+          application/json:
+            type: "success"
+            code: "BACKGROUND_REFRESH_STOPPED"
+            message: "Background refresh service stopped successfully"
+            data:
+              is_running: false
+      500:
+        description: Failed to stop background refresh service
+        examples:
+          application/json:
+            type: "error"
+            code: "BACKGROUND_REFRESH_STOP_FAILED"
+            message: "Failed to stop background refresh service: <error_details>"
+    """
     try:
         from core.background_refresh_service import background_refresh_service
         
