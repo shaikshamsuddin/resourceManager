@@ -57,10 +57,22 @@
           "storage_gb": 122,
           "gpus": 0
         },
-        "available": {
+        "allocated": {
           "cpus": 6,
           "ram_gb": 109,
           "storage_gb": 121,
+          "gpus": 0
+        },
+        "available": {
+          "cpus": 3.6999999999999997,
+          "ram_gb": 106.70000000000002,
+          "storage_gb": 121,
+          "gpus": 0
+        },
+        "actual_usage": {
+          "cpus": 0.04762583600000001,
+          "ram_gb": 2.0,
+          "storage_gb": 0.0,
           "gpus": 0
         }
       },
@@ -71,7 +83,7 @@
         "setup_method": "api_automated",
         "setup_timestamp": "2025-07-24T17:50:09.024446",
         "configured_by": "api",
-        "last_updated": "2025-07-24T22:25:06.014345",
+        "last_updated": "2025-07-24T22:49:13.010980",
         "live_data_fresh": true
       },
       "pods": [
@@ -81,8 +93,8 @@
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_baseline_engine:84644",
           "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
+            "cpus": 0.25,
+            "ram_gb": 0.25,
             "storage_gb": 0,
             "gpus": 0
           },
@@ -97,8 +109,8 @@
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_frontcontroller:85286",
           "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
+            "cpus": 0.25,
+            "ram_gb": 0.25,
             "storage_gb": 0,
             "gpus": 0
           },
@@ -113,8 +125,8 @@
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_frontcontroller:85286",
           "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
+            "cpus": 0.25,
+            "ram_gb": 0.25,
             "storage_gb": 0,
             "gpus": 0
           },
@@ -129,8 +141,8 @@
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_manifes_engine:86657",
           "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
+            "cpus": 0.25,
+            "ram_gb": 0.25,
             "storage_gb": 0,
             "gpus": 0
           },
@@ -145,8 +157,8 @@
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_ai:85013",
           "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
+            "cpus": 0.25,
+            "ram_gb": 0.25,
             "storage_gb": 0,
             "gpus": 0
           },
@@ -161,8 +173,8 @@
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_be:85284",
           "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
+            "cpus": 0.25,
+            "ram_gb": 0.25,
             "storage_gb": 0,
             "gpus": 0
           },
@@ -177,8 +189,8 @@
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_pass_infra:86752",
           "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
+            "cpus": 0.25,
+            "ram_gb": 0.25,
             "storage_gb": 0,
             "gpus": 0
           },
@@ -193,8 +205,8 @@
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_setup_manager:86658",
           "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
+            "cpus": 0.25,
+            "ram_gb": 0.25,
             "storage_gb": 0,
             "gpus": 0
           },
@@ -202,6 +214,22 @@
           "status": "online",
           "timestamp": "2025-07-23T09:37:49+00:00",
           "pod_ip": "10.1.0.45"
+        },
+        {
+          "pod_id": "test123newpod",
+          "namespace": "custom-apps",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 1,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "pending",
+          "timestamp": "2025-07-24T17:41:20+00:00",
+          "pod_ip": null
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-c2xx2",
@@ -1004,6 +1032,38 @@
           "pod_ip": "10.1.0.61"
         },
         {
+          "pod_id": "ingress-nginx-admission-create-7sv2z",
+          "namespace": "ingress-nginx",
+          "server_id": "cloud-node-01",
+          "image_url": "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1@sha256:36d05b4077fb8e3d13663702fa337f124675ba8667cbd949c03a8e8ea6fa4366",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-21T17:47:44+00:00",
+          "pod_ip": null
+        },
+        {
+          "pod_id": "ingress-nginx-admission-patch-blk9m",
+          "namespace": "ingress-nginx",
+          "server_id": "cloud-node-01",
+          "image_url": "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1@sha256:36d05b4077fb8e3d13663702fa337f124675ba8667cbd949c03a8e8ea6fa4366",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-21T17:47:44+00:00",
+          "pod_ip": null
+        },
+        {
           "pod_id": "ingress-nginx-controller-7bfd769f7b-vbcsz",
           "namespace": "ingress-nginx",
           "server_id": "cloud-node-01",
@@ -1025,8 +1085,8 @@
           "server_id": "cloud-node-01",
           "image_url": "registry.k8s.io/ingress-nginx/controller:v1.11.5",
           "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
+            "cpus": 0.1,
+            "ram_gb": 0.1,
             "storage_gb": 0,
             "gpus": 0
           },

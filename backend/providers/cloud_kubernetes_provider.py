@@ -418,9 +418,13 @@ class CloudKubernetesProvider:
                         if node_index is not None:
                             node_list[node_index]['pods'].append(pod_info)
             
-            # Update available resources for each node
+            # Update available resources and get actual usage for each node
             for node in node_list:
                 self._update_available_resources(node)
+                
+                # Get actual resource usage
+                actual_usage = self._get_actual_resource_usage(node['name'])
+                node['resources']['actual_usage'] = actual_usage
             
             return node_list
             
@@ -436,7 +440,7 @@ class CloudKubernetesProvider:
             node: Kubernetes node object
             
         Returns:
-            Dictionary with total and available resources
+            Dictionary with total, allocated, and actual usage resources
         """
         capacity = node.status.capacity
         allocatable = node.status.allocatable
@@ -449,7 +453,7 @@ class CloudKubernetesProvider:
             "gpus": int(capacity.get("nvidia.com/gpu", 0))
         }
         
-        available = {
+        allocated = {
             "cpus": int(allocatable.get("cpu", 0)),
             "ram_gb": self._parse_memory(allocatable.get("memory", "0")),
             "storage_gb": self._parse_memory(allocatable.get("ephemeral-storage", "0")),
@@ -458,7 +462,8 @@ class CloudKubernetesProvider:
         
         return {
             "total": total,
-            "available": available
+            "allocated": allocated,
+            "available": allocated.copy()  # Will be updated by _update_available_resources
         }
     
     def _parse_memory(self, memory_str: str) -> int:
@@ -522,7 +527,7 @@ class CloudKubernetesProvider:
     
     def _extract_pod_resources(self, pod) -> Dict:
         """
-        Extract resource requests from pod.
+        Extract resource requests and limits from pod.
         
         Args:
             pod: Kubernetes pod object
@@ -538,32 +543,145 @@ class CloudKubernetesProvider:
         }
         
         for container in pod.spec.containers:
-            if container.resources and container.resources.requests:
-                requests = container.resources.requests
+            if container.resources:
+                # Check resource requests first
+                if container.resources.requests:
+                    requests = container.resources.requests
+                    
+                    # CPU
+                    if requests.get("cpu"):
+                        cpu_str = requests["cpu"]
+                        if cpu_str.endswith('m'):
+                            resources["cpus"] += int(cpu_str[:-1]) // 1000
+                        else:
+                            resources["cpus"] += int(float(cpu_str))
+                    
+                    # Memory
+                    if requests.get("memory"):
+                        memory_str = requests["memory"]
+                        resources["ram_gb"] += self._parse_memory(memory_str)
+                    
+                    # Storage
+                    if requests.get("ephemeral-storage"):
+                        storage_str = requests["ephemeral-storage"]
+                        resources["storage_gb"] += self._parse_memory(storage_str)
+                    
+                    # GPUs
+                    if requests.get("nvidia.com/gpu"):
+                        resources["gpus"] += int(requests["nvidia.com/gpu"])
                 
-                # CPU
-                if requests.get("cpu"):
-                    cpu_str = requests["cpu"]
-                    if cpu_str.endswith('m'):
-                        resources["cpus"] += int(cpu_str[:-1]) // 1000
+                # If no requests, check limits
+                elif container.resources.limits:
+                    limits = container.resources.limits
+                    
+                    # CPU
+                    if limits.get("cpu"):
+                        cpu_str = limits["cpu"]
+                        if cpu_str.endswith('m'):
+                            resources["cpus"] += int(cpu_str[:-1]) // 1000
+                        else:
+                            resources["cpus"] += int(float(cpu_str))
+                    
+                    # Memory
+                    if limits.get("memory"):
+                        memory_str = limits["memory"]
+                        resources["ram_gb"] += self._parse_memory(memory_str)
+                    
+                    # Storage
+                    if limits.get("ephemeral-storage"):
+                        storage_str = limits["ephemeral-storage"]
+                        resources["storage_gb"] += self._parse_memory(storage_str)
+                    
+                    # GPUs
+                    if limits.get("nvidia.com/gpu"):
+                        resources["gpus"] += int(limits["nvidia.com/gpu"])
+                
+                # If no requests or limits, use default estimates based on container type
+                else:
+                    # Default estimates for common container types
+                    image = container.image.lower()
+                    if any(keyword in image for keyword in ['nginx', 'httpd', 'apache']):
+                        resources["cpus"] += 0.1
+                        resources["ram_gb"] += 0.1
+                    elif any(keyword in image for keyword in ['python', 'node', 'java', 'golang']):
+                        resources["cpus"] += 0.5
+                        resources["ram_gb"] += 0.5
+                    elif any(keyword in image for keyword in ['database', 'mysql', 'postgres', 'redis']):
+                        resources["cpus"] += 1.0
+                        resources["ram_gb"] += 1.0
                     else:
-                        resources["cpus"] += int(float(cpu_str))
-                
-                # Memory
-                if requests.get("memory"):
-                    memory_str = requests["memory"]
-                    resources["ram_gb"] += self._parse_memory(memory_str)
-                
-                # Storage
-                if requests.get("ephemeral-storage"):
-                    storage_str = requests["ephemeral-storage"]
-                    resources["storage_gb"] += self._parse_memory(storage_str)
-                
-                # GPUs
-                if requests.get("nvidia.com/gpu"):
-                    resources["gpus"] += int(requests["nvidia.com/gpu"])
+                        # Generic default for unknown containers
+                        resources["cpus"] += 0.25
+                        resources["ram_gb"] += 0.25
         
         return resources
+    
+    def _get_actual_resource_usage(self, node_name: str) -> Dict:
+        """
+        Get actual resource usage from Kubernetes metrics API.
+        
+        Args:
+            node_name: Name of the node
+            
+        Returns:
+            Dictionary with actual resource usage
+        """
+        try:
+            # Try to get metrics from metrics.k8s.io API
+            # Note: This requires metrics-server to be installed
+            from kubernetes.client import CustomObjectsApi
+            custom_api = CustomObjectsApi()
+            
+            # Get pod metrics
+            metrics = custom_api.list_namespaced_custom_object(
+                group="metrics.k8s.io",
+                version="v1beta1",
+                namespace="",
+                plural="pods"
+            )
+            
+            total_usage = {
+                "cpus": 0.0,
+                "ram_gb": 0.0,
+                "storage_gb": 0.0,
+                "gpus": 0
+            }
+            
+            for pod_metric in metrics.get('items', []):
+                pod_name = pod_metric['metadata']['name']
+                namespace = pod_metric['metadata']['namespace']
+                
+                # Check if this pod is on our target node
+                try:
+                    pod = self.core_v1.read_namespaced_pod(pod_name, namespace)
+                    if pod.spec.node_name == node_name:
+                        for container in pod_metric.get('containers', []):
+                            # CPU usage (convert from nanocores to cores)
+                            cpu_usage = container.get('usage', {}).get('cpu', '0')
+                            if cpu_usage.endswith('n'):
+                                total_usage["cpus"] += int(cpu_usage[:-1]) / 1000000000
+                            else:
+                                total_usage["cpus"] += float(cpu_usage)
+                            
+                            # Memory usage (convert to GB)
+                            memory_usage = container.get('usage', {}).get('memory', '0')
+                            total_usage["ram_gb"] += self._parse_memory(memory_usage)
+                            
+                except Exception as e:
+                    print(f"Warning: Could not get pod info for {pod_name}: {e}")
+                    continue
+            
+            return total_usage
+            
+        except Exception as e:
+            print(f"Warning: Could not get metrics from Kubernetes API: {e}")
+            # Return empty usage if metrics API is not available
+            return {
+                "cpus": 0.0,
+                "ram_gb": 0.0,
+                "storage_gb": 0.0,
+                "gpus": 0
+            }
     
     def _get_pod_status(self, pod) -> str:
         """

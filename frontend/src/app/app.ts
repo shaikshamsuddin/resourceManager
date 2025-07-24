@@ -340,10 +340,14 @@ export class App {
   }
 
   get allocatedCPUs() {
-    return Math.max(
+    return Math.round(Math.max(
       0,
       this.servers.reduce((acc: number, s: any) => acc + ((s.resources?.total?.cpus || 0) - (s.resources?.available?.cpus || 0)), 0)
-    );
+    ) * 100) / 100;
+  }
+
+  get actualCPUUsage() {
+    return Math.round(this.servers.reduce((acc: number, s: any) => acc + (s.resources?.actual_usage?.cpus || 0), 0) * 100) / 100;
   }
 
   get totalGPUs() {
@@ -357,12 +361,23 @@ export class App {
     );
   }
 
+  get actualGPUUsage() {
+    return this.servers.reduce((acc: number, s: any) => acc + (s.resources?.actual_usage?.gpus || 0), 0);
+  }
+
   get totalRAM() {
     return this.servers.reduce((acc: number, s: any) => acc + (s.resources?.total?.ram_gb || 0), 0);
   }
 
-  get availableRAM() {
-    return this.servers.reduce((acc: number, s: any) => acc + (s.resources?.available?.ram_gb || 0), 0);
+  get allocatedRAM() {
+    return Math.round(Math.max(
+      0,
+      this.servers.reduce((acc: number, s: any) => acc + ((s.resources?.total?.ram_gb || 0) - (s.resources?.available?.ram_gb || 0)), 0)
+    ) * 100) / 100;
+  }
+
+  get actualRAMUsage() {
+    return Math.round(this.servers.reduce((acc: number, s: any) => acc + (s.resources?.actual_usage?.ram_gb || 0), 0) * 100) / 100;
   }
 
   get allPods() {
