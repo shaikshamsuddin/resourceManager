@@ -56,28 +56,100 @@ class CloudKubernetesProvider:
             raise
     
     def _load_kubeconfig_from_data(self, kubeconfig_data: Dict):
-        """Load kubeconfig from data dictionary."""
+        """Load kubeconfig from data dictionary with fallback authentication."""
         try:
             import tempfile
             import os
             
-            # Create temporary kubeconfig file
-            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.yaml') as temp_file:
-                import yaml
-                yaml.dump(kubeconfig_data, temp_file)
-                temp_file_path = temp_file.name
+            # First, try certificate-based authentication (primary method)
+            users = kubeconfig_data.get('users', [])
+            if users and len(users) > 0:
+                user = users[0].get('user', {})
+                if 'client-certificate-data' in user and 'client-key-data' in user:
+                    print("🔐 Attempting certificate-based authentication...")
+                    try:
+                        # Create temporary kubeconfig file for certificate-based auth
+                        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.yaml') as temp_file:
+                            import yaml
+                            yaml.dump(kubeconfig_data, temp_file)
+                            temp_file_path = temp_file.name
+                        
+                        # Load the kubeconfig
+                        k8s_config.load_kube_config(config_file=temp_file_path)
+                        
+                        # Create API clients with the loaded configuration
+                        self.core_v1 = client.CoreV1Api()
+                        self.apps_v1 = client.AppsV1Api()
+                        
+                        # Clean up temporary file
+                        os.unlink(temp_file_path)
+                        
+                        print("✅ Certificate-based authentication successful")
+                        return
+                        
+                    except Exception as cert_error:
+                        print(f"❌ Certificate-based authentication failed: {cert_error}")
+                        # Clean up temp file if it exists
+                        if 'temp_file_path' in locals():
+                            try:
+                                os.unlink(temp_file_path)
+                            except:
+                                pass
+                        # Continue to fallback authentication
             
-            # Load the kubeconfig
-            k8s_config.load_kube_config(config_file=temp_file_path)
-            self._configure_insecure_client()
+            # Fallback: Try username/password authentication
+            if users and len(users) > 0:
+                user = users[0].get('user', {})
+                if 'username' in user and 'password' in user:
+                    print("🔑 Attempting username/password authentication (fallback)...")
+                    try:
+                        self._load_kubeconfig_with_credentials(kubeconfig_data)
+                        print("✅ Username/password authentication successful")
+                        return
+                    except Exception as cred_error:
+                        print(f"❌ Username/password authentication failed: {cred_error}")
+                        raise Exception(f"Both certificate and username/password authentication failed")
             
-            # Clean up temporary file
-            os.unlink(temp_file_path)
-            
-            print("Successfully loaded kubeconfig from data")
+            # If we get here, no valid authentication method found
+            raise Exception("No valid authentication method found in kubeconfig")
             
         except Exception as e:
             print(f"Failed to load kubeconfig from data: {e}")
+            raise
+    
+    def _load_kubeconfig_with_credentials(self, kubeconfig_data: Dict):
+        """Load kubeconfig with username/password authentication."""
+        try:
+            # Extract cluster and user info
+            clusters = kubeconfig_data.get('clusters', [])
+            users = kubeconfig_data.get('users', [])
+            
+            if not clusters or not users:
+                raise Exception("Invalid kubeconfig: missing clusters or users")
+            
+            cluster = clusters[0]
+            user = users[0]
+            
+            # Get connection details
+            server = cluster['cluster']['server']
+            username = user['user']['username']
+            password = user['user']['password']
+            
+            # Create configuration with basic auth
+            configuration = client.Configuration()
+            configuration.host = server
+            configuration.username = username
+            configuration.password = password
+            configuration.verify_ssl = False  # For Azure VM connections
+            
+            # Create API clients
+            self.core_v1 = client.CoreV1Api(api_client=client.ApiClient(configuration))
+            self.apps_v1 = client.AppsV1Api(api_client=client.ApiClient(configuration))
+            
+            print(f"Successfully loaded kubeconfig with credentials for {username}@{server}")
+            
+        except Exception as e:
+            print(f"Failed to load kubeconfig with credentials: {e}")
             raise
     
     def _load_kubeconfig_from_file(self, kubeconfig_path: str):
@@ -95,7 +167,10 @@ class CloudKubernetesProvider:
             
             # Load the kubeconfig
             k8s_config.load_kube_config(config_file=kubeconfig_path)
-            self._configure_insecure_client()
+            
+            # Create API clients with the loaded configuration
+            self.core_v1 = client.CoreV1Api()
+            self.apps_v1 = client.AppsV1Api()
             
             print(f"Successfully loaded kubeconfig from file: {kubeconfig_path}")
             
@@ -343,9 +418,13 @@ class CloudKubernetesProvider:
                         if node_index is not None:
                             node_list[node_index]['pods'].append(pod_info)
             
-            # Update available resources for each node
+            # Update available resources and get actual usage for each node
             for node in node_list:
                 self._update_available_resources(node)
+                
+                # Get actual resource usage
+                actual_usage = self._get_actual_resource_usage(node['name'])
+                node['resources']['actual_usage'] = actual_usage
             
             return node_list
             
@@ -361,7 +440,7 @@ class CloudKubernetesProvider:
             node: Kubernetes node object
             
         Returns:
-            Dictionary with total and available resources
+            Dictionary with total, allocated, and actual usage resources
         """
         capacity = node.status.capacity
         allocatable = node.status.allocatable
@@ -374,7 +453,7 @@ class CloudKubernetesProvider:
             "gpus": int(capacity.get("nvidia.com/gpu", 0))
         }
         
-        available = {
+        allocated = {
             "cpus": int(allocatable.get("cpu", 0)),
             "ram_gb": self._parse_memory(allocatable.get("memory", "0")),
             "storage_gb": self._parse_memory(allocatable.get("ephemeral-storage", "0")),
@@ -383,7 +462,8 @@ class CloudKubernetesProvider:
         
         return {
             "total": total,
-            "available": available
+            "allocated": allocated,
+            "available": allocated.copy()  # Will be updated by _update_available_resources
         }
     
     def _parse_memory(self, memory_str: str) -> int:
@@ -438,7 +518,8 @@ class CloudKubernetesProvider:
                 "requested": resources,
                 "owner": pod.metadata.labels.get("owner", "unknown"),
                 "status": status,
-                "timestamp": pod.metadata.creation_timestamp.isoformat() if pod.metadata.creation_timestamp else datetime.now().isoformat()
+                "timestamp": pod.metadata.creation_timestamp.isoformat() if pod.metadata.creation_timestamp else datetime.now().isoformat(),
+                "pod_ip": pod.status.pod_ip if pod.status and pod.status.pod_ip else None
             }
         except Exception as e:
             print(f"Error extracting pod info: {e}")
@@ -446,7 +527,7 @@ class CloudKubernetesProvider:
     
     def _extract_pod_resources(self, pod) -> Dict:
         """
-        Extract resource requests from pod.
+        Extract resource requests and limits from pod.
         
         Args:
             pod: Kubernetes pod object
@@ -462,32 +543,145 @@ class CloudKubernetesProvider:
         }
         
         for container in pod.spec.containers:
-            if container.resources and container.resources.requests:
-                requests = container.resources.requests
+            if container.resources:
+                # Check resource requests first
+                if container.resources.requests:
+                    requests = container.resources.requests
+                    
+                    # CPU
+                    if requests.get("cpu"):
+                        cpu_str = requests["cpu"]
+                        if cpu_str.endswith('m'):
+                            resources["cpus"] += int(cpu_str[:-1]) // 1000
+                        else:
+                            resources["cpus"] += int(float(cpu_str))
+                    
+                    # Memory
+                    if requests.get("memory"):
+                        memory_str = requests["memory"]
+                        resources["ram_gb"] += self._parse_memory(memory_str)
+                    
+                    # Storage
+                    if requests.get("ephemeral-storage"):
+                        storage_str = requests["ephemeral-storage"]
+                        resources["storage_gb"] += self._parse_memory(storage_str)
+                    
+                    # GPUs
+                    if requests.get("nvidia.com/gpu"):
+                        resources["gpus"] += int(requests["nvidia.com/gpu"])
                 
-                # CPU
-                if requests.get("cpu"):
-                    cpu_str = requests["cpu"]
-                    if cpu_str.endswith('m'):
-                        resources["cpus"] += int(cpu_str[:-1]) // 1000
+                # If no requests, check limits
+                elif container.resources.limits:
+                    limits = container.resources.limits
+                    
+                    # CPU
+                    if limits.get("cpu"):
+                        cpu_str = limits["cpu"]
+                        if cpu_str.endswith('m'):
+                            resources["cpus"] += int(cpu_str[:-1]) // 1000
+                        else:
+                            resources["cpus"] += int(float(cpu_str))
+                    
+                    # Memory
+                    if limits.get("memory"):
+                        memory_str = limits["memory"]
+                        resources["ram_gb"] += self._parse_memory(memory_str)
+                    
+                    # Storage
+                    if limits.get("ephemeral-storage"):
+                        storage_str = limits["ephemeral-storage"]
+                        resources["storage_gb"] += self._parse_memory(storage_str)
+                    
+                    # GPUs
+                    if limits.get("nvidia.com/gpu"):
+                        resources["gpus"] += int(limits["nvidia.com/gpu"])
+                
+                # If no requests or limits, use default estimates based on container type
+                else:
+                    # Default estimates for common container types
+                    image = container.image.lower()
+                    if any(keyword in image for keyword in ['nginx', 'httpd', 'apache']):
+                        resources["cpus"] += 0.1
+                        resources["ram_gb"] += 0.1
+                    elif any(keyword in image for keyword in ['python', 'node', 'java', 'golang']):
+                        resources["cpus"] += 0.5
+                        resources["ram_gb"] += 0.5
+                    elif any(keyword in image for keyword in ['database', 'mysql', 'postgres', 'redis']):
+                        resources["cpus"] += 1.0
+                        resources["ram_gb"] += 1.0
                     else:
-                        resources["cpus"] += int(float(cpu_str))
-                
-                # Memory
-                if requests.get("memory"):
-                    memory_str = requests["memory"]
-                    resources["ram_gb"] += self._parse_memory(memory_str)
-                
-                # Storage
-                if requests.get("ephemeral-storage"):
-                    storage_str = requests["ephemeral-storage"]
-                    resources["storage_gb"] += self._parse_memory(storage_str)
-                
-                # GPUs
-                if requests.get("nvidia.com/gpu"):
-                    resources["gpus"] += int(requests["nvidia.com/gpu"])
+                        # Generic default for unknown containers
+                        resources["cpus"] += 0.25
+                        resources["ram_gb"] += 0.25
         
         return resources
+    
+    def _get_actual_resource_usage(self, node_name: str) -> Dict:
+        """
+        Get actual resource usage from Kubernetes metrics API.
+        
+        Args:
+            node_name: Name of the node
+            
+        Returns:
+            Dictionary with actual resource usage
+        """
+        try:
+            # Try to get metrics from metrics.k8s.io API
+            # Note: This requires metrics-server to be installed
+            from kubernetes.client import CustomObjectsApi
+            custom_api = CustomObjectsApi()
+            
+            # Get pod metrics
+            metrics = custom_api.list_namespaced_custom_object(
+                group="metrics.k8s.io",
+                version="v1beta1",
+                namespace="",
+                plural="pods"
+            )
+            
+            total_usage = {
+                "cpus": 0.0,
+                "ram_gb": 0.0,
+                "storage_gb": 0.0,
+                "gpus": 0
+            }
+            
+            for pod_metric in metrics.get('items', []):
+                pod_name = pod_metric['metadata']['name']
+                namespace = pod_metric['metadata']['namespace']
+                
+                # Check if this pod is on our target node
+                try:
+                    pod = self.core_v1.read_namespaced_pod(pod_name, namespace)
+                    if pod.spec.node_name == node_name:
+                        for container in pod_metric.get('containers', []):
+                            # CPU usage (convert from nanocores to cores)
+                            cpu_usage = container.get('usage', {}).get('cpu', '0')
+                            if cpu_usage.endswith('n'):
+                                total_usage["cpus"] += int(cpu_usage[:-1]) / 1000000000
+                            else:
+                                total_usage["cpus"] += float(cpu_usage)
+                            
+                            # Memory usage (convert to GB)
+                            memory_usage = container.get('usage', {}).get('memory', '0')
+                            total_usage["ram_gb"] += self._parse_memory(memory_usage)
+                            
+                except Exception as e:
+                    print(f"Warning: Could not get pod info for {pod_name}: {e}")
+                    continue
+            
+            return total_usage
+            
+        except Exception as e:
+            print(f"Warning: Could not get metrics from Kubernetes API: {e}")
+            # Return empty usage if metrics API is not available
+            return {
+                "cpus": 0.0,
+                "ram_gb": 0.0,
+                "storage_gb": 0.0,
+                "gpus": 0
+            }
     
     def _get_pod_status(self, pod) -> str:
         """
@@ -554,7 +748,8 @@ class CloudKubernetesProvider:
             # Create API client with insecure configuration
             configuration = client.Configuration()
             configuration.verify_ssl = False
-            configuration.assert_hostname = False
+            # Remove deprecated assert_hostname parameter
+            # configuration.assert_hostname = False
             
             # Create API client with updated configuration
             self.core_v1 = client.CoreV1Api(api_client=client.ApiClient(configuration))
@@ -567,6 +762,77 @@ class CloudKubernetesProvider:
             # Fall back to standard client creation
             self.core_v1 = client.CoreV1Api()
             self.apps_v1 = client.AppsV1Api()
+
+    def create_pod(self, pod_data: Dict) -> Dict:
+        """Create a pod in a dynamic namespace (from payload or default to 'default')."""
+        self._ensure_initialized()
+        try:
+            pod_name = pod_data.get('PodName') or pod_data.get('pod_id')
+            resources = pod_data.get('Resources') or pod_data.get('requested') or {}
+            image_url = pod_data.get('image_url', 'nginx:latest')
+            namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'custom-apps'
+
+            # Create namespace if it doesn't exist
+            try:
+                self.core_v1.read_namespace(namespace)
+            except Exception:
+                ns_body = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace))
+                self.core_v1.create_namespace(ns_body)
+
+            # Define resource requirements
+            resource_requirements = client.V1ResourceRequirements(
+                requests={
+                    'cpu': str(resources.get('cpus', 0) or 1),
+                    'memory': f"{resources.get('ram_gb', 1)}Gi",
+                    'ephemeral-storage': f"{resources.get('storage_gb', 1)}Gi"
+                }
+            )
+
+            # Define container
+            container = client.V1Container(
+                name=pod_name,
+                image=image_url,
+                resources=resource_requirements
+            )
+
+            # Define pod spec
+            pod_spec = client.V1PodSpec(containers=[container], restart_policy='Always')
+
+            # Define pod metadata
+            pod_metadata = client.V1ObjectMeta(
+                name=pod_name,
+                labels={
+                    'app': pod_name,
+                    'owner': pod_data.get('Owner', 'unknown')
+                }
+            )
+
+            # Define pod
+            pod = client.V1Pod(
+                metadata=pod_metadata,
+                spec=pod_spec
+            )
+
+            # Create pod
+            self.core_v1.create_namespaced_pod(namespace=namespace, body=pod)
+            return {'status': 'success', 'message': f'Pod {pod_name} created in namespace {namespace}'}
+        except ApiException as e:
+            return {'status': 'error', 'message': f'Kubernetes API error: {e}'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Failed to create pod: {e}'}
+
+    def delete_pod(self, pod_data: Dict) -> Dict:
+        """Delete a pod by name in the specified or default namespace."""
+        self._ensure_initialized()
+        try:
+            pod_name = pod_data.get('PodName') or pod_data.get('pod_id')
+            namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'custom-apps'
+            self.core_v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
+            return {'status': 'success', 'message': f'Pod {pod_name} deleted from namespace {namespace}'}
+        except ApiException as e:
+            return {'status': 'error', 'message': f'Kubernetes API error: {e}'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Failed to delete pod: {e}'}
 
 
 # Global instance for cloud Kubernetes

@@ -1,7 +1,9 @@
 <!-- Consistency/Error Message Area -->
 <!-- (Removed old consistencyMessage text display) -->
 <!-- Pod Creation Message Area -->
-<div *ngIf="podMessage" [ngClass]="{'pod-message-success': podMessageType === 'success', 'pod-message-error': podMessageType === 'error'}" class="pod-message" [innerHTML]="formattedPodMessage"></div>
+<div *ngIf="podMessage"
+  [ngClass]="{'pod-message-success': podMessageType === 'success', 'pod-message-error': podMessageType === 'error'}"
+  class="pod-message" [innerHTML]="formattedPodMessage"></div>
 
 <!-- Header with title -->
 <div class="dashboard-header">
@@ -23,20 +25,34 @@
       <div class="ribbon-value">{{ totalServers }}</div>
     </div>
     <div class="ribbon-stat">
+      <div class="ribbon-label">Actual RAM Usage</div>
+      <div class="ribbon-value">{{ actualRAMUsage }} / {{ totalRAM }} GB</div>
+    </div>
+    <div class="ribbon-stat">
+      <div class="ribbon-label">Actual CPU Usage</div>
+      <div class="ribbon-value">{{ actualCPUUsage }} / {{ totalCPUs }}</div>
+    </div>
+    <div class="ribbon-stat">
+      <div class="ribbon-label">Actual GPU Usage</div>
+      <div class="ribbon-value">{{ actualGPUUsage }} / {{ totalGPUs }}</div>
+    </div>
+  </div>
+  <div class="ribbon-row">
+    <div class="ribbon-stat">
       <div class="ribbon-label">Total Pods</div>
       <div class="ribbon-value">{{ totalPods }}</div>
     </div>
     <div class="ribbon-stat">
-      <div class="ribbon-label">Allocated CPUs</div>
+      <div class="ribbon-label">Reserved RAM</div>
+      <div class="ribbon-value">{{ allocatedRAM }} / {{ totalRAM }} GB</div>
+    </div>
+    <div class="ribbon-stat">
+      <div class="ribbon-label">Reserved CPUs</div>
       <div class="ribbon-value">{{ allocatedCPUs }} / {{ totalCPUs }}</div>
     </div>
     <div class="ribbon-stat">
-      <div class="ribbon-label">Allocated GPUs</div>
+      <div class="ribbon-label">Reserved GPUs</div>
       <div class="ribbon-value">{{ allocatedGPUs }} / {{ totalGPUs }}</div>
-    </div>
-    <div class="ribbon-stat">
-      <div class="ribbon-label">Available RAM</div>
-      <div class="ribbon-value">{{ availableRAM }} / {{ totalRAM }} GB</div>
     </div>
   </div>
 </mat-card>
@@ -46,26 +62,26 @@
   <div class="choose-server-header">
     <div class="choose-server-title">Choose a Server to Deploy Pod</div>
     <div class="server-actions">
-      <button mat-button color="accent" (click)="reconnectServers()" [disabled]="isReconnecting">
-        <mat-icon>refresh</mat-icon>
-        Reconnect Servers
-      </button>
       <button mat-raised-button color="primary" (click)="openServerConfigDialog()">
         Configure Server
       </button>
     </div>
   </div>
   <div class="choose-server-row">
-    <mat-card *ngFor="let server of servers" class="server-sub-card" [class.selected]="server.server_id === selectedServer?.server_id || server.id === selectedServer?.id" (click)="selectServer(server)">
+    <mat-card *ngFor="let server of servers" class="server-sub-card"
+      [class.selected]="server.server_id === selectedServer?.server_id || server.id === selectedServer?.id"
+      (click)="selectServer(server)">
       <div class="server-name">{{ server.server_name || server.name }}</div>
       <div class="server-ip">{{ server.metadata?.location || server.ip || 'N/A' }}</div>
-      <div class="server-status" [class.online]="server.status === 'Online'" [class.offline]="server.status === 'Offline'">{{ server.status || 'Online' }}</div>
+      <div class="server-status" [class.online]="server.status === 'Online'"
+        [class.offline]="server.status === 'Offline'">{{ server.status || 'Online' }}</div>
       <div class="server-pods" *ngIf="server.pods">{{ server.pods.length }} pods</div>
-      
+
       <!-- Server Status LEDs - Bottom Row -->
       <div class="server-status-leds">
         <!-- Resource Integrity LED for this server -->
-        <div class="led-container" (click)="onResourceIntegrityLedClick()" [title]="resourceIntegrityMessage || 'Resource integrity status unknown'">
+        <div class="led-container" (click)="onResourceIntegrityLedClick()"
+          [title]="resourceIntegrityMessage || 'Resource integrity status unknown'">
           <mat-icon class="led-icon">verified</mat-icon>
           <span class="resource-integrity-led" [ngClass]="{
             'led-green': resourceIntegrityMessage === 'Azure VM resource allocation is valid', 
@@ -73,11 +89,10 @@
             'led-grey': !resourceIntegrityMessage
           }"></span>
         </div>
-        
+
         <!-- Server Connection LED -->
-        <div class="led-container" 
-             (click)="onServerStatusClick(server)" 
-             [title]="'Server Connection: ' + (server.status || 'Online')">
+        <div class="led-container" (click)="onServerStatusClick(server)"
+          [title]="'Server Connection: ' + (server.status || 'Online')">
           <mat-icon class="led-icon">cloud</mat-icon>
           <span class="server-status-led" [ngClass]="{
             'led-green': server.status === 'Online', 
@@ -100,11 +115,12 @@
         <th mat-header-cell *matHeaderCellDef> Actions </th>
         <td mat-cell *matCellDef="let s">
           <div class="action-buttons">
-            <button mat-icon-button 
-                    color="warn" 
-                    (click)="deconfigureServer(s)" 
-                    class="small-icon-button"
-                    matTooltip="De-configure server">
+            <button mat-icon-button color="primary" (click)="reconnectServer(s)" [disabled]="isReconnecting"
+              class="medium-icon-button" matTooltip="Reconnect server">
+              <mat-icon>refresh</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="deconfigureServer(s)" class="medium-icon-button"
+              matTooltip="De-configure server">
               <mat-icon>delete</mat-icon>
             </button>
           </div>
@@ -120,7 +136,8 @@
       </ng-container>
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef> Status </th>
-        <td mat-cell *matCellDef="let s"><span [class.online]="s.status === 'Online'" [class.offline]="s.status === 'Offline'">{{ s.status || 'Online' }}</span></td>
+        <td mat-cell *matCellDef="let s"><span [class.online]="s.status === 'Online'"
+            [class.offline]="s.status === 'Offline'">{{ s.status || 'Online' }}</span></td>
       </ng-container>
       <ng-container matColumnDef="pods">
         <th mat-header-cell *matHeaderCellDef> Pods </th>
@@ -138,8 +155,10 @@
         <th mat-header-cell *matHeaderCellDef> CPUs </th>
         <td mat-cell *matCellDef="let s">{{ s.resources?.total?.cpus || 0 }}</td>
       </ng-container>
-      <tr mat-header-row *matHeaderRowDef="['actions', 'name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus']; sticky: true"></tr>
-      <tr mat-row *matRowDef="let row; columns: ['actions', 'name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus'];"></tr>
+      <tr mat-header-row
+        *matHeaderRowDef="['actions', 'name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus']; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: ['actions', 'name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus'];">
+      </tr>
     </table>
   </div>
 </mat-card>
@@ -184,6 +203,15 @@
         <th mat-header-cell *matHeaderCellDef> GPUs </th>
         <td mat-cell *matCellDef="let p">{{ p.requested?.gpus || 0 }}</td>
       </ng-container>
+      <ng-container matColumnDef="pod_ip">
+        <th mat-header-cell *matHeaderCellDef> Pod IP Address </th>
+        <td mat-cell *matCellDef="let p">
+          <span *ngIf="p.pod_ip" class="pod-ip">
+            {{ p.pod_ip }}
+          </span>
+          <span *ngIf="!p.pod_ip" class="no-ip">Not available</span>
+        </td>
+      </ng-container>
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef> Status </th>
         <td mat-cell *matCellDef="let p">
@@ -193,8 +221,10 @@
           </span>
         </td>
       </ng-container>
-      <tr mat-header-row *matHeaderRowDef="['actions', 'pod_id', 'server_name', 'ram', 'gpus', 'status']; sticky: true"></tr>
-      <tr mat-row *matRowDef="let row; columns: ['actions', 'pod_id', 'server_name', 'ram', 'gpus', 'status'];"></tr>
+      <tr mat-header-row
+        *matHeaderRowDef="['actions', 'pod_id', 'server_name', 'ram', 'gpus', 'pod_ip', 'status']; sticky: true"></tr>
+      <tr mat-row
+        *matRowDef="let row; columns: ['actions', 'pod_id', 'server_name', 'ram', 'gpus', 'pod_ip', 'status'];"></tr>
     </table>
   </div>
 </mat-card>

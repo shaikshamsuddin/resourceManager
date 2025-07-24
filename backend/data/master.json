@@ -1,16 +1,17 @@
 {
   "servers": [
     {
-      "id": "azure-vm-4-246-178-26",
+      "id": "kubernetes-4-246-178-26",
       "name": "Azure VM Kubernetes (4.246.178.26)",
       "type": "kubernetes",
       "environment": "live",
+      "live_refresh_interval": 5,
       "connection_coordinates": {
         "method": "kubeconfig",
         "host": "4.246.178.26",
         "port": 16443,
         "username": "azureuser",
-        "kubeconfig_path": "azure_vm_kubeconfig_updated",
+        "kubeconfig_path": "kubernetes-4-246-178-26_kubeconfig",
         "kubeconfig_data": {
           "apiVersion": "v1",
           "clusters": [
@@ -37,26 +38,1071 @@
           "users": [
             {
               "name": "admin",
-              "user": {}
+              "user": {
+                "username": "azureuser",
+                "password": "azureuser@12345",
+                "client-certificate-data": "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN6RENDQWJTZ0F3SUJBZ0lVWk9WM01YLzQ3ZkN6ci9oUW9IZWc1NTltOTBJd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0Z6RVZNQk1HQTFVRUF3d01NVEF1TVRVeUxqRTRNeTR4TUI0WERUSTFNRGN5TVRFM05EVXdNbG9YRFRNMQpNRGN4T1RFM05EVXdNbG93S1RFT01Bd0dBMVVFQXd3RllXUnRhVzR4RnpBVkJnTlZCQW9NRG5ONWMzUmxiVHB0CllYTjBaWEp6TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUE5QXNuQlNLSlNpbXgKbExFaEx4amZmWWJlSk03enBaYUFZdmtJY1R3M2I1bmZZOW8yVU9meis1K0pvSUJtZjF0d1NjT3R2cFJxVHV4WApncFk1VmkyNUlFQ0JNMm9SVjQ4ZldzT2l0OHZ5Ynk1bnZaTUIvM21uZG5MeFJSSUV1T0p0NlZFOWZwUUkzRTlRCjFJMEhVYVYxQjVUVDl1ZGM0YWNkQzdjQkZIWU9TeGhHUEliYWMxT0hVeldHRGE4VU5nQ3RaN1JzcGxzay8yek8KZU9IeU1paDBxT2hkeU9XdUhDd0dOL2tiNWdxNUNnNTV5M2I0VUlqQlVhT3RPeHB6MzAzT3diUkRsVU5iMGdMYwpEUGlYSTMvaEpjZHZEdkdEdms5YzNvZ3Bxd0hCWHJRamFyRzY5UllEWUFvc2lnd0x2TXhibzFiaTlRamdiT0ZHCk5TcHg5TUhEMXdJREFRQUJNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUNwYVRHYkN2WnVzRDVXVWJ3QmFzQ0kKSUVzM05NdThjR29WbVRRRFFjMEk3VjgwejRhVS9ZNGswalE2azVBaTEzZGxvZVV0Mm56cHVsQWVWTWdxVkZvOApvNGs5YU4vMGlOZ0Qwbnc2djdTd1BwUnk0c25zTDBuODJhek1lRHZFcUc1d3lrUXcwVnB4UjQ0ME1hTDRZd0phCnBOSENQenl0cEFuT2N2Slc0aVlQQXVqYUpXTWpCRkpFT3dEZDhWL3BRem83R05ucUh1blRUYTFsQ3ZLbkUwZzYKZ2xBd2xoVkozZTUxTzlBVU4zcUdqSExUbEpMcTlPZVZqU3NTVDM4R1BoUjhnaFE2NmZaT2hWSzFHT3Z5TGd2SQpUblM2c3FLeHVPM2lNUmtQTmJFL0Z6YmtSbTBnSnhNSHRDeVZIaWlHQTR6Zm5VMVU5WHJqdm1lQ3dUckVaWDl1Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K",
+                "client-key-data": "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBOUFzbkJTS0pTaW14bExFaEx4amZmWWJlSk03enBaYUFZdmtJY1R3M2I1bmZZOW8yClVPZnorNStKb0lCbWYxdHdTY090dnBScVR1eFhncFk1VmkyNUlFQ0JNMm9SVjQ4ZldzT2l0OHZ5Ynk1bnZaTUIKLzNtbmRuTHhSUklFdU9KdDZWRTlmcFFJM0U5UTFJMEhVYVYxQjVUVDl1ZGM0YWNkQzdjQkZIWU9TeGhHUEliYQpjMU9IVXpXR0RhOFVOZ0N0WjdSc3Bsc2svMnpPZU9IeU1paDBxT2hkeU9XdUhDd0dOL2tiNWdxNUNnNTV5M2I0ClVJakJVYU90T3hwejMwM093YlJEbFVOYjBnTGNEUGlYSTMvaEpjZHZEdkdEdms5YzNvZ3Bxd0hCWHJRamFyRzYKOVJZRFlBb3NpZ3dMdk14Ym8xYmk5UWpnYk9GR05TcHg5TUhEMXdJREFRQUJBb0lCQVFDdnkyelRSUnFTZ3RBNQo1UktiWTVaeVRQbXVtQ2xveWE0NEhWNFllNkVQVWs5YUZYRjAvSEdEZTF2ZmN6N2lWUkxoQUFVak9MUVBvQzQxCmtsTkJJZlN1SitrcUNTanU0dGxhUDN6eVd3YUxVbWxHWlNSV1RPTDE3enlmWGFocktpaTBubUhtMFdwRWtSb1AKMG50SU5DREdVazRTR0gyT3l4dWdPYmFjYjZKQ01wVWFnUzdiL05aNVk4Lzk5Y3ZraFhIL21Ebk42UTNJYXU5NgoyTDJIekNsY1Awa1Zub29FblQ2YXBsNXNNa0ptd1NWSStMd3lRZWpiamw3alRjYldGUFdyeEtEc0orcW1nSlRYCjJtcUlNcTJkalY3V1BJYnMvOEJYRzZJSWVuS28rdWw2Uzd3OFNiRk5pckxBd2doUThjcklxLzQ0RkVrQXJOLzcKQ2lzQWcvODVBb0dCQVAxYzYyQzVIbW15USsvSThNZFJmdTJYOEJ2aU43VGJvUlFtV0lQcGVoV0VwTEtMTG5PeQpEbTFUblNKUUVYN2djZkVyNGQvNEJxTTdvbnNWR0N5cW9uYjJSb0JwczB0bktVckNTUDI2azZyNGxRL3V2MTZECkpXRHB4Z0U1T2hBUDhXQXpYNWpyYlJ1RnEydGdsbU43MEdPRlFURUdtTU1GenBtWnBsc0x4QjM5QW9HQkFQYVYKWnRCUTUrTjlvU3FWL01FY0xnZm45akphM2xFTjdCU0dVb2VHRFN1YmlkWTNhVU04aFNvQ1krczJic3gvMHV4UQpSUndFVmkxQzlTT0tuNWI2MGpRTXVpdDZGQzJrdURpMXJKNi9kUGtXc1ZIM2ptVTdlWTkzQ2UvN2xabzRqcU1iCmNRemZjY3FuN0R5SllKeUNKMU03aC92K2doR200SVdJTWJFQXpVZGpBb0dBUjBEZGxXc2FhWUZQNTl5c0VuSVIKNzBIZXJnalZ2OUJRb2JrVEJhNGd2bko2V3hnWGJVUXpHSDMrWUFzQ2tKc1FrRkhXQ1VYWW9BbUNiWGtHUG5HUwpsVUEzblorY1krVlVVSWtKUEFvL3cwSjdzV3BrZVhFS2p4SFB0TUppV09nUzZ3b25wWHI0U1ZneldGUm1sdjNZCklsVDBlNVF1WEJLREF1R2FUbHFsd2dVQ2dZRUE1TmpkZGFKUXhCRzVQTU84c3lCTEhDMU1rWWxCNE9uUjIyNmEKTTRyV3VFei9ESithZ3JzdFAwSytwdko2dkRJNWQvWTdYWGdzM283UTRhNXExSDF1RHI1dEhhS01EWnhkR015TApLejIyK3VIenFZWGVVdGR5eHhJTVYvd2U2T1ZxZzdnWklJQlRwR2hhV0FpTGNGVmUxK0ZkSUNNaFplNkJXNHg5CnlhOWIxTThDZ1lCTmRScmZLVTZzVnZPRWFpVENkSVVjTWthMmt0YmtUQk5wRnlORWczZDAySFJ5Z2tZdXovUm8KK3p3dFFqVWNZN0tQZnJYUzN6cC93SmIyRVN3MEx1NCswa3cwSDQyeWZscWI5MysydVlNdWpPckFYV05vR1dkZApvRVdETkpQMlI2RCtLYW5wNEFRdVErQ2ZiTXdlaUJ1ZDZWMkN6WmN1UjRlWml0cFlvb2piK2c9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo="
+              }
             }
           ]
         },
-        "insecure_skip_tls_verify": true
+        "insecure_skip_tls_verify": true,
+        "password": "azureuser@12345"
+      },
+      "resources": {
+        "total": {
+          "cpus": 6,
+          "ram_gb": 110,
+          "storage_gb": 122,
+          "gpus": 0
+        },
+        "allocated": {
+          "cpus": 6,
+          "ram_gb": 109,
+          "storage_gb": 121,
+          "gpus": 0
+        },
+        "available": {
+          "cpus": 3.6999999999999997,
+          "ram_gb": 106.70000000000002,
+          "storage_gb": 121,
+          "gpus": 0
+        },
+        "actual_usage": {
+          "cpus": 0.04762583600000001,
+          "ram_gb": 2.0,
+          "storage_gb": 0.0,
+          "gpus": 0
+        }
       },
       "metadata": {
-        "location": "Azure VM",
+        "location": "Kubernetes Server",
         "environment": "live",
-        "description": "Kubernetes cluster on Azure VM 4.246.178.26",
+        "description": "Kubernetes cluster on 4.246.178.26",
         "setup_method": "api_automated",
-        "setup_timestamp": "2025-07-24T11:28:30.264638",
-        "configured_by": "api"
-      }
+        "setup_timestamp": "2025-07-24T17:50:09.024446",
+        "configured_by": "api",
+        "last_updated": "2025-07-24T22:49:13.010980",
+        "live_data_fresh": true
+      },
+      "pods": [
+        {
+          "pod_id": "paas-ai-baseline-engine-784f6c5b76-25n7m",
+          "namespace": "aidf-cli-setup",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_baseline_engine:84644",
+          "requested": {
+            "cpus": 0.25,
+            "ram_gb": 0.25,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-23T09:37:50+00:00",
+          "pod_ip": "10.1.0.49"
+        },
+        {
+          "pod_id": "paas-ai-frontcontroller-aiservice-d5887f488-zhrnm",
+          "namespace": "aidf-cli-setup",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_frontcontroller:85286",
+          "requested": {
+            "cpus": 0.25,
+            "ram_gb": 0.25,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-23T09:37:48+00:00",
+          "pod_ip": "10.1.0.19"
+        },
+        {
+          "pod_id": "paas-ai-frontcontroller-pipeline-57f5944b6d-7pz2p",
+          "namespace": "aidf-cli-setup",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_frontcontroller:85286",
+          "requested": {
+            "cpus": 0.25,
+            "ram_gb": 0.25,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-23T09:37:48+00:00",
+          "pod_ip": "10.1.0.37"
+        },
+        {
+          "pod_id": "paas-ai-manifest-engine-9dcbfd48-7fbbl",
+          "namespace": "aidf-cli-setup",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_manifes_engine:86657",
+          "requested": {
+            "cpus": 0.25,
+            "ram_gb": 0.25,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-23T09:37:47+00:00",
+          "pod_ip": "10.1.0.63"
+        },
+        {
+          "pod_id": "paas-ai-orchestration-engine-6987cd5f9c-cg64q",
+          "namespace": "aidf-cli-setup",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_ai:85013",
+          "requested": {
+            "cpus": 0.25,
+            "ram_gb": 0.25,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T10:28:24+00:00",
+          "pod_ip": "10.1.0.29"
+        },
+        {
+          "pod_id": "paas-be-5f969974f4-2dqz2",
+          "namespace": "aidf-cli-setup",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_be:85284",
+          "requested": {
+            "cpus": 0.25,
+            "ram_gb": 0.25,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-23T09:37:47+00:00",
+          "pod_ip": "10.1.0.21"
+        },
+        {
+          "pod_id": "paas-infra-7b9964bd8-p88zl",
+          "namespace": "aidf-cli-setup",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_pass_infra:86752",
+          "requested": {
+            "cpus": 0.25,
+            "ram_gb": 0.25,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-23T09:37:49+00:00",
+          "pod_ip": "10.1.0.28"
+        },
+        {
+          "pod_id": "paas-setup-manager-67f899cd5b-xnbt7",
+          "namespace": "aidf-cli-setup",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_setup_manager:86658",
+          "requested": {
+            "cpus": 0.25,
+            "ram_gb": 0.25,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-23T09:37:49+00:00",
+          "pod_ip": "10.1.0.45"
+        },
+        {
+          "pod_id": "test123newpod",
+          "namespace": "custom-apps",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 1,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "pending",
+          "timestamp": "2025-07-24T17:41:20+00:00",
+          "pod_ip": null
+        },
+        {
+          "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-c2xx2",
+          "namespace": "dev-aiservicesetup1-189-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:53+00:00",
+          "pod_ip": "10.1.0.16"
+        },
+        {
+          "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-hwd86",
+          "namespace": "dev-aiservicesetup1-189-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:53+00:00",
+          "pod_ip": "10.1.0.5"
+        },
+        {
+          "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-mk4zl",
+          "namespace": "dev-aiservicesetup1-189-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:53+00:00",
+          "pod_ip": "10.1.0.36"
+        },
+        {
+          "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-mv27d",
+          "namespace": "dev-aiservicesetup1-189-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:38+00:00",
+          "pod_ip": "10.1.0.11"
+        },
+        {
+          "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-p2npd",
+          "namespace": "dev-aiservicesetup1-189-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:38+00:00",
+          "pod_ip": "10.1.0.58"
+        },
+        {
+          "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-q6lmh",
+          "namespace": "dev-aiservicesetup1-189-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:53+00:00",
+          "pod_ip": "10.1.0.57"
+        },
+        {
+          "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-txg6f",
+          "namespace": "dev-aiservicesetup1-189-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:08+00:00",
+          "pod_ip": "10.1.0.60"
+        },
+        {
+          "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-vff4n",
+          "namespace": "dev-aiservicesetup1-189-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:08+00:00",
+          "pod_ip": "10.1.0.59"
+        },
+        {
+          "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-vk4bs",
+          "namespace": "dev-aiservicesetup1-189-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:38+00:00",
+          "pod_ip": "10.1.0.38"
+        },
+        {
+          "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-zn5vd",
+          "namespace": "dev-aiservicesetup1-189-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:31:53+00:00",
+          "pod_ip": "10.1.0.52"
+        },
+        {
+          "pod_id": "dev-aiservicesetup2-188-11-75449bb954-6flq5",
+          "namespace": "dev-aiservicesetup2-188-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:38+00:00",
+          "pod_ip": "10.1.0.51"
+        },
+        {
+          "pod_id": "dev-aiservicesetup2-188-11-75449bb954-8fx7n",
+          "namespace": "dev-aiservicesetup2-188-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:53+00:00",
+          "pod_ip": "10.1.0.30"
+        },
+        {
+          "pod_id": "dev-aiservicesetup2-188-11-75449bb954-95vhr",
+          "namespace": "dev-aiservicesetup2-188-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:53+00:00",
+          "pod_ip": "10.1.0.17"
+        },
+        {
+          "pod_id": "dev-aiservicesetup2-188-11-75449bb954-b84pq",
+          "namespace": "dev-aiservicesetup2-188-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:38+00:00",
+          "pod_ip": "10.1.0.54"
+        },
+        {
+          "pod_id": "dev-aiservicesetup2-188-11-75449bb954-fnggp",
+          "namespace": "dev-aiservicesetup2-188-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:08+00:00",
+          "pod_ip": "10.1.0.43"
+        },
+        {
+          "pod_id": "dev-aiservicesetup2-188-11-75449bb954-hh84d",
+          "namespace": "dev-aiservicesetup2-188-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:38+00:00",
+          "pod_ip": "10.1.0.12"
+        },
+        {
+          "pod_id": "dev-aiservicesetup2-188-11-75449bb954-qrrxg",
+          "namespace": "dev-aiservicesetup2-188-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:08+00:00",
+          "pod_ip": "10.1.0.53"
+        },
+        {
+          "pod_id": "dev-aiservicesetup2-188-11-75449bb954-r8sdc",
+          "namespace": "dev-aiservicesetup2-188-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:53+00:00",
+          "pod_ip": "10.1.0.50"
+        },
+        {
+          "pod_id": "dev-aiservicesetup2-188-11-75449bb954-xdskp",
+          "namespace": "dev-aiservicesetup2-188-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:31:53+00:00",
+          "pod_ip": "10.1.0.35"
+        },
+        {
+          "pod_id": "dev-aiservicesetup2-188-11-75449bb954-xmvrc",
+          "namespace": "dev-aiservicesetup2-188-11",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:53+00:00",
+          "pod_ip": "10.1.0.41"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-2x6g6",
+          "namespace": "dev-combinedragvectorization-185-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:36+00:00",
+          "pod_ip": "10.1.0.56"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-584lz",
+          "namespace": "dev-combinedragvectorization-185-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:05+00:00",
+          "pod_ip": "10.1.0.25"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-fxzdj",
+          "namespace": "dev-combinedragvectorization-185-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T06:39:53+00:00",
+          "pod_ip": "10.1.0.23"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-gqtc7",
+          "namespace": "dev-combinedragvectorization-185-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:21+00:00",
+          "pod_ip": "10.1.0.39"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-lgr4h",
+          "namespace": "dev-combinedragvectorization-185-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:36+00:00",
+          "pod_ip": "10.1.0.64"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-m4x4q",
+          "namespace": "dev-combinedragvectorization-185-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:21+00:00",
+          "pod_ip": "10.1.0.46"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-rg7hl",
+          "namespace": "dev-combinedragvectorization-185-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:21+00:00",
+          "pod_ip": "10.1.0.7"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-sq6s7",
+          "namespace": "dev-combinedragvectorization-185-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:05+00:00",
+          "pod_ip": "10.1.0.4"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-vmzph",
+          "namespace": "dev-combinedragvectorization-185-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:35+00:00",
+          "pod_ip": "10.1.0.47"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-zpjj2",
+          "namespace": "dev-combinedragvectorization-185-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:21+00:00",
+          "pod_ip": "10.1.0.10"
+        },
+        {
+          "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-bfgx9",
+          "namespace": "dev-copyfromblobtocosmos-146-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:20+00:00",
+          "pod_ip": "10.1.0.27"
+        },
+        {
+          "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-cpzkp",
+          "namespace": "dev-copyfromblobtocosmos-146-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:35+00:00",
+          "pod_ip": "10.1.0.18"
+        },
+        {
+          "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-f6klk",
+          "namespace": "dev-copyfromblobtocosmos-146-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:20+00:00",
+          "pod_ip": "10.1.0.44"
+        },
+        {
+          "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-fwj95",
+          "namespace": "dev-copyfromblobtocosmos-146-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:35+00:00",
+          "pod_ip": "10.1.0.13"
+        },
+        {
+          "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-hfq2v",
+          "namespace": "dev-copyfromblobtocosmos-146-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:05+00:00",
+          "pod_ip": "10.1.0.15"
+        },
+        {
+          "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-jt8w6",
+          "namespace": "dev-copyfromblobtocosmos-146-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:20+00:00",
+          "pod_ip": "10.1.0.40"
+        },
+        {
+          "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-jv6cw",
+          "namespace": "dev-copyfromblobtocosmos-146-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:35+00:00",
+          "pod_ip": "10.1.0.20"
+        },
+        {
+          "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-k6556",
+          "namespace": "dev-copyfromblobtocosmos-146-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:05+00:00",
+          "pod_ip": "10.1.0.9"
+        },
+        {
+          "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-lbfdt",
+          "namespace": "dev-copyfromblobtocosmos-146-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-22T09:45:23+00:00",
+          "pod_ip": "10.1.0.42"
+        },
+        {
+          "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-zcfvx",
+          "namespace": "dev-copyfromblobtocosmos-146-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:20+00:00",
+          "pod_ip": "10.1.0.22"
+        },
+        {
+          "pod_id": "dev-yolov8-176-2-dfd7f4665-8p827",
+          "namespace": "dev-yolov8-176-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:35+00:00",
+          "pod_ip": "10.1.0.34"
+        },
+        {
+          "pod_id": "dev-yolov8-176-2-dfd7f4665-9v9fk",
+          "namespace": "dev-yolov8-176-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:20+00:00",
+          "pod_ip": "10.1.0.33"
+        },
+        {
+          "pod_id": "dev-yolov8-176-2-dfd7f4665-cw9p8",
+          "namespace": "dev-yolov8-176-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:35+00:00",
+          "pod_ip": "10.1.0.32"
+        },
+        {
+          "pod_id": "dev-yolov8-176-2-dfd7f4665-dpxfn",
+          "namespace": "dev-yolov8-176-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:20+00:00",
+          "pod_ip": "10.1.0.55"
+        },
+        {
+          "pod_id": "dev-yolov8-176-2-dfd7f4665-fqqqh",
+          "namespace": "dev-yolov8-176-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:05+00:00",
+          "pod_ip": "10.1.0.8"
+        },
+        {
+          "pod_id": "dev-yolov8-176-2-dfd7f4665-k5j96",
+          "namespace": "dev-yolov8-176-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:20+00:00",
+          "pod_ip": "10.1.0.26"
+        },
+        {
+          "pod_id": "dev-yolov8-176-2-dfd7f4665-kp4cp",
+          "namespace": "dev-yolov8-176-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:20+00:00",
+          "pod_ip": "10.1.0.48"
+        },
+        {
+          "pod_id": "dev-yolov8-176-2-dfd7f4665-mww7z",
+          "namespace": "dev-yolov8-176-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:33:05+00:00",
+          "pod_ip": "10.1.0.24"
+        },
+        {
+          "pod_id": "dev-yolov8-176-2-dfd7f4665-qftpj",
+          "namespace": "dev-yolov8-176-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T13:32:35+00:00",
+          "pod_ip": "10.1.0.14"
+        },
+        {
+          "pod_id": "dev-yolov8-176-2-dfd7f4665-wmdsj",
+          "namespace": "dev-yolov8-176-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-23T06:36:14+00:00",
+          "pod_ip": "10.1.0.61"
+        },
+        {
+          "pod_id": "ingress-nginx-admission-create-7sv2z",
+          "namespace": "ingress-nginx",
+          "server_id": "cloud-node-01",
+          "image_url": "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1@sha256:36d05b4077fb8e3d13663702fa337f124675ba8667cbd949c03a8e8ea6fa4366",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-21T17:47:44+00:00",
+          "pod_ip": null
+        },
+        {
+          "pod_id": "ingress-nginx-admission-patch-blk9m",
+          "namespace": "ingress-nginx",
+          "server_id": "cloud-node-01",
+          "image_url": "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1@sha256:36d05b4077fb8e3d13663702fa337f124675ba8667cbd949c03a8e8ea6fa4366",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-21T17:47:44+00:00",
+          "pod_ip": null
+        },
+        {
+          "pod_id": "ingress-nginx-controller-7bfd769f7b-vbcsz",
+          "namespace": "ingress-nginx",
+          "server_id": "cloud-node-01",
+          "image_url": "registry.k8s.io/ingress-nginx/controller:v1.11.1@sha256:e6439a12b52076965928e83b7b56aae6731231677b01e81818bce7fa5c60161a",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-21T17:47:44+00:00",
+          "pod_ip": "10.1.0.6"
+        },
+        {
+          "pod_id": "nginx-ingress-microk8s-controller-bthvx",
+          "namespace": "ingress",
+          "server_id": "cloud-node-01",
+          "image_url": "registry.k8s.io/ingress-nginx/controller:v1.11.5",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-22T03:57:04+00:00",
+          "pod_ip": "10.1.0.31"
+        }
+      ],
+      "status": "Online"
     }
   ],
   "config": {
-    "default_server": "azure-vm-4-246-178-26",
-    "refresh_interval": 30,
-    "timeout": 30,
-    "max_retries": 3
+    "ui_refresh_interval": 5,
+    "auto_refresh_enabled": true,
+    "last_refresh": null,
+    "last_live_refresh": "2025-07-24T21:54:01.134393"
   }
 }

@@ -113,6 +113,11 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 15px;
+  margin-bottom: 12px;
+}
+
+.ribbon-row:last-child {
+  margin-bottom: 0;
 }
 
 .ribbon-stat {
@@ -470,6 +475,20 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
   line-height: 16px;
 }
 
+.action-buttons .medium-icon-button {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  padding: 0;
+}
+
+.action-buttons .medium-icon-button mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+}
+
 .action-buttons button {
   opacity: 0.7;
   transition: opacity 0.2s;
@@ -777,6 +796,24 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
   justify-content: center;
 }
 
+.overview-card .mat-column-pod_ip {
+  flex: 0 0 150px;
+  min-width: 150px;
+}
+
+.pod-ip {
+  color: #1976d2;
+  font-family: monospace;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.no-ip {
+  color: #666;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
 /* Server Selector Styles */
 .server-selector-container {
   display: flex;
@@ -808,20 +845,20 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
 }
 
 .server-name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
-  color: #fff;
+  color: #444;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .server-status {
-  font-size: 12px;
+  font-size: 13px;
   padding: 4px 8px;
   border-radius: 12px;
   text-transform: uppercase;
-  font-weight: 500;
+  font-weight: 600;
   margin-top: 4px;
 }
 
@@ -839,7 +876,7 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
 
 .status-online {
   background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
+  color: #25ad29;
 }
 
 .status-offline {

@@ -1,0 +1,203 @@
+{
+    "servers": [
+        {
+            "id": "kubernetes-4-246-178-26",
+            "name": "Azure VM Kubernetes (4.246.178.26)",
+            "type": "kubernetes",
+            "connection_coordinates": {
+                "method": "kubeconfig",
+                "host": "4.246.178.26",
+                "port": 16443,
+                "username": "azureuser",
+                "kubeconfig_path": "kubernetes-4-246-178-26_kubeconfig",
+                "kubeconfig_data": {
+                    "apiVersion": "v1",
+                    "clusters": [
+                        {
+                            "cluster": {
+                                "server": "https://4.246.178.26:16443",
+                                "insecure-skip-tls-verify": true
+                            },
+                            "name": "microk8s-cluster"
+                        }
+                    ],
+                    "contexts": [
+                        {
+                            "context": {
+                                "cluster": "microk8s-cluster",
+                                "user": "admin"
+                            },
+                            "name": "microk8s"
+                        }
+                    ],
+                    "current-context": "microk8s",
+                    "kind": "Config",
+                    "preferences": {},
+                    "users": [
+                        {
+                            "name": "admin",
+                            "user": {
+                                "username": "azureuser",
+                                "password": "azureuser@12345"
+                            }
+                        }
+                    ]
+                },
+                "insecure_skip_tls_verify": true,
+                "password": "azureuser@12345"
+            },
+            "resources": {
+                "total": {
+                    "gpus": 8,
+                    "ram_gb": 512,
+                    "storage_gb": 2048,
+                    "cpus": 64
+                },
+                "available": {
+                    "gpus": 6,
+                    "ram_gb": 490.5,
+                    "storage_gb": 1987,
+                    "cpus": 64
+                }
+            },
+            "metadata": {
+                "location": "Kubernetes Server",
+                "environment": "live",
+                "description": "Kubernetes cluster on 4.246.178.26",
+                "setup_method": "api_automated",
+                "setup_timestamp": "2025-07-24T17:50:09.024446",
+                "configured_by": "api"
+            },
+            "pods": [
+                {
+                    "pod_id": "testpod1233233\t",
+                    "owner": "unknown",
+                    "status": "running",
+                    "timestamp": "2025-07-17T15:06:40.866469Z",
+                    "requested": {
+                        "gpus": 0,
+                        "ram_gb": 3,
+                        "storage_gb": 2
+                    },
+                    "image_url": "https://nodejs.org/en/download",
+                    "registery_url": null,
+                    "image_name": null,
+                    "image_tag": null
+                },
+                {
+                    "pod_id": "newpod-07",
+                    "owner": "unknown",
+                    "status": "running",
+                    "timestamp": "2025-07-17T15:07:38.043789Z",
+                    "requested": {
+                        "gpus": 0,
+                        "ram_gb": 7,
+                        "storage_gb": 7
+                    },
+                    "image_url": "https://nodejs.org/en/download",
+                    "registery_url": null,
+                    "image_name": null,
+                    "image_tag": null
+                },
+                {
+                    "pod_id": "newpod-1",
+                    "owner": "unknown",
+                    "status": "running",
+                    "timestamp": "2025-07-17T15:19:47.112630Z",
+                    "requested": {
+                        "gpus": 0,
+                        "ram_gb": 0,
+                        "storage_gb": 0
+                    },
+                    "image_url": "https://nodejs.org/en/download",
+                    "registery_url": null,
+                    "image_name": null,
+                    "image_tag": null
+                },
+                {
+                    "pod_id": "etete",
+                    "owner": "unknown",
+                    "status": "running",
+                    "timestamp": "2025-07-17T15:20:36.103663Z",
+                    "requested": {
+                        "gpus": 0,
+                        "ram_gb": 2,
+                        "storage_gb": 22
+                    },
+                    "image_url": "https://nodejs.org/en/download",
+                    "registery_url": null,
+                    "image_name": null,
+                    "image_tag": null
+                },
+                {
+                    "pod_id": "newpod",
+                    "owner": "unknown",
+                    "status": "running",
+                    "timestamp": "2025-07-17T15:37:05.835784Z",
+                    "requested": {
+                        "gpus": 0,
+                        "ram_gb": 2,
+                        "storage_gb": 4
+                    },
+                    "image_url": "https://nodejs.org/en/download",
+                    "registery_url": null,
+                    "image_name": null,
+                    "image_tag": null
+                },
+                {
+                    "pod_id": "VikramPod123",
+                    "server_id": "server-01",
+                    "image_url": "http://127.0.0.1:5000/",
+                    "requested": {
+                        "gpus": 1,
+                        "ram_gb": 1,
+                        "storage_gb": 10
+                    },
+                    "owner": "unknown",
+                    "status": "Running",
+                    "timestamp": "2025-07-20T11:38:24.688170Z"
+                },
+                {
+                    "pod_id": "test-deployment-pod",
+                    "server_id": "server-01",
+                    "image_url": "nginx:latest",
+                    "requested": {
+                        "gpus": 1,
+                        "ram_gb": 4,
+                        "storage_gb": 10
+                    },
+                    "owner": "test-user",
+                    "status": "Running",
+                    "timestamp": "2025-07-20T13:54:08Z"
+                },
+                {
+                    "pod_id": "status-test-pod",
+                    "server_id": "server-01",
+                    "image_url": "nginx:latest",
+                    "requested": {
+                        "gpus": 0,
+                        "ram_gb": 2,
+                        "storage_gb": 5
+                    },
+                    "owner": "status-test",
+                    "status": "online",
+                    "timestamp": "2025-07-20T14:00:46Z"
+                },
+                {
+                    "pod_id": "safe-test-pod",
+                    "server_id": "server-01",
+                    "image_url": "nginx:latest",
+                    "requested": {
+                        "gpus": 0,
+                        "ram_gb": 0.5,
+                        "storage_gb": 1
+                    },
+                    "owner": "safe-test",
+                    "status": "online",
+                    "timestamp": "2025-07-20T14:12:12Z"
+                }
+            ]
+        }
+    ],
+    "config": {}
+}

@@ -72,6 +72,10 @@ export interface Server {
           <mat-icon>add</mat-icon>
           Configure New Server
         </button>
+        <button mat-raised-button color="accent" (click)="testKubeconfigUpdate()" style="margin-left: 8px;">
+          <mat-icon>settings</mat-icon>
+          Test Kubeconfig Update
+        </button>
       </div>
 
       <!-- Stats Cards -->
@@ -624,7 +628,8 @@ export class ServerManagementComponent implements OnInit, OnDestroy {
     this.http.get<any>(ApiConfig.getServerConfigServersUrl())
       .subscribe({
         next: (response) => {
-          this.servers = response.data?.servers || [];
+          // Handle both response formats: response.data.servers and response.data directly
+          this.servers = response.data?.servers || response.data || [];
           this.isLoading = false;
         },
         error: (error) => {
@@ -640,17 +645,47 @@ export class ServerManagementComponent implements OnInit, OnDestroy {
   }
 
   startAutoRefresh() {
-    // Refresh every 30 seconds
-    this.refreshSubscription = interval(30000)
-      .pipe(switchMap(() => this.http.get<any>(ApiConfig.getServerConfigServersUrl())))
-      .subscribe({
-        next: (response) => {
-          this.servers = response.data?.servers || [];
-        },
-        error: (error) => {
-          console.error('Auto-refresh failed:', error);
+    // Get refresh interval from backend configuration
+    this.http.get<any>(ApiConfig.getServerConfigRefreshConfigUrl()).subscribe({
+      next: (response) => {
+        const refreshInterval = response.data?.ui_refresh_interval || 5;
+        const autoRefreshEnabled = response.data?.auto_refresh_enabled !== false;
+        
+        if (autoRefreshEnabled) {
+          console.log(`Starting auto-refresh every ${refreshInterval} seconds`);
+          
+          // Refresh every N seconds based on backend config
+          this.refreshSubscription = interval(refreshInterval * 1000)
+            .pipe(switchMap(() => this.http.get<any>(ApiConfig.getServerConfigServersUrl())))
+            .subscribe({
+              next: (response) => {
+                // Handle both response formats: response.data.servers and response.data directly
+                this.servers = response.data?.servers || response.data || [];
+                console.log(`Auto-refresh completed at ${new Date().toISOString()}`);
+              },
+              error: (error) => {
+                console.error('Auto-refresh failed:', error);
+              }
+            });
+        } else {
+          console.log('Auto-refresh disabled by backend configuration');
         }
-      });
+      },
+      error: (error) => {
+        console.error('Failed to get refresh configuration, using default 5s:', error);
+        // Fallback to 5 seconds if config fetch fails
+        this.refreshSubscription = interval(5000)
+          .pipe(switchMap(() => this.http.get<any>(ApiConfig.getServerConfigServersUrl())))
+          .subscribe({
+            next: (response) => {
+              this.servers = response.data?.servers || response.data || [];
+            },
+            error: (error) => {
+              console.error('Auto-refresh failed:', error);
+            }
+          });
+      }
+    });
   }
 
   openServerConfigDialog() {
@@ -763,5 +798,28 @@ export class ServerManagementComponent implements OnInit, OnDestroy {
 
   formatTimestamp(timestamp: string): string {
     return new Date(timestamp).toLocaleString();
+  }
+
+  testKubeconfigUpdate() {
+    // Test the automated kubeconfig update functionality
+    const testCredentials = {
+      username: 'admin',
+      password: 'test123'
+    };
+
+    this.http.post(`http://localhost:5005/api/server-config/servers/azure-vm-4-246-178-26/kubeconfig`, testCredentials)
+      .subscribe({
+        next: (response: any) => {
+          if (response.type === 'success') {
+            this.snackBar.open('✅ ' + response.message, 'Close', { duration: 3000 });
+            this.loadServers(); // Refresh to show updated status
+          } else {
+            this.snackBar.open('❌ ' + response.message, 'Close', { duration: 5000 });
+          }
+        },
+        error: (error) => {
+          this.snackBar.open('❌ Failed to update kubeconfig: ' + (error.error?.message || error.message), 'Close', { duration: 5000 });
+        }
+      });
   }
 } 

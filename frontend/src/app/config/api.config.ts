@@ -49,6 +49,7 @@ export class ApiConfig {
     SERVER_CONFIG_DECONFIGURE: '/api/server-config/deconfigure',
     SERVER_CONFIG_RECONNECT: '/api/server-config/reconnect',
     SERVER_CONFIG_HEALTH: '/api/server-config/health',
+    SERVER_CONFIG_REFRESH_CONFIG: '/api/server-config/config/refresh',
     
     // Root endpoint
     ROOT: '/'
@@ -112,6 +113,10 @@ export class ApiConfig {
   
   static getServerConfigReconnectUrl(): string {
     return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_RECONNECT}`;
+  }
+  
+  static getServerConfigRefreshConfigUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_REFRESH_CONFIG}`;
   }
   
   static getRootUrl(): string {
