@@ -1,0 +1,62 @@
+{
+  "servers": [
+    {
+      "id": "azure-vm-4-246-178-26",
+      "name": "Azure VM Kubernetes (4.246.178.26)",
+      "type": "kubernetes",
+      "environment": "live",
+      "connection_coordinates": {
+        "method": "kubeconfig",
+        "host": "4.246.178.26",
+        "port": 16443,
+        "username": "azureuser",
+        "kubeconfig_path": "azure_vm_kubeconfig_updated",
+        "kubeconfig_data": {
+          "apiVersion": "v1",
+          "clusters": [
+            {
+              "cluster": {
+                "server": "https://4.246.178.26:16443",
+                "insecure-skip-tls-verify": true
+              },
+              "name": "microk8s-cluster"
+            }
+          ],
+          "contexts": [
+            {
+              "context": {
+                "cluster": "microk8s-cluster",
+                "user": "admin"
+              },
+              "name": "microk8s"
+            }
+          ],
+          "current-context": "microk8s",
+          "kind": "Config",
+          "preferences": {},
+          "users": [
+            {
+              "name": "admin",
+              "user": {}
+            }
+          ]
+        },
+        "insecure_skip_tls_verify": true
+      },
+      "metadata": {
+        "location": "Azure VM",
+        "environment": "live",
+        "description": "Kubernetes cluster on Azure VM 4.246.178.26",
+        "setup_method": "api_automated",
+        "setup_timestamp": "2025-07-24T11:28:30.264638",
+        "configured_by": "api"
+      }
+    }
+  ],
+  "config": {
+    "default_server": "azure-vm-4-246-178-26",
+    "refresh_interval": 30,
+    "timeout": 30,
+    "max_retries": 3
+  }
+}

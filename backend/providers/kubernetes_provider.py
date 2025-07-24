@@ -1,6 +1,6 @@
 """
 Local Kubernetes Provider
-This module handles local Kubernetes resource management (minikube, local clusters).
+This module handles local Kubernetes resource management (local clusters).
 """
 
 import json
@@ -10,25 +10,29 @@ from typing import Dict, List, Optional, Tuple
 from kubernetes import client, config as k8s_config
 from kubernetes.client.rest import ApiException
 
-from constants import (
+from config.constants import (
     PodStatus, ResourceType, DefaultValues, 
     ErrorMessages, TimeFormats, KubernetesConstants
 )
-from utils import map_kubernetes_status_to_user_friendly
+from config.utils import map_kubernetes_status_to_user_friendly
 
 
 class LocalKubernetesProvider:
-    """Manages local Kubernetes resources (minikube, local clusters)."""
+    """Manages local Kubernetes resources (local clusters, or remote clusters via kubeconfig)."""
     
     def __init__(self):
-        """Initialize local Kubernetes client."""
+        """Initialize Kubernetes client (local or remote)."""
+        kubeconfig_path = os.environ.get('KUBECONFIG_REMOTE')
         try:
-            # Load local kubeconfig (minikube, local clusters)
-            k8s_config.load_kube_config()
+            if kubeconfig_path and os.path.exists(kubeconfig_path):
+                print(f"Loading kubeconfig from {kubeconfig_path}")
+                k8s_config.load_kube_config(config_file=kubeconfig_path)
+            else:
+                print("Loading default local kubeconfig")
+                k8s_config.load_kube_config()
         except Exception as e:
-            print(f"Failed to load local kubeconfig: {e}")
+            print(f"Failed to load kubeconfig: {e}")
             raise
-        
         self.core_v1 = client.CoreV1Api()
         self.apps_v1 = client.AppsV1Api()
         
@@ -384,7 +388,7 @@ class LocalKubernetesProvider:
             Access URL string
         """
         try:
-            # For local Kubernetes, use minikube service URL
+            # For Azure VM Kubernetes, use node port
             node_port = service.spec.ports[0].node_port
             return f"http://localhost:{node_port}"
         except Exception:
@@ -407,8 +411,4 @@ class LocalKubernetesProvider:
             'owner': pod_data.get('Owner', 'unknown'),
             'status': 'starting',
             'timestamp': datetime.utcnow().strftime(TimeFormats.ISO_FORMAT)
-        }
-
-
-# Global instance for local Kubernetes
-local_kubernetes_provider = LocalKubernetesProvider() 
+        } 

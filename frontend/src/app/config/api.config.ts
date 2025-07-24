@@ -11,8 +11,7 @@ export class ApiConfig {
   private static readonly DEFAULT_PORT = '5005';
   private static readonly DEFAULT_PROTOCOL = 'http';
   
-  // Environment-based configuration
-  private static readonly ENVIRONMENT: string = environment.production ? 'production' : 'development';
+
   
   // Get base URL from environment or use defaults
   private static getBaseUrl(): string {
@@ -33,8 +32,8 @@ export class ApiConfig {
     // Health and monitoring endpoints
     HEALTH: '/health',
     HEALTH_DETAILED: '/health/detailed',
-    CLUSTER_STATUS: '/cluster-status',
-    CONSISTENCY_CHECK: '/consistency-check',
+
+    RESOURCE_VALIDATION: '/resource-validation',
     
     // Resource management endpoints
     SERVERS: '/servers',
@@ -42,10 +41,14 @@ export class ApiConfig {
     DELETE_POD: '/delete',
     UPDATE_POD: '/update',
     
-    // Configuration endpoints
-    MODE: '/mode',
-    LAST_MODE: '/last-mode',
-    RESET_LAST_MODE: '/reset-last-mode',
+    // Server configuration endpoints
+    SERVER_CONFIG: '/api/server-config',
+    SERVER_CONFIG_CONFIGURE: '/api/server-config/configure',
+    SERVER_CONFIG_SERVERS: '/api/server-config/servers',
+    SERVER_CONFIG_TEST: '/api/server-config/test',
+    SERVER_CONFIG_DECONFIGURE: '/api/server-config/deconfigure',
+    SERVER_CONFIG_RECONNECT: '/api/server-config/reconnect',
+    SERVER_CONFIG_HEALTH: '/api/server-config/health',
     
     // Root endpoint
     ROOT: '/'
@@ -60,12 +63,10 @@ export class ApiConfig {
     return `${this.BASE_URL}${this.ENDPOINTS.HEALTH_DETAILED}`;
   }
   
-  static getClusterStatusUrl(): string {
-    return `${this.BASE_URL}${this.ENDPOINTS.CLUSTER_STATUS}`;
-  }
+
   
-  static getConsistencyCheckUrl(): string {
-    return `${this.BASE_URL}${this.ENDPOINTS.CONSISTENCY_CHECK}`;
+  static getResourceValidationUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.RESOURCE_VALIDATION}`;
   }
   
   static getServersUrl(): string {
@@ -84,34 +85,40 @@ export class ApiConfig {
     return `${this.BASE_URL}${this.ENDPOINTS.UPDATE_POD}`;
   }
   
-  static getModeUrl(): string {
-    return `${this.BASE_URL}${this.ENDPOINTS.MODE}`;
+  // Server configuration URL getters
+  static getServerConfigUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG}`;
   }
   
-  static getLastModeUrl(): string {
-    return `${this.BASE_URL}${this.ENDPOINTS.LAST_MODE}`;
+  static getServerConfigConfigureUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_CONFIGURE}`;
   }
   
-  static getResetLastModeUrl(): string {
-    return `${this.BASE_URL}${this.ENDPOINTS.RESET_LAST_MODE}`;
+  static getServerConfigServersUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_SERVERS}`;
+  }
+  
+  static getServerConfigTestUrl(serverId: string): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_TEST}/${serverId}`;
+  }
+  
+  static getServerConfigDeconfigureUrl(serverId: string): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_DECONFIGURE}/${serverId}`;
+  }
+  
+  static getServerConfigHealthUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_HEALTH}`;
+  }
+  
+  static getServerConfigReconnectUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.SERVER_CONFIG_RECONNECT}`;
   }
   
   static getRootUrl(): string {
     return `${this.BASE_URL}${this.ENDPOINTS.ROOT}`;
   }
   
-  // Environment information
-  static getEnvironment(): string {
-    return this.ENVIRONMENT;
-  }
-  
-  static isDevelopment(): boolean {
-    return this.ENVIRONMENT === 'development';
-  }
-  
-  static isProduction(): boolean {
-    return this.ENVIRONMENT === 'production';
-  }
+
   
   // Configuration override methods for runtime changes
   static setPort(port: string): void {
@@ -125,7 +132,6 @@ export class ApiConfig {
   // Configuration validation
   static validateConfig(): void {
     console.log(`🔧 API Configuration:`);
-    console.log(`   Environment: ${this.ENVIRONMENT}`);
     console.log(`   Base URL: ${this.BASE_URL}`);
     console.log(`   Health Check: ${this.getHealthUrl()}`);
     console.log(`   Servers: ${this.getServersUrl()}`);

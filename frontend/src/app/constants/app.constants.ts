@@ -3,12 +3,7 @@
  * Centralized definition of all constants used throughout the application.
  */
 
-export enum Environment {
-  DEVELOPMENT = 'development',
-  PRODUCTION = 'production',
-  STAGING = 'staging',
-  TESTING = 'testing'
-}
+
 
 export enum PodStatus {
   RUNNING = 'Running',
@@ -66,7 +61,7 @@ export class ApiEndpoints {
   static readonly CREATE_POD = '/create';
   static readonly DELETE_POD = '/delete';
   static readonly UPDATE_POD = '/update';
-  static readonly CONSISTENCY_CHECK = '/consistency-check';
+  static readonly RESOURCE_VALIDATION = '/resource-validation';
   static readonly HEALTH_CHECK = '/health';
 }
 
@@ -106,7 +101,7 @@ export class ErrorMessages {
   static readonly POD_NAME_LOWERCASE = 'Pod name must be lowercase.';
   static readonly POD_NAME_NO_UNDERSCORE = 'Pod name must not contain underscores.';
   static readonly RESOURCES_REQUIRED = 'Resources must be specified.';
-  static readonly IMAGE_URL_REQUIRED = 'Image URL is required in production environment.';
+  static readonly IMAGE_URL_REQUIRED = 'Image URL is required.';
 
   // Resource errors
   static readonly INSUFFICIENT_RESOURCES = 'Not enough {resource} available. Requested: {requested}, Available: {available}';
@@ -157,15 +152,7 @@ export class UIConstants {
   static readonly SORT_DIRECTION_DESC = 'desc';
 }
 
-export class FeatureFlags {
-  // Feature flags for different environments
-  static readonly REQUIRE_IMAGE_URL_DEV = false;
-  static readonly REQUIRE_IMAGE_URL_PROD = true;
-  static readonly ENABLE_ADVANCED_FEATURES_DEV = false;
-  static readonly ENABLE_ADVANCED_FEATURES_PROD = true;
-  static readonly ENABLE_SWAGGER_DEV = true;
-  static readonly ENABLE_SWAGGER_PROD = false;
-}
+
 
 export class LocalStorageKeys {
   // Local storage keys
