@@ -69,7 +69,10 @@ class CloudKubernetesProvider:
             
             # Load the kubeconfig
             k8s_config.load_kube_config(config_file=temp_file_path)
-            self._configure_insecure_client()
+            
+            # Create API clients with the loaded configuration
+            self.core_v1 = client.CoreV1Api()
+            self.apps_v1 = client.AppsV1Api()
             
             # Clean up temporary file
             os.unlink(temp_file_path)
@@ -95,7 +98,10 @@ class CloudKubernetesProvider:
             
             # Load the kubeconfig
             k8s_config.load_kube_config(config_file=kubeconfig_path)
-            self._configure_insecure_client()
+            
+            # Create API clients with the loaded configuration
+            self.core_v1 = client.CoreV1Api()
+            self.apps_v1 = client.AppsV1Api()
             
             print(f"Successfully loaded kubeconfig from file: {kubeconfig_path}")
             
@@ -554,7 +560,8 @@ class CloudKubernetesProvider:
             # Create API client with insecure configuration
             configuration = client.Configuration()
             configuration.verify_ssl = False
-            configuration.assert_hostname = False
+            # Remove deprecated assert_hostname parameter
+            # configuration.assert_hostname = False
             
             # Create API client with updated configuration
             self.core_v1 = client.CoreV1Api(api_client=client.ApiClient(configuration))
