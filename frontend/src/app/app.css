@@ -840,20 +840,20 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
 }
 
 .server-name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
-  color: #fff;
+  color: #444;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .server-status {
-  font-size: 12px;
+  font-size: 13px;
   padding: 4px 8px;
   border-radius: 12px;
   text-transform: uppercase;
-  font-weight: 500;
+  font-weight: 600;
   margin-top: 4px;
 }
 
@@ -871,7 +871,7 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
 
 .status-online {
   background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
+  color: #25ad29;
 }
 
 .status-offline {
