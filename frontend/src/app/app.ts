@@ -227,6 +227,8 @@ export class App {
         if (result.status === 'success') {
           this.showAlert('success', 'Success', 'Server configured successfully!');
         }
+        // Always reload backend config after server changes
+        this.http.post(ApiConfig.getServerConfigReconnectUrl(), {}).subscribe();
       }
     });
   }
@@ -594,40 +596,35 @@ export class App {
     }
   }
 
-  reconnectServers() {
+  reconnectServer(server: any) {
     this.isReconnecting = true;
-    
-    this.http.post(ApiConfig.getServerConfigReconnectUrl(), {})
+    // Only send required fields for reconnection
+    const payload = {
+      id: server.server_id || server.id,
+      name: server.server_name || server.name,
+      type: server.type,
+      environment: server.environment,
+      connection_coordinates: server.connection_coordinates || server.connection_coordinates,
+    };
+    this.http.post(ApiConfig.getServerConfigReconnectUrl(), payload)
       .subscribe({
         next: (response: any) => {
           this.isReconnecting = false;
-          
-          // Show success message with details
-          const data = response.data;
-          const message = `${response.message}\n\n` +
-            `• Total servers: ${data.total_servers}\n` +
-            `• Successfully reconnected: ${data.successful_reconnections}\n` +
-            `• Failed reconnections: ${data.failed_reconnections}`;
-          
           this.showAlert(
             'success',
-            'Server Reconnection Complete',
-            message
+            'Server Reconnected',
+            `Server "${payload.name}" has been reconnected.`
           );
-          
-          // Refresh the server list to show updated status
           this.fetchServers();
         },
         error: (error) => {
           this.isReconnecting = false;
-          
-          const errorMessage = error.error?.message || 'Failed to reconnect servers';
+          const errorMessage = error.error?.message || 'Failed to reconnect server';
           this.showAlert(
             'error',
             'Reconnection Failed',
             errorMessage
           );
-          console.error('Failed to reconnect servers:', error);
         }
       });
   }

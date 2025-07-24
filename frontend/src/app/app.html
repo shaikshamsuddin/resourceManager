@@ -46,10 +46,6 @@
   <div class="choose-server-header">
     <div class="choose-server-title">Choose a Server to Deploy Pod</div>
     <div class="server-actions">
-      <button mat-button color="accent" (click)="reconnectServers()" [disabled]="isReconnecting">
-        <mat-icon>refresh</mat-icon>
-        Reconnect Servers
-      </button>
       <button mat-raised-button color="primary" (click)="openServerConfigDialog()">
         Configure Server
       </button>
@@ -100,6 +96,9 @@
         <th mat-header-cell *matHeaderCellDef> Actions </th>
         <td mat-cell *matCellDef="let s">
           <div class="action-buttons">
+            <button mat-icon-button color="primary" (click)="reconnectServer(s)" [disabled]="isReconnecting" matTooltip="Reconnect server">
+              <mat-icon>refresh</mat-icon>
+            </button>
             <button mat-icon-button 
                     color="warn" 
                     (click)="deconfigureServer(s)" 

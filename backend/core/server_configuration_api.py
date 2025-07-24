@@ -237,19 +237,40 @@ def health_check():
 
 @server_config_bp.route('/reconnect', methods=['POST'])
 def reconnect_servers():
-    """Reconnect servers by reloading server manager config."""
+    """Reconnect a specific server by re-initializing its provider with the given details."""
     try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "No server details provided."}), 400
+        # Expect full server config in payload
+        server_id = data.get('id') or data.get('server_id')
+        if not server_id:
+            return jsonify({"status": "error", "message": "Server ID is required."}), 400
         from core.server_manager import server_manager
-        server_manager.reload_config()
-        return jsonify({
-            "status": "success",
-            "message": "Servers reconnected successfully."
-        })
+        # Remove existing provider if present
+        if server_id in server_manager.server_providers:
+            del server_manager.server_providers[server_id]
+        # Use the same logic as initial connection
+        provider = server_manager._create_provider(data)
+        if provider:
+            server_manager.server_providers[server_id] = {
+                "provider": provider,
+                "config": data
+            }
+            return jsonify({
+                "status": "success",
+                "message": f"Server {server_id} reconnected successfully."
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "message": f"Failed to create provider for server {server_id}."
+            }), 500
     except Exception as e:
         return jsonify({
             "status": "error",
-            "message": f"Failed to reconnect servers: {str(e)}"
-        }), 500 
+            "message": f"Failed to reconnect server: {str(e)}"
+        }), 500
 
 @server_config_bp.route('/config', methods=['GET'])
 def get_config():

@@ -175,34 +175,68 @@ class ServerManager:
     
     def create_pod(self, server_id: str, pod_data: Dict) -> Dict:
         """Create a pod on the specified server."""
+        self.reload_config()  # Always reload config before operation
         if server_id not in self.server_providers:
             return {"error": f"Server {server_id} not found"}
-        
         try:
             provider = self.server_providers[server_id]["provider"]
-            return provider.create_pod(pod_data)
+            result = provider.create_pod(pod_data)
+            # Optionally, after creation, reload pods from Kubernetes and update master.json
+            self.sync_pods_from_kubernetes(server_id)
+            return result
         except Exception as e:
             return {"error": f"Failed to create pod: {e}"}
-    
-    def delete_pod(self, server_id: str, pod_name: str) -> Dict:
-        """Delete a pod from the specified server."""
+
+    def delete_pod(self, server_id: str, pod_name: str, pod_data: Dict = None) -> Dict:
+        """Delete a pod from the specified server and update master.json only if successful."""
+        self.reload_config()
         if server_id not in self.server_providers:
             return {"error": f"Server {server_id} not found"}
-        
         try:
             provider = self.server_providers[server_id]["provider"]
-            return provider.delete_pod(pod_name)
+            # Pass pod_data for namespace support
+            pod_data = pod_data or {"PodName": pod_name}
+            result = provider.delete_pod(pod_data)
+            if result.get('status') == 'success':
+                # Remove pod from master.json
+                self.master_config = self._load_master_config()
+                for server in self.master_config.get('servers', []):
+                    if server.get('id') == server_id:
+                        server['pods'] = [p for p in server.get('pods', []) if p.get('pod_id') != pod_name and p.get('name') != pod_name]
+                config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+                with open(config_path, 'w') as f:
+                    json.dump(self.master_config, f, indent=2)
+            return result
         except Exception as e:
             return {"error": f"Failed to delete pod: {e}"}
     
     def update_pod(self, server_id: str, pod_data: Dict) -> Dict:
-        """Update a pod on the specified server."""
+        """Update a pod on the specified server and in master.json."""
+        self.reload_config()  # Always reload config before operation
         if server_id not in self.server_providers:
             return {"error": f"Server {server_id} not found"}
-        
         try:
             provider = self.server_providers[server_id]["provider"]
-            return provider.update_pod(pod_data)
+            result = provider.update_pod(pod_data)
+            # After updating in Kubernetes, update master.json
+            pod_name = pod_data.get('PodName') or pod_data.get('pod_id')
+            # Reload master config
+            self.master_config = self._load_master_config()
+            for server in self.master_config.get('servers', []):
+                if server.get('id') == server_id:
+                    for pod in server.get('pods', []):
+                        if pod.get('pod_id') == pod_name or pod.get('name') == pod_name:
+                            # Update resource fields
+                            resources = pod_data.get('Resources') or pod_data.get('requested') or {}
+                            pod['requested'] = resources
+                            pod['status'] = pod_data.get('status', pod.get('status', 'online'))
+                            pod['image_url'] = pod_data.get('image_url', pod.get('image_url', ''))
+                            pod['owner'] = pod_data.get('Owner', pod.get('owner', ''))
+            # Save updated master.json
+            config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+            with open(config_path, 'w') as f:
+                json.dump(self.master_config, f, indent=2)
+            return result
         except Exception as e:
             return {"error": f"Failed to update pod: {e}"}
     
@@ -211,6 +245,33 @@ class ServerManager:
         self.master_config = self._load_master_config()
         self.server_providers = {}
         self._initialize_providers()
+
+    def sync_pods_from_kubernetes(self, server_id: str) -> Dict:
+        """Fetch live pod data from the provider and update the pods field in master.json for the given server."""
+        if server_id not in self.server_providers:
+            return {"error": f"Server {server_id} not found"}
+        try:
+            provider = self.server_providers[server_id]["provider"]
+            # Fetch live pods from provider
+            servers_data = provider.get_servers_with_pods()
+            # Flatten all pods from all nodes (if node-based)
+            live_pods = []
+            for node in servers_data:
+                if "pods" in node:
+                    for pod in node["pods"]:
+                        live_pods.append(pod)
+            # Update master.json
+            self.master_config = self._load_master_config()
+            for server in self.master_config.get("servers", []):
+                if server.get("id") == server_id:
+                    server["pods"] = live_pods
+            # Write back to master.json
+            config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+            with open(config_path, 'w') as f:
+                json.dump(self.master_config, f, indent=2)
+            return {"status": "success", "pods": live_pods}
+        except Exception as e:
+            return {"error": f"Failed to sync pods: {e}"}
 
 
 # Create a global instance
