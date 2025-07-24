@@ -1164,7 +1164,10 @@ def reconnect_servers():
             # Test connection to this server
             connection_result = manager.test_server_connection(server_id)
             
-            if connection_result.get('success'):
+            # Extract the actual test result from the nested structure
+            connection_test = connection_result.get('data', {}).get('connection_test', {})
+            
+            if connection_test.get('success'):
                 successful_reconnections += 1
                 results.append({
                     'server_id': server_id,
@@ -1177,7 +1180,7 @@ def reconnect_servers():
                     'server_id': server_id,
                     'server_name': server_name,
                     'status': 'failed',
-                    'message': connection_result.get('message', 'Unknown error')
+                    'message': connection_test.get('message', 'Unknown error')
                 })
         
         return jsonify({
