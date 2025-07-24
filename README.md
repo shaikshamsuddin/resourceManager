@@ -1,210 +1,248 @@
 # Resource Manager
 
-A comprehensive Kubernetes resource management system with support for local development, cloud deployments, and Azure VM integration.
+A comprehensive Kubernetes resource management system with independent Frontend and Backend components.
 
-## Overview
+## 🏗️ Architecture
 
-The Resource Manager provides a modern web interface for managing Kubernetes resources across different environments:
-- **Demo Mode**: Mock data for testing and demonstration
-- **Local Kubernetes**: Local development with minikube
-- **Cloud Kubernetes**: Production deployments on Azure AKS, GKE, or Azure VMs
+This project is designed with **complete independence** between Frontend (FE) and Backend (BE) components, preparing for future project splits.
 
-## Architecture
+### **🎯 Independent Components**
 
+**✅ BACKEND (Flask API)**
+- Complete REST API for Kubernetes management
+- Server configuration and health monitoring
+- Pod lifecycle management
+- Independent startup/shutdown/deployment scripts
+- Own documentation, tests, and development tools
+
+**✅ FRONTEND (Angular UI)**
+- Modern web interface for resource management
+- Real-time server status monitoring
+- Pod creation, editing, and deletion
+- Independent startup/shutdown/deployment scripts
+- Own documentation, tests, and development tools
+
+**✅ COMPLETE INDEPENDENCE**
+- Each component has its own API contracts
+- No shared dependencies
+- Independent development and deployment
+
+## 🚀 Quick Start
+
+### **Start Components Independently**
+
+**Backend Only:**
+```bash
+cd backend
+./deploy.sh
+# Backend available at: http://localhost:5005
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │    Backend      │    │   Kubernetes    │
-│   (Angular)     │◄──►│   (Flask)       │◄──►│   Clusters      │
-│   Port 4200     │    │   Port 5005     │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+
+**Frontend Only:**
+```bash
+cd frontend
+./deploy.sh
+# Frontend available at: http://localhost:4200
 ```
 
-## Modes
-
-The backend supports the following modes:
-
-### 1. Demo Mode (`demo`)
-- **Environment**: `local-mock-db`
-- **Description**: Mock data for testing and demonstration
-- **Features**: Realistic mock data, no real Kubernetes connection
-- **Use Case**: Development, testing, demonstrations
-
-### 2. Local Kubernetes (`local-k8s`)
-- **Environment**: `development`
-- **Description**: Local Kubernetes cluster (minikube)
-- **Features**: Real Kubernetes operations, port management, service creation
-- **Use Case**: Local development and testing
-
-### 3. Cloud Kubernetes (`cloud-k8s`)
-- **Environment**: `production`
-- **Description**: Cloud Kubernetes clusters (Azure AKS, GKE, Azure VM)
-- **Features**: Production-grade Kubernetes management
-- **Use Case**: Production deployments, Azure VM integration
-
-## Azure VM Integration
-
-The Resource Manager now supports managing Kubernetes clusters running on Azure VMs using the `cloud-k8s` mode.
-
-### Quick Start
-
-1. **Setup Azure VM Connection**:
-   ```bash
-   cd backend
-   python setup_azure_vm.py
-   ```
-
-2. **Configure Environment**:
-   ```bash
-   export AZURE_VM_IP=your-vm-ip
-   export AZURE_VM_USERNAME=azureuser
-   export AZURE_VM_SSH_KEY_PATH=/path/to/ssh/key
-   export ENVIRONMENT=production
-   ```
-
-3. **Test Connection**:
-   ```bash
-   python setup_azure_vm.py test
-   ```
-
-4. **Start the Application**:
-   ```bash
-   # Backend
-   cd backend && python app.py
-   
-   # Frontend (in another terminal)
-   cd frontend && npm start
-   ```
-
-### Azure VM Setup Guide
-
-For detailed Azure VM setup instructions, see [AZURE_VM_SETUP.md](backend/AZURE_VM_SETUP.md).
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.8+
-- Node.js 16+
-- Kubernetes cluster (for non-demo modes)
-- SSH access to Azure VM (for Azure VM integration)
-
-### Installation
-
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd rm1
-   ```
-
-2. **Backend Setup**:
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   ```
-
-3. **Frontend Setup**:
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-### Running the Application
-
-1. **Start Backend**:
-   ```bash
-   cd backend
-   python app.py
-   ```
-
-2. **Start Frontend**:
-   ```bash
-   cd frontend
-   npm start
-   ```
-
-3. **Access the Application**:
-   - Frontend: http://localhost:4200
-   - Backend API: http://localhost:5005
-   - API Documentation: http://localhost:5005/apidocs/
-
-## API Endpoints
-
-- `GET /` - Application status and information
-- `GET /servers` - List all servers and pods
-- `POST /create` - Create a new pod
-- `POST /delete` - Delete a pod
-- `POST /update` - Update a pod
-- `GET /mode` - Get or set backend mode
-- `GET /health` - Health check
-- `GET /consistency-check` - Data consistency check
-
-## Configuration
-
-### Environment Variables
-
-- `ENVIRONMENT`: Set the environment (development, production, local-mock-db)
-- `BACKEND_PORT`: Backend server port (default: 5005)
-- `CORS_ORIGINS`: Allowed CORS origins
-
-### Azure VM Variables
-
-- `AZURE_VM_IP`: Azure VM IP address
-- `AZURE_VM_USERNAME`: VM username (default: azureuser)
-- `AZURE_VM_SSH_KEY_PATH`: Path to SSH private key
-- `AZURE_VM_KUBECONFIG`: Direct path to kubeconfig file
-
-## Development
-
-### Project Structure
+## 📁 Project Structure
 
 ```
 rm1/
-├── backend/
-│   ├── app.py                 # Main Flask application
-│   ├── config.py              # Configuration management
-│   ├── constants.py           # Constants and enums
-│   ├── providers/             # Kubernetes providers
-│   ├── setup_azure_vm.py      # Azure VM setup script
-│   └── AZURE_VM_SETUP.md      # Azure VM setup guide
-├── frontend/
-│   ├── src/app/               # Angular application
-│   └── package.json           # Frontend dependencies
-└── README.md                  # This file
+├── README.md                    # Main project overview
+
+├── backend/                     # Completely independent backend
+│   ├── app.py                  # Main Flask app
+│   ├── server_configuration_api.py
+│   ├── server_manager.py
+│   ├── k8s_client.py, health_monitor.py
+│   ├── kubernetes_resource_manager.py
+│   ├── config.py, constants.py, utils.py
+│   ├── data/, providers/, apipayloads/
+│   ├── requirements.txt, env.example
+│   ├── README.md               # Backend-specific docs
+│   ├── start.sh, stop.sh, deploy.sh
+│   ├── tests/, docs/, scripts/
+│   ├── dev/, logs/
+│   └── .gitignore
+├── frontend/                    # Completely independent frontend
+│   ├── main.ts                 # Main entry point
+│   ├── core/                   # Core application files
+│   ├── components/             # Angular components
+│   ├── config/                 # Configuration files (including angular.json, tsconfig)
+│   ├── styles/                 # Style files
+│   ├── assets/                 # Assets
+│   ├── package.json            # Node.js dependencies
+│   ├── docs/                   # Documentation (README.md, STRUCTURE.md)
+│   ├── start.sh, stop.sh, deploy.sh  # Root scripts (call scripts/ directory)
+│   ├── scripts/
+│   └── .gitignore
+
 ```
 
-### Adding New Providers
+## 🔧 Development
 
-To add support for new Kubernetes environments:
-
-1. Create a new provider in `backend/providers/`
-2. Update `constants.py` with new environment/mode
-3. Update `config.py` with configuration
-4. Add provider to `app.py`
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Port Conflicts**: Ensure ports 5005 and 4200 are available
-2. **Kubernetes Connection**: Verify kubeconfig and cluster accessibility
-3. **Azure VM Connection**: Check SSH connectivity and permissions
-4. **CORS Issues**: Verify CORS configuration for frontend-backend communication
-
-### Debug Mode
-
-Enable debug logging:
+### **Backend Development**
 ```bash
-export DEBUG=true
+cd backend
+./start.sh          # Start backend
+./stop.sh           # Stop backend
+./deploy.sh         # Deploy backend
+tail -f logs/backend.log  # View logs
 ```
 
-## Contributing
+### **Frontend Development**
+```bash
+cd frontend
+./start.sh          # Start frontend
+./stop.sh           # Stop frontend
+./deploy.sh         # Deploy frontend
+tail -f logs/frontend.log  # View logs
+```
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+### **Testing**
+```bash
+# Backend tests
+cd backend/tests
+python -m pytest
 
-## License
+# Frontend tests
+cd frontend/tests
+npm test
+```
 
-[Add your license information here] 
+## 📋 Features
+
+### **Server Management**
+- Configure Kubernetes clusters via Azure VMs
+- Real-time server health monitoring
+- Server templates for quick setup
+- Automatic kubeconfig retrieval
+
+### **Pod Management**
+- Create, edit, and delete Kubernetes pods
+- Resource allocation (GPU, RAM, Storage)
+- Multi-cluster pod deployment
+- Resource usage tracking
+
+### **User Interface**
+- Modern Angular Material design
+- Real-time status updates
+- Comprehensive error handling
+- Responsive mobile-friendly interface
+
+## 🔗 API Integration
+
+### **Backend API Endpoints**
+- `GET /api/server-config/servers` - List servers
+- `POST /api/server-config/configure` - Configure server
+- `GET /api/k8s/pods` - List pods
+- `POST /api/k8s/pods` - Create pod
+- `PUT /api/k8s/pods/<id>` - Update pod
+- `DELETE /api/k8s/pods/<id>` - Delete pod
+
+### **Frontend-Backend Communication**
+- RESTful API calls
+- JSON request/response format
+- Error handling and retry logic
+- Real-time status updates
+
+## 🛠️ Configuration
+
+### **Backend Configuration**
+- Environment variables in `backend/env.example`
+- Server configurations in `backend/data/master.json`
+- API documentation at `http://localhost:5005/apidocs`
+
+### **Frontend Configuration**
+- API endpoint in `frontend/src/config/api.config.ts`
+- Environment files in `frontend/src/environments/`
+- Angular configuration in `frontend/angular.json`
+
+## 🔍 Troubleshooting
+
+### **Common Issues**
+
+1. **Port conflicts:**
+   ```bash
+   # Backend port 5005
+   lsof -i :5005 && kill -9 <PID>
+   
+   # Frontend port 4200
+   lsof -i :4200 && kill -9 <PID>
+   ```
+
+2. **Backend connection issues:**
+   - Verify Azure VM credentials in `backend/data/master.json`
+   - Check SSH connectivity to VMs
+   - Ensure MicroK8s is running on VMs
+
+3. **Frontend-Backend communication:**
+   - Verify backend is running on port 5005
+   - Check API configuration in frontend
+   - Ensure CORS is properly configured
+
+### **Logs**
+- **Backend logs:** `backend/logs/backend.log`
+- **Frontend logs:** `frontend/logs/frontend.log`
+- **Application logs:** Check respective component directories
+
+## 📚 Documentation
+
+### **Component-Specific Docs**
+- [Backend Documentation](backend/README.md)
+- [Frontend Documentation](frontend/README.md)
+- [API Documentation](http://localhost:5005/apidocs) (when backend is running)
+
+### **Architecture Docs**
+- [Backend Architecture](backend/docs/)
+- [Frontend Architecture](frontend/docs/)
+- [Backend API Contracts](backend/api-contracts/)
+- [Frontend API Contracts](frontend/api-contracts/)
+
+## 🚀 Deployment
+
+### **Independent Deployment**
+Each component can be deployed independently:
+
+**Backend Deployment:**
+```bash
+cd backend
+./deploy.sh
+```
+
+**Frontend Deployment:**
+```bash
+cd frontend
+./deploy.sh
+```
+
+### **Production Considerations**
+- Use environment-specific configurations
+- Implement proper security measures
+- Set up monitoring and logging
+- Configure load balancing if needed
+
+## 🤝 Contributing
+
+1. **Backend contributions:** Follow Python/Flask best practices
+2. **Frontend contributions:** Follow Angular style guide
+3. **Documentation:** Update relevant README files
+4. **Testing:** Add tests for new features
+5. **Scripts:** Ensure all scripts are executable
+
+## 📄 License
+
+On-premise application - internal use only.
+
+---
+
+## 🎯 Future Project Split
+
+This architecture is designed to facilitate easy separation into independent projects:
+
+- **Backend** can become a standalone Kubernetes management API with its own API contracts
+- **Frontend** can become a standalone web interface with its own API contracts
+- **Zero shared dependencies** - each component is completely self-contained
+- **Independent deployment** and scaling capabilities
+- **Contract-driven development** ensures compatibility even after split 

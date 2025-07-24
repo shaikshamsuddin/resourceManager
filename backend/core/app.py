@@ -21,20 +21,20 @@ except Exception as e:
     print(f"⚠️  Failed to load .env file: {e}")
 
 # Import configuration and utility functions
-from config import Config
-from utils import (
+from config.config import Config
+from config.utils import (
     get_available_resources,
     validate_resource_request,
     create_pod_k8s,
     delete_pod_k8s
 )
 
-from server_manager import server_manager
-from health_monitor import health_monitor
-from constants import Ports, PodStatus, ConfigKeys, APP_CONFIG
+from core.server_manager import server_manager
+from core.health_monitor import health_monitor
+from config.constants import Ports, PodStatus, ConfigKeys, APP_CONFIG
 
 # Import server configuration API
-from server_configuration_api import server_config_bp
+from core.server_configuration_api import server_config_bp
 
 app = Flask(__name__)
 

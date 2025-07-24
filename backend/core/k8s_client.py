@@ -11,8 +11,8 @@ from typing import Optional, Dict, Any
 from kubernetes import client, config as k8s_config
 from kubernetes.client.rest import ApiException
 
-from config import Config
-from constants import (
+from config.config import Config
+from config.constants import (
     AuthMethod, KubernetesConstants, DefaultValues, ErrorMessages
 )
 

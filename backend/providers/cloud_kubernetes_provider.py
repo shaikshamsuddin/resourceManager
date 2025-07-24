@@ -12,11 +12,11 @@ from typing import Dict, List, Optional, Tuple
 from kubernetes import client, config as k8s_config
 from kubernetes.client.rest import ApiException
 
-from constants import (
+from config.constants import (
     PodStatus, ResourceType, DefaultValues, 
     ErrorMessages, TimeFormats, KubernetesConstants
 )
-from utils import map_kubernetes_status_to_user_friendly
+from config.utils import map_kubernetes_status_to_user_friendly
 
 
 class CloudKubernetesProvider:

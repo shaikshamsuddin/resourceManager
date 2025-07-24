@@ -6,7 +6,7 @@ Handles environment-specific settings for development and production.
 import os
 from typing import Optional, Dict, Any
 
-from constants import (
+from config.constants import (
     AuthMethod, DefaultValues, ConfigKeys,
     KubernetesConstants, ErrorMessages
 )

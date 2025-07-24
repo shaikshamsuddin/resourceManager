@@ -11,12 +11,12 @@ from datetime import datetime, timedelta
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 
-from config import Config
-from constants import (
+from config.config import Config
+from config.constants import (
     ClusterStatus, HealthStatus, HealthCheckType, HealthCheckConfig,
     ErrorMessages, SuccessMessages, LogLevels
 )
-from k8s_client import k8s_client
+from core.k8s_client import k8s_client
 
 
 class HealthCheckResult:

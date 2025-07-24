@@ -13,9 +13,9 @@ from kubernetes import client, config as k8s_config
 from kubernetes.client.rest import ApiException
 import paramiko
 
-from config import Config
-from k8s_client import k8s_client
-from constants import (
+from config.config import Config
+from core.k8s_client import k8s_client
+from config.constants import (
     ResourceType, PodStatus, DefaultValues, ErrorMessages,
     SuccessMessages, TimeFormats
 )

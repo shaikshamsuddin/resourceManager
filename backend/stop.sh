@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Resource Manager - Complete Shutdown Script
-# This script stops all services started by start_all.sh
+# Backend Shutdown Script
+# This script stops the Flask backend service
 
-echo "🛑 Stopping Resource Manager - Complete Shutdown"
-echo "================================================"
+echo "🛑 Stopping Resource Manager Backend"
+echo "===================================="
 
 # Colors for output
 RED='\033[0;31m'
@@ -35,31 +35,10 @@ process_running() {
     ps -p $1 >/dev/null 2>&1
 }
 
-# Step 1: Stop Frontend
-print_status "Step 1: Stopping Frontend Service..."
-if [ -f "frontend.pid" ]; then
-    FRONTEND_PID=$(cat frontend.pid)
-    if process_running $FRONTEND_PID; then
-        print_status "Stopping frontend (PID: $FRONTEND_PID)..."
-        kill $FRONTEND_PID
-        sleep 2
-        if process_running $FRONTEND_PID; then
-            print_warning "Frontend didn't stop gracefully, force killing..."
-            kill -9 $FRONTEND_PID
-        fi
-        print_success "Frontend stopped"
-    else
-        print_warning "Frontend process not running"
-    fi
-    rm -f frontend.pid
-else
-    print_warning "Frontend PID file not found"
-fi
-
-# Step 2: Stop Backend
-print_status "Step 2: Stopping Backend Service..."
-if [ -f "backend.pid" ]; then
-    BACKEND_PID=$(cat backend.pid)
+# Stop Backend
+print_status "Stopping Backend Service..."
+if [ -f "logs/backend.pid" ]; then
+    BACKEND_PID=$(cat logs/backend.pid)
     if process_running $BACKEND_PID; then
         print_status "Stopping backend (PID: $BACKEND_PID)..."
         kill $BACKEND_PID
@@ -72,20 +51,18 @@ if [ -f "backend.pid" ]; then
     else
         print_warning "Backend process not running"
     fi
-    rm -f backend.pid
+    rm -f logs/backend.pid
 else
     print_warning "Backend PID file not found"
 fi
 
 # Clean up
 print_status "Cleaning up..."
-rm -f .service_pids
 print_success "Cleanup completed"
 
 echo ""
-echo "🎉 Resource Manager Shutdown Complete!"
-echo "======================================"
-print_success "All services stopped successfully!"
-echo ""
+echo "🎉 Backend Shutdown Complete!"
+echo "============================="
+print_success "Backend service stopped successfully!"
 print_status "Note: Azure VM Kubernetes cluster remains running."
 print_status "To stop the cluster, you would need to stop the Azure VM itself." 

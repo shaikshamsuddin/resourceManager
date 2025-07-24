@@ -1,39 +1,34 @@
 """
-Server Manager
-Handles loading and managing server configurations from master.json
+Server Manager Module
+Handles server and pod management operations.
 """
 
-import json
 import os
+import json
 from typing import Dict, List, Optional
-from pathlib import Path
-
-from constants import ErrorMessages
-from providers.kubernetes_provider import LocalKubernetesProvider
+from kubernetes import client, config
 from providers.cloud_kubernetes_provider import CloudKubernetesProvider
+from providers.kubernetes_provider import LocalKubernetesProvider
 
 
 class ServerManager:
-    """Manages server configurations and connections."""
+    """Manages server configurations and Kubernetes providers."""
     
     def __init__(self):
-        """Initialize server manager."""
+        """Initialize the server manager."""
         self.master_config = self._load_master_config()
         self.server_providers = {}
         self._initialize_providers()
     
     def _load_master_config(self) -> Dict:
-        """Load master configuration from JSON file."""
+        """Load master configuration from data/master.json."""
         try:
-            config_path = Path(__file__).parent / "data" / "master.json"
+            config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
             with open(config_path, 'r') as f:
                 return json.load(f)
-        except FileNotFoundError:
-            print(f"Warning: master.json not found at {config_path}")
-            return {"servers": [], "config": {}}
-        except json.JSONDecodeError as e:
-            print(f"Error parsing master.json: {e}")
-            return {"servers": [], "config": {}}
+        except Exception as e:
+            print(f"❌ Failed to load master config: {e}")
+            return {"servers": []}
     
     def _initialize_providers(self):
         """Initialize providers for all configured servers."""
@@ -48,8 +43,12 @@ class ServerManager:
                             "config": server
                         }
                         print(f"✅ Created provider for server: {server_id} (lazy initialization)")
+                    else:
+                        print(f"⚠️  No provider created for server: {server_id}")
                 except Exception as e:
                     print(f"❌ Failed to create provider for {server_id}: {e}")
+                    import traceback
+                    traceback.print_exc()
     
     def _create_provider(self, server_config: Dict):
         """Create appropriate provider based on server type and connection method."""
@@ -136,62 +135,57 @@ class ServerManager:
             
             servers_data = provider.get_servers_with_pods()
             
-            # Add server metadata
-            for server_data in servers_data:
+            if servers_data:
+                server_data = servers_data[0]  # Get first server
                 server_data["server_id"] = server_id
                 server_data["server_name"] = config.get("name", server_id)
                 server_data["server_type"] = config.get("type", "unknown")
                 server_data["metadata"] = config.get("metadata", {})
-            
-            return servers_data[0] if servers_data else None
+                server_data["environment"] = config.get("environment", "unknown")
+                return server_data
             
         except Exception as e:
             print(f"Error getting data for server {server_id}: {e}")
-            return {
-                "server_id": server_id,
-                "server_name": config.get("name", server_id),
-                "server_type": config.get("type", "unknown"),
-                "status": "error",
-                "error": str(e),
-                "pods": []
-            }
+        
+        return None
     
     def create_pod(self, server_id: str, pod_data: Dict) -> Dict:
-        """Create a pod on a specific server."""
-        provider = self.get_server_provider(server_id)
-        if not provider:
+        """Create a pod on the specified server."""
+        if server_id not in self.server_providers:
             return {"error": f"Server {server_id} not found"}
         
         try:
+            provider = self.server_providers[server_id]["provider"]
             return provider.create_pod(pod_data)
         except Exception as e:
-            return {"error": f"Failed to create pod: {str(e)}"}
+            return {"error": f"Failed to create pod: {e}"}
     
     def delete_pod(self, server_id: str, pod_name: str) -> Dict:
-        """Delete a pod from a specific server."""
-        provider = self.get_server_provider(server_id)
-        if not provider:
+        """Delete a pod from the specified server."""
+        if server_id not in self.server_providers:
             return {"error": f"Server {server_id} not found"}
         
         try:
+            provider = self.server_providers[server_id]["provider"]
             return provider.delete_pod(pod_name)
         except Exception as e:
-            return {"error": f"Failed to delete pod: {str(e)}"}
+            return {"error": f"Failed to delete pod: {e}"}
     
     def update_pod(self, server_id: str, pod_data: Dict) -> Dict:
-        """Update a pod on a specific server."""
-        provider = self.get_server_provider(server_id)
-        if not provider:
+        """Update a pod on the specified server."""
+        if server_id not in self.server_providers:
             return {"error": f"Server {server_id} not found"}
         
         try:
+            provider = self.server_providers[server_id]["provider"]
             return provider.update_pod(pod_data)
         except Exception as e:
-            return {"error": f"Failed to update pod: {str(e)}"}
+            return {"error": f"Failed to update pod: {e}"}
     
     def get_default_server_id(self) -> str:
-        """Get the default server ID from configuration."""
-        return self.master_config.get("config", {}).get("default_server", "")
+        """Get the default server ID."""
+        server_ids = self.get_server_ids()
+        return server_ids[0] if server_ids else ""
     
     def reload_config(self):
         """Reload the master configuration."""
@@ -200,5 +194,5 @@ class ServerManager:
         self._initialize_providers()
 
 
-# Global server manager instance
+# Create a global instance
 server_manager = ServerManager() 
