@@ -23,4 +23,20 @@ def get_config():
     return jsonify({
         "message": "Server configuration endpoint",
         "status": "available"
-    }) 
+    })
+
+@server_config_bp.route('/reconnect', methods=['POST'])
+def reconnect_servers():
+    """Reconnect servers by reloading server manager config."""
+    try:
+        from core.server_manager import server_manager
+        server_manager.reload_config()
+        return jsonify({
+            "status": "success",
+            "message": "Servers reconnected successfully."
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Failed to reconnect servers: {str(e)}"
+        }), 500 
