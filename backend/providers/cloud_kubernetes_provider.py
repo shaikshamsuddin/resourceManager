@@ -644,6 +644,77 @@ class CloudKubernetesProvider:
             self.core_v1 = client.CoreV1Api()
             self.apps_v1 = client.AppsV1Api()
 
+    def create_pod(self, pod_data: Dict) -> Dict:
+        """Create a pod in a dynamic namespace (from payload or default to 'default')."""
+        self._ensure_initialized()
+        try:
+            pod_name = pod_data.get('PodName') or pod_data.get('pod_id')
+            resources = pod_data.get('Resources') or pod_data.get('requested') or {}
+            image_url = pod_data.get('image_url', 'nginx:latest')
+            namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'custom-apps'
+
+            # Create namespace if it doesn't exist
+            try:
+                self.core_v1.read_namespace(namespace)
+            except Exception:
+                ns_body = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace))
+                self.core_v1.create_namespace(ns_body)
+
+            # Define resource requirements
+            resource_requirements = client.V1ResourceRequirements(
+                requests={
+                    'cpu': str(resources.get('cpus', 0) or 1),
+                    'memory': f"{resources.get('ram_gb', 1)}Gi",
+                    'ephemeral-storage': f"{resources.get('storage_gb', 1)}Gi"
+                }
+            )
+
+            # Define container
+            container = client.V1Container(
+                name=pod_name,
+                image=image_url,
+                resources=resource_requirements
+            )
+
+            # Define pod spec
+            pod_spec = client.V1PodSpec(containers=[container], restart_policy='Always')
+
+            # Define pod metadata
+            pod_metadata = client.V1ObjectMeta(
+                name=pod_name,
+                labels={
+                    'app': pod_name,
+                    'owner': pod_data.get('Owner', 'unknown')
+                }
+            )
+
+            # Define pod
+            pod = client.V1Pod(
+                metadata=pod_metadata,
+                spec=pod_spec
+            )
+
+            # Create pod
+            self.core_v1.create_namespaced_pod(namespace=namespace, body=pod)
+            return {'status': 'success', 'message': f'Pod {pod_name} created in namespace {namespace}'}
+        except ApiException as e:
+            return {'status': 'error', 'message': f'Kubernetes API error: {e}'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Failed to create pod: {e}'}
+
+    def delete_pod(self, pod_data: Dict) -> Dict:
+        """Delete a pod by name in the specified or default namespace."""
+        self._ensure_initialized()
+        try:
+            pod_name = pod_data.get('PodName') or pod_data.get('pod_id')
+            namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'custom-apps'
+            self.core_v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
+            return {'status': 'success', 'message': f'Pod {pod_name} deleted from namespace {namespace}'}
+        except ApiException as e:
+            return {'status': 'error', 'message': f'Kubernetes API error: {e}'}
+        except Exception as e:
+            return {'status': 'error', 'message': f'Failed to delete pod: {e}'}
+
 
 # Global instance for cloud Kubernetes
 cloud_kubernetes_provider = CloudKubernetesProvider() 

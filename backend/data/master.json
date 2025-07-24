@@ -196,6 +196,21 @@
           "timestamp": "2025-07-23T09:37:49+00:00"
         },
         {
+          "pod_id": "testpod123323",
+          "namespace": "custom-apps",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 1,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-24T14:59:02+00:00"
+        },
+        {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-c2xx2",
           "namespace": "dev-aiservicesetup1-189-11",
           "server_id": "cloud-node-01",
