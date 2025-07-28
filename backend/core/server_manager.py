@@ -208,35 +208,7 @@ class ServerManager:
         except Exception as e:
             return {"error": f"Failed to delete pod: {e}"}
     
-    def update_pod(self, server_id: str, pod_data: Dict) -> Dict:
-        """Update a pod on the specified server and in master.json."""
-        self.reload_config()  # Always reload config before operation
-        if server_id not in self.server_providers:
-            return {"error": f"Server {server_id} not found"}
-        try:
-            provider = self.server_providers[server_id]["provider"]
-            result = provider.update_pod(pod_data)
-            # After updating in Kubernetes, update master.json
-            pod_name = pod_data.get('PodName') or pod_data.get('pod_id')
-            # Reload master config
-            self.master_config = self._load_master_config()
-            for server in self.master_config.get('servers', []):
-                if server.get('id') == server_id:
-                    for pod in server.get('pods', []):
-                        if pod.get('pod_id') == pod_name or pod.get('name') == pod_name:
-                            # Update resource fields
-                            resources = pod_data.get('Resources') or pod_data.get('requested') or {}
-                            pod['requested'] = resources
-                            pod['status'] = pod_data.get('status', pod.get('status', 'online'))
-                            pod['image_url'] = pod_data.get('image_url', pod.get('image_url', ''))
-                            pod['owner'] = pod_data.get('Owner', pod.get('owner', ''))
-            # Save updated master.json
-            config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
-            with open(config_path, 'w') as f:
-                json.dump(self.master_config, f, indent=2)
-            return result
-        except Exception as e:
-            return {"error": f"Failed to update pod: {e}"}
+
     
     def reload_config(self):
         """Reload the master configuration."""

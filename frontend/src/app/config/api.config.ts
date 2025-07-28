@@ -39,7 +39,6 @@ export class ApiConfig {
     SERVERS: '/servers',
     CREATE_POD: '/create',
     DELETE_POD: '/delete',
-    UPDATE_POD: '/update',
     
     // Server configuration endpoints
     SERVER_CONFIG: '/api/server-config',
@@ -82,9 +81,7 @@ export class ApiConfig {
     return `${this.BASE_URL}${this.ENDPOINTS.DELETE_POD}`;
   }
   
-  static getUpdatePodUrl(): string {
-    return `${this.BASE_URL}${this.ENDPOINTS.UPDATE_POD}`;
-  }
+
   
   // Server configuration URL getters
   static getServerConfigUrl(): string {

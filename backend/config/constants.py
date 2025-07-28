@@ -248,7 +248,6 @@ class SuccessMessages:
     
     POD_CREATED = "Pod created successfully"
     POD_DELETED = "Pod deleted successfully"
-    POD_UPDATED = "Pod updated successfully"
     OPERATION_SUCCESS = "Operation completed successfully"
     CLUSTER_HEALTHY = "Kubernetes cluster is healthy"
     HEALTH_CHECK_PASSED = "All health checks passed"
@@ -261,7 +260,6 @@ class ApiEndpoints:
     SERVERS = "/servers"
     CREATE_POD = "/create"
     DELETE_POD = "/delete"
-    UPDATE_POD = "/update"
     RESOURCE_VALIDATION = "/resource-validation"
     HEALTH_CHECK = "/health"
 
