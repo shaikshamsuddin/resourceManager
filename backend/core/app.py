@@ -3,6 +3,11 @@ Resource Manager Backend API
 This module contains the Flask application and API endpoints for managing Kubernetes resources.
 """
 
+import warnings
+# Suppress SSL/TLS warnings for development environments
+warnings.filterwarnings('ignore', message='Unverified HTTPS request')
+warnings.filterwarnings('ignore', category=Warning, module='urllib3')
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
@@ -74,7 +79,7 @@ def index():
     
     # Try to get a quick cluster/server summary
     try:
-        servers = server_manager.get_all_servers_with_pods()
+        servers = server_manager.get_all_servers_static()
         total_servers = len(servers)
         total_pods = sum(len(s.get('pods', [])) for s in servers)
     except Exception:
@@ -231,8 +236,8 @@ def get_servers():
             else:
                 return jsonify({'error': f'Server {server_id} not found'}), 404
         else:
-            # Get all servers data
-            servers = server_manager.get_all_servers_with_pods()
+            # Get all servers data from master.json only (fast, no live sync)
+            servers = server_manager.get_all_servers_static()
             return jsonify(servers), 200
             
     except Exception as e:
@@ -416,8 +421,8 @@ def resource_validation():
             details: "<details>"
     """
     try:
-        # Use server manager for all environments
-        servers = server_manager.get_all_servers_with_pods()
+        # Use server manager for all environments (static data only)
+        servers = server_manager.get_all_servers_static()
         
         errors = []
         for server in servers:

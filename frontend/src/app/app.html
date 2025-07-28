@@ -68,19 +68,29 @@
     </div>
   </div>
   <div class="choose-server-row">
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading servers...</p>
+    </div>
+    
+    <!-- Server cards -->
     <mat-card *ngFor="let server of servers" class="server-sub-card"
-      [class.selected]="server.server_id === selectedServer?.server_id || server.id === selectedServer?.id"
+      [class.selected]="selectedServer && (server.server_id === selectedServer.server_id || server.id === selectedServer.id)"
+      [class.default]="!selectedServer && server === servers[0]"
+      [class.unselected]="selectedServer && (server.server_id !== selectedServer.server_id && server.id !== selectedServer.id)"
       (click)="selectServer(server)">
+
       <div class="server-name">{{ server.server_name || server.name }}</div>
       <div class="server-ip">{{ server.metadata?.location || server.ip || 'N/A' }}</div>
       <div class="server-status" [class.online]="server.status === 'Online'"
         [class.offline]="server.status === 'Offline'">{{ server.status || 'Online' }}</div>
       <div class="server-pods" *ngIf="server.pods">{{ server.pods.length }} pods</div>
 
-      <!-- Server Status LEDs - Bottom Row -->
+      <!-- Server Status LEDs - Bottom Row (Non-clickable) -->
       <div class="server-status-leds">
         <!-- Resource Integrity LED for this server -->
-        <div class="led-container" (click)="onResourceIntegrityLedClick()"
+        <div class="led-container disabled"
           [title]="resourceIntegrityMessage || 'Resource integrity status unknown'">
           <mat-icon class="led-icon">verified</mat-icon>
           <span class="resource-integrity-led" [ngClass]="{
@@ -91,7 +101,7 @@
         </div>
 
         <!-- Server Connection LED -->
-        <div class="led-container" (click)="onServerStatusClick(server)"
+        <div class="led-container disabled"
           [title]="'Server Connection: ' + (server.status || 'Online')">
           <mat-icon class="led-icon">cloud</mat-icon>
           <span class="server-status-led" [ngClass]="{
@@ -168,9 +178,11 @@
   <div class="overview-header-row">
     <div>
       <div class="overview-title">Pod Overview</div>
-      <div class="overview-desc">Detailed status and resource utilization of all Kubernetes servers.</div>
+      <div class="overview-desc">Detailed status and resource utilization of pods from the selected server.</div>
     </div>
-    <button mat-raised-button color="accent" (click)="openAddPodDialog()">Deploy New Pod</button>
+    <button mat-raised-button color="accent" (click)="openAddPodDialog()">
+      Deploy New Pod{{ selectedServer ? ' to ' + (selectedServer.server_name || selectedServer.name) : '' }}
+    </button>
   </div>
   <div style="max-height: 400px; overflow: auto;">
     <table mat-table [dataSource]="allPods" class="mat-elevation-z1">

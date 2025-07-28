@@ -3,6 +3,11 @@ Server Manager Module
 Handles server and pod management operations.
 """
 
+import warnings
+# Suppress SSL/TLS warnings for development environments
+warnings.filterwarnings('ignore', message='Unverified HTTPS request')
+warnings.filterwarnings('ignore', category=Warning, module='urllib3')
+
 import os
 import json
 from typing import Dict, List, Optional
@@ -107,42 +112,104 @@ class ServerManager:
             return self.server_providers[server_id]["provider"]
         return None
     
+    def get_all_servers_static(self) -> List[Dict]:
+        """
+        Get all servers and pods from master.json only (no live sync).
+        This method is optimized for fast API responses.
+        
+        Returns:
+            List of servers with their data from master.json
+        """
+        all_servers = []
+        
+        # Read directly from master.json without any provider initialization
+        for server_config in self.master_config.get("servers", []):
+            server_id = server_config.get("id")
+            server_name = server_config.get("name", server_id)
+            server_type = server_config.get("type", "unknown")
+            environment = server_config.get("environment", "unknown")
+            metadata = server_config.get("metadata", {})
+            
+            # Create server object from master.json data only
+            server_data = {
+                "id": server_id,  # Add id field for frontend compatibility
+                "server_id": server_id,
+                "name": server_name,  # Add name field for frontend compatibility
+                "server_name": server_name,
+                "server_type": server_type,
+                "metadata": metadata,
+                "environment": environment,
+                "status": server_config.get("status", "offline"),
+                "pods": server_config.get("pods", []),
+                "resources": server_config.get("resources", {
+                    "total": {}, 
+                    "allocated": {}, 
+                    "available": {}, 
+                    "actual_usage": {}
+                })
+            }
+            
+            all_servers.append(server_data)
+        
+        return all_servers
+
     def get_all_servers_with_pods(self) -> List[Dict]:
         """Get all servers with their pods data."""
         all_servers = []
         
-        for server_id, server_info in self.server_providers.items():
-            try:
-                provider = server_info["provider"]
-                config = server_info["config"]
-                
-                # Get live data from provider
-                servers_data = provider.get_servers_with_pods()
-                
-                # Add server metadata
-                for server_data in servers_data:
-                    server_data["server_id"] = server_id
-                    server_data["server_name"] = config.get("name", server_id)
-                    server_data["server_type"] = config.get("type", "unknown")
-                    server_data["metadata"] = config.get("metadata", {})
-                    server_data["environment"] = config.get("environment", "unknown")
-                
-                all_servers.extend(servers_data)
-                
-            except Exception as e:
-                print(f"Error getting data for server {server_id}: {e}")
-                # Add server with error state
-                error_server = {
+        # Get all servers from master config, not just those with providers
+        for server_config in self.master_config.get("servers", []):
+            server_id = server_config.get("id")
+            server_name = server_config.get("name", server_id)
+            server_type = server_config.get("type", "unknown")
+            environment = server_config.get("environment", "unknown")
+            metadata = server_config.get("metadata", {})
+            
+            # Check if we have a provider for this server
+            if server_id in self.server_providers:
+                try:
+                    provider = self.server_providers[server_id]["provider"]
+                    
+                    # Get live data from provider
+                    servers_data = provider.get_servers_with_pods()
+                    
+                    # Add server metadata
+                    for server_data in servers_data:
+                        server_data["server_id"] = server_id
+                        server_data["server_name"] = server_name
+                        server_data["server_type"] = server_type
+                        server_data["metadata"] = metadata
+                        server_data["environment"] = environment
+                    
+                    all_servers.extend(servers_data)
+                    
+                except Exception as e:
+                    print(f"Error getting live data for server {server_id}: {e}")
+                    # Add server with error state but include static data
+                    error_server = {
+                        "server_id": server_id,
+                        "server_name": server_name,
+                        "server_type": server_type,
+                        "metadata": metadata,
+                        "environment": environment,
+                        "status": "error",
+                        "pods": server_config.get("pods", []),
+                        "resources": server_config.get("resources", {"total": {}, "allocated": {}, "available": {}, "actual_usage": {}})
+                    }
+                    all_servers.append(error_server)
+            else:
+                # Server doesn't have a provider (like dummy servers), use static data
+                static_server = {
                     "server_id": server_id,
-                    "server_name": config.get("name", server_id),
-                    "server_type": config.get("type", "unknown"),
-                    "metadata": config.get("metadata", {}),
-                    "environment": config.get("environment", "unknown"),
-                    "status": "error",
-                    "pods": [],
-                    "resources": {"total": {}, "allocated": {}, "available": {}}
+                    "server_name": server_name,
+                    "server_type": server_type,
+                    "metadata": metadata,
+                    "environment": environment,
+                    "status": "offline",  # or "static" to indicate it's not live
+                    "pods": server_config.get("pods", []),
+                    "resources": server_config.get("resources", {"total": {}, "allocated": {}, "available": {}, "actual_usage": {}})
                 }
-                all_servers.append(error_server)
+                all_servers.append(static_server)
         
         return all_servers
     

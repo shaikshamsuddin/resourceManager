@@ -7,10 +7,15 @@ import json
 import os
 import subprocess
 import tempfile
+import warnings
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from kubernetes import client, config as k8s_config
 from kubernetes.client.rest import ApiException
+
+# Suppress SSL/TLS warnings for development environments
+warnings.filterwarnings('ignore', message='Unverified HTTPS request')
+warnings.filterwarnings('ignore', category=Warning, module='urllib3')
 
 from config.constants import (
     PodStatus, ResourceType, DefaultValues, 
@@ -35,7 +40,12 @@ class CloudKubernetesProvider:
     def _initialize_with_server_config(self, server_config: Dict):
         """Initialize Kubernetes client using server configuration from master.json."""
         try:
+            # Check if this is a dummy server
             connection_coords = server_config.get('connection_coordinates', {})
+            if connection_coords.get('is_dummy', False):
+                print(f"⏭️  Skipping initialization for dummy server: {server_config.get('id')}")
+                return
+            
             kubeconfig_data = connection_coords.get('kubeconfig_data')
             
             if kubeconfig_data:
@@ -388,6 +398,21 @@ class CloudKubernetesProvider:
             List of cloud Kubernetes nodes with pods
         """
         try:
+            # Check if this is a dummy server
+            if self.server_config and self.server_config.get('connection_coordinates', {}).get('is_dummy', False):
+                print(f"⏭️  Returning static data for dummy server: {self.server_config.get('id')}")
+                # Return static data from server config
+                return [{
+                    "id": self.server_config.get('id'),
+                    "name": self.server_config.get('name', 'Dummy Server'),
+                    "ip": self.server_config.get('connection_coordinates', {}).get('host', '0.0.0.0'),
+                    "status": "Offline",  # Dummy servers are offline
+                    "resources": self.server_config.get('resources', {
+                        "total": {}, "allocated": {}, "available": {}, "actual_usage": {}
+                    }),
+                    "pods": self.server_config.get('pods', [])
+                }]
+            
             # Initialize client on first use
             self._ensure_initialized()
             
@@ -471,7 +496,7 @@ class CloudKubernetesProvider:
         Parse Kubernetes memory string to GB.
         
         Args:
-            memory_str: Memory string (e.g., "8Gi", "1024Mi")
+            memory_str: Memory string (e.g., "8Gi", "1024Mi", "100u")
             
         Returns:
             Memory in GB
@@ -480,14 +505,25 @@ class CloudKubernetesProvider:
             return 0
         
         memory_str = memory_str.upper()
+        
+        # Handle various suffixes
         if memory_str.endswith('GI'):
             return int(memory_str[:-2])
         elif memory_str.endswith('MI'):
             return int(memory_str[:-2]) // 1024
         elif memory_str.endswith('KI'):
             return int(memory_str[:-2]) // (1024 * 1024)
+        elif memory_str.endswith('U'):
+            # Handle micro units (e.g., "100u" = 100 microseconds)
+            try:
+                return int(memory_str[:-1]) // (1024 * 1024 * 1024 * 1024)  # Convert to GB
+            except ValueError:
+                return 0
         else:
-            return int(memory_str) // (1024 * 1024 * 1024)
+            try:
+                return int(memory_str) // (1024 * 1024 * 1024)
+            except ValueError:
+                return 0
     
     def _extract_pod_info(self, pod) -> Optional[Dict]:
         """

@@ -19,6 +19,7 @@ import { ServerManagementComponent } from './server-management/server-management
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiConfig } from './config/api.config';
 
 
@@ -39,7 +40,8 @@ import { ApiConfig } from './config/api.config';
     MatTableModule,
     MatIconModule,
     MatTooltipModule,
-],
+    MatProgressSpinnerModule,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css',
   standalone: true
@@ -56,6 +58,11 @@ export class App {
   azureVMStatus: string = 'unknown';
   azureVMStatusInterval: any;
   isReconnecting: boolean = false;
+  isLoading: boolean = true; // Add loading state
+  
+  // Add caching properties
+  private lastDataFetch: number = 0;
+  private readonly CACHE_DURATION = 2000; // 2 seconds cache (reduced from 5s)
 
   constructor(private http: HttpClient, private dialog: MatDialog) {
     // Validate API configuration on startup
@@ -64,8 +71,11 @@ export class App {
   }
 
   ngOnInit() {
-    this.startResourceIntegrityPolling();
-    this.startAzureVMStatusPolling();
+    // Always fetch data immediately on page load, ignore cache
+    this.fetchServersImmediate();
+    
+    // Start optimized polling with reduced frequency
+    this.startOptimizedPolling();
   }
 
   ngOnDestroy() {
@@ -77,90 +87,100 @@ export class App {
     }
   }
 
-  startResourceIntegrityPolling() {
-    this.checkResourceIntegrity();
-    this.resourceIntegrityCheckInterval = setInterval(() => this.checkResourceIntegrity(), 10000);
+  startOptimizedPolling() {
+    // Single polling mechanism that fetches all data at once
+    this.performDataRefresh();
+    this.resourceIntegrityCheckInterval = setInterval(() => this.performDataRefresh(), 30000); // 30 seconds instead of 5-10
   }
 
-  checkResourceIntegrity() {
-    this.http.get<any>(ApiConfig.getResourceValidationUrl()).subscribe({
-      next: (res) => {
-        this.resourceIntegrityMessage = res.message;
+  // New method for immediate data fetch (ignores cache)
+  fetchServersImmediate() {
+    console.log('Fetching servers immediately on page load...');
+    this.isLoading = true;
+    
+    this.http.get<any>(ApiConfig.getServersUrl()).subscribe({
+      next: (response) => {
+        // Backend returns an array directly, not wrapped in a 'servers' property
+        this.servers = Array.isArray(response) ? response : (response.servers || []);
+        this.lastDataFetch = Date.now();
+        this.isLoading = false;
+        console.log('Fetched servers immediately:', this.servers);
+        
+        // Set default server if no server is currently selected
+        if (this.servers.length > 0 && !this.selectedServer) {
+          this.selectedServer = this.servers[0];
+          console.log('Default server set:', this.selectedServer);
+        }
+        
+        // Update status messages
+        this.updateStatusMessages();
       },
-      error: (err) => {
-        this.resourceIntegrityMessage = err?.error?.message || 'resource validation error';
+      error: (error) => {
+        console.error('Error fetching servers on page load:', error);
+        this.isLoading = false;
+        // Don't show alert on initial load, just log the error
+        // this.showAlert('error', 'Error', 'Failed to fetch servers');
+        
+        // Retry after 2 seconds
+        setTimeout(() => {
+          console.log('Retrying server fetch...');
+          this.fetchServersImmediate();
+        }, 2000);
       }
     });
   }
 
-
-
-  startAzureVMStatusPolling() {
-    this.checkAzureVMStatus();
+  performDataRefresh() {
+    // Check if we should use cached data (but be less aggressive)
+    const now = Date.now();
+    if (now - this.lastDataFetch < this.CACHE_DURATION && this.servers.length > 0) {
+      console.log('Using cached data for polling, skipping API call');
+      return;
+    }
     
-    // Get refresh interval from backend configuration
-    this.http.get<any>(ApiConfig.getServerConfigRefreshConfigUrl()).subscribe({
+    // Single API call to get all server data
+    this.http.get<any>(ApiConfig.getServersUrl()).subscribe({
       next: (response) => {
-        const refreshInterval = response.data?.ui_refresh_interval || 5;
-        const autoRefreshEnabled = response.data?.auto_refresh_enabled !== false;
+        const servers = Array.isArray(response) ? response : (response.servers || []);
+        this.servers = servers;
+        this.lastDataFetch = now;
         
-        if (autoRefreshEnabled) {
-          console.log(`Starting Azure VM status polling every ${refreshInterval} seconds`);
-          this.azureVMStatusInterval = setInterval(() => this.checkAzureVMStatus(), refreshInterval * 1000);
-        } else {
-          console.log('Azure VM status polling disabled by backend configuration');
+        // Update status messages
+        this.updateStatusMessages();
+        
+        // Set default server if no server is currently selected
+        if (this.servers.length > 0 && !this.selectedServer) {
+          this.selectedServer = this.servers[0];
         }
       },
       error: (error) => {
-        console.error('Failed to get refresh configuration, using default 5s:', error);
-        // Fallback to 5 seconds if config fetch fails
-        this.azureVMStatusInterval = setInterval(() => this.checkAzureVMStatus(), 5000);
-      }
-    });
-  }
-
-  checkAzureVMStatus() {
-    // Check Azure VM connection by making a request to the configuration endpoint
-    this.http.get<any>(ApiConfig.getServerConfigServersUrl()).subscribe({
-      next: (res) => {
-        const servers = res.data?.servers || res.data || [];
-        if (servers && servers.length > 0) {
-          // Check if we can get server details and if the server is responsive
-          const server = servers[0];
-          if (server.status === 'Online' || server.status === 'online') {
-            this.azureVMStatus = 'connected';
-          } else {
-            this.azureVMStatus = 'server_unavailable';
-          }
-        } else {
-          this.azureVMStatus = 'connection_failed';
-        }
-      },
-      error: (err) => {
-        console.error('Azure VM connection check failed:', err);
+        console.error('Error refreshing data:', error);
+        this.resourceIntegrityMessage = 'Failed to refresh server data';
         this.azureVMStatus = 'connection_failed';
       }
     });
   }
 
-  fetchServers() {
-    // Get complete server data from configuration API (single source of truth)
-    this.http.get<any>(ApiConfig.getServerConfigServersUrl()).subscribe({
-      next: (response) => {
-        console.log('Fetched complete server data:', response);
-        this.servers = response.data || [];
-        
-        // Don't auto-select a server - let user choose from the card
-        if (this.servers.length > 0 && !this.selectedServer) {
-          // Only auto-select if no server is currently selected
-          this.selectedServer = this.servers[0];
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching servers:', error);
-        this.servers = [];
+  // Helper method to update status messages
+  updateStatusMessages() {
+    if (this.servers.length > 0) {
+      const onlineServers = this.servers.filter((s: any) => s.status === 'Online' || s.status === 'online');
+      if (onlineServers.length > 0) {
+        this.resourceIntegrityMessage = 'Azure VM resource allocation is valid';
+        this.azureVMStatus = 'connected';
+      } else {
+        this.resourceIntegrityMessage = 'Some servers are offline';
+        this.azureVMStatus = 'server_unavailable';
       }
-    });
+    } else {
+      this.resourceIntegrityMessage = 'No servers available';
+      this.azureVMStatus = 'connection_failed';
+    }
+  }
+
+  // Keep fetchServers method for compatibility with other parts of the app
+  fetchServers() {
+    this.fetchServersImmediate();
   }
 
   deletePod(pod: any) {
@@ -336,8 +356,16 @@ export class App {
   }
 
   get allPods() {
-    // Flatten all pods from all servers, add serverName property
-    return this.servers.flatMap((s: any) => (s.pods || []).map((p: any) => ({ ...p, serverName: s.name })));
+    // Return pods only from the selected server
+    if (!this.selectedServer) {
+      return [];
+    }
+    
+    // Get pods from the selected server and add serverName property
+    return (this.selectedServer.pods || []).map((p: any) => ({ 
+      ...p, 
+      serverName: this.selectedServer.server_name || this.selectedServer.name 
+    }));
   }
 
   get formattedPodMessage(): string {
@@ -354,7 +382,7 @@ export class App {
         'Resource Integrity Status',
         'Resource integrity status is unknown. Checking now...'
       );
-      this.checkResourceIntegrity();
+      this.performDataRefresh();
       return;
     }
     
@@ -370,8 +398,8 @@ export class App {
       'Resource Integrity Status',
       this.resourceIntegrityMessage
     );
-    // Trigger a new resource integrity check immediately
-    this.checkResourceIntegrity();
+    // Trigger a new data refresh immediately
+    this.performDataRefresh();
   }
 
   onAzureVMStatusClick() {
@@ -382,7 +410,7 @@ export class App {
         'Azure VM Status',
         'Azure VM status is unknown. Checking now...'
       );
-      this.checkAzureVMStatus();
+      this.performDataRefresh();
       return;
     }
     
@@ -505,15 +533,22 @@ export class App {
 
 
   selectServer(server: any) {
+    // Set the selected server
     this.selectedServer = server;
     console.log('Selected server:', server);
     
-    // Show a brief message to confirm selection
-    this.showAlert(
-      'info',
-      'Server Selected',
-      `You are now managing: ${server.server_name || server.name}`
-    );
+    // No popup - just silently select the server
+  }
+
+  // Method to get the default server (first server in the list)
+  getDefaultServer(): any {
+    return this.servers.length > 0 ? this.servers[0] : null;
+  }
+
+  // Method to check if a server is the default server
+  isDefaultServer(server: any): boolean {
+    return this.servers.length > 0 && 
+           (server.server_id === this.servers[0].server_id || server.id === this.servers[0].id);
   }
 
   deconfigureServer(server: any) {
