@@ -180,25 +180,25 @@ export interface Server {
               
               <div class="detail-row">
                 <span class="detail-label">Location:</span>
-                <span class="detail-value">{{ server.metadata?.location || 'N/A' }}</span>
+                <span class="detail-value">{{ server.metadata.location || 'N/A' }}</span>
               </div>
               
               <div class="detail-row">
                 <span class="detail-label">Host:</span>
-                <span class="detail-value">{{ server.connection_coordinates?.host || 'N/A' }}</span>
+                <span class="detail-value">{{ server.connection_coordinates.host || 'N/A' }}</span>
               </div>
               
               <div class="detail-row">
                 <span class="detail-label">Port:</span>
-                <span class="detail-value">{{ server.connection_coordinates?.port || 'N/A' }}</span>
+                <span class="detail-value">{{ server.connection_coordinates.port || 'N/A' }}</span>
               </div>
               
               <div class="detail-row">
                 <span class="detail-label">Username:</span>
-                <span class="detail-value">{{ server.connection_coordinates?.username || 'N/A' }}</span>
+                <span class="detail-value">{{ server.connection_coordinates.username || 'N/A' }}</span>
               </div>
               
-              <div class="detail-row" *ngIf="server.metadata?.description">
+              <div class="detail-row" *ngIf="server.metadata.description">
                 <span class="detail-label">Description:</span>
                 <span class="detail-value">{{ server.metadata.description }}</span>
               </div>

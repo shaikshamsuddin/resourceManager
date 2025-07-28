@@ -144,7 +144,6 @@ def index():
       <li><b>GET /servers</b> - List all servers and pods</li>
       <li><b>POST /create</b> - Create a new pod (JSON body required)</li>
       <li><b>POST /delete</b> - Delete a pod (JSON body required)</li>
-      <li><b>POST /update</b> - Update a pod (JSON body required)</li>
       <li><b>GET /resource-validation</b> - Validate Azure VM resource integrity</li>
       <li><b>GET /health</b> - Basic health check</li>
       <li><b>GET /health/detailed</b> - Detailed health check</li>
@@ -174,7 +173,7 @@ def index():
             <li><b>✅ Server Configuration:</b> Complete API for server setup and management</li>
             <li><b>✅ Background Services:</b> Automatic live data refresh and health monitoring</li>
             <li><b>✅ Azure VM Integration:</b> Full Kubernetes cluster management</li>
-            <li><b>✅ Pod Management:</b> Create, update, delete pods with proper validation</li>
+            <li><b>✅ Pod Management:</b> Create, delete pods with proper validation</li>
             <li><b>✅ Real-time Updates:</b> Live data fetching with configurable intervals</li>
         </ul>
         
@@ -243,6 +242,11 @@ def get_servers():
 def create_pod():
     """
     Create a new pod on a specific server
+    
+    Two-tier validation approach:
+    1. Frontend validation: Uses master.json data for immediate user feedback
+    2. Backend validation: Validates directly against live Kubernetes server data
+    
     ---
     tags:
       - Pods
@@ -298,12 +302,13 @@ def create_pod():
         if not isinstance(resources, dict):
             return jsonify({'error': 'Resources must be a dictionary/object'}), 400
         
-        # Get server data for validation
+        # Get server data for validation - ensure we get fresh live data
         server_data = server_manager.get_server_with_pods(server_id)
         if not server_data:
             return jsonify({'error': f"Server '{server_id}' not found"}), 404
         
-        # Validate resource request
+        # Backend validation: Validate against live Kubernetes data (not master.json)
+        # This ensures accuracy even if master.json is slightly outdated
         ok, err = validate_resource_request(server_data, resources)
         if not ok:
             return jsonify({'error': err}), 400
@@ -378,67 +383,7 @@ def delete_pod():
     except Exception as e:
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
-@app.route('/update', methods=['POST'])
-def update_pod():
-    """
-    Update a pod on a specific server
-    ---
-    tags:
-      - Pods
-    parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          type: object
-          properties:
-            server_id:
-              type: string
-              description: Server ID to update pod on
-            PodName:
-              type: string
-            Resources:
-              type: object
-            Owner:
-              type: string
-    responses:
-      200:
-        description: Pod updated successfully
-      400:
-        description: Validation error
-      404:
-        description: Pod not found
-      500:
-        description: Server error
-    """
-    try:
-        req = request.json
-        if req is None:
-            return jsonify({'error': 'Invalid JSON data'}), 400
-        
-        # Get server_id and pod_name from request
-        server_id = req.get('server_id')
-        pod_name = req.get('PodName')
-        
-        if not server_id:
-            return jsonify({'error': 'server_id is required'}), 400
-        
-        if not pod_name:
-            return jsonify({'error': 'PodName is required'}), 400
-        
-        # Update pod using server manager
-        result = server_manager.update_pod(server_id, req)
-        
-        if 'error' in result:
-            if 'not found' in result['error'].lower():
-                return jsonify(result), 404
-            else:
-                return jsonify(result), 500
-        else:
-            return jsonify({'type': 'success', 'message': 'Pod updated', 'pod': result}), 200
-            
-    except Exception as e:
-        return jsonify({'error': 'Server error', 'details': str(e)}), 500
+
 
 @app.route('/resource-validation', methods=['GET'])
 def resource_validation():

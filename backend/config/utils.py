@@ -49,25 +49,32 @@ def get_available_resources(server):
 def validate_resource_request(server, requested):
     """
     Validate if requested resources are available on the server.
+    This function validates against live Kubernetes data directly.
     
     Args:
-        server (dict): Server data
+        server (dict): Server data (should contain live resource information)
         requested (dict): Requested resources
         
     Returns:
         tuple: (is_valid, error_message)
     """
+    # Get available resources from live server data
     available = get_available_resources(server)
     resource_types = [ResourceType.GPUS, ResourceType.RAM_GB, ResourceType.STORAGE_GB]
     
+    # Validate each resource type against live Kubernetes data
     for resource_type in resource_types:
         key = resource_type.value
-        if requested.get(key, 0) > available.get(key, 0):
+        requested_amount = requested.get(key, 0)
+        available_amount = available.get(key, 0)
+        
+        if requested_amount > available_amount:
             return False, ErrorMessages.INSUFFICIENT_RESOURCES.format(
                 resource=key,
-                requested=requested.get(key, 0),
-                available=available.get(key, 0)
+                requested=requested_amount,
+                available=available_amount
             )
+    
     return True, None
 
 

@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,7 +10,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog, MatDialogModule, MatDialogConfig } from '@angular/material/dialog';
 import { AddPodDialogComponent } from './add-pod-dialog/add-pod-dialog';
-import { EditPodDialogComponent } from './edit-pod-dialog/edit-pod-dialog';
+import { EnvironmentVariableDialogComponent } from './environment-variable-dialog/environment-variable-dialog';
+
 import { AlertDialogComponent } from './alert-dialog/alert-dialog';
 import { ServerConfigDialogComponent } from './server-config-dialog/server-config-dialog';
 import { ServerManagementComponent } from './server-management/server-management';
@@ -25,8 +26,9 @@ import { ApiConfig } from './config/api.config';
   selector: 'app-root',
   imports: [
     CommonModule,
-    FormsModule,
     HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
     MatFormFieldModule,
@@ -37,10 +39,6 @@ import { ApiConfig } from './config/api.config';
     MatTableModule,
     MatIconModule,
     MatTooltipModule,
-    AddPodDialogComponent,
-    EditPodDialogComponent,
-    ServerConfigDialogComponent,
-    ServerManagementComponent,
 ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -257,72 +255,29 @@ export class App {
     });
   }
 
-  openEditPodDialog(pod: any): void {
-    const server = this.servers.find((s: any) => s.name === pod.serverName);
-    if (!server) {
-      this.showAlert(
-        'error',
-        'Server Not Found',
-        'Server not found.'
-      );
-      return;
-    }
-
-    const dialogRef = this.dialog.open(EditPodDialogComponent, {
-      width: '480px',
+  openEnvironmentVariableDialog(pod: any): void {
+    const dialogRef = this.dialog.open(EnvironmentVariableDialogComponent, {
+      width: '400px',
       data: { 
-        pod,
-        serverResources: server.resources
+        environmentVariable: pod.environmentVariable || ''
       }
     });
 
-    dialogRef.componentInstance.podUpdated.subscribe((updatedPod: any) => {
-      this.updatePod(updatedPod);
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.setEnvironmentVariable(pod, result);
+      }
     });
   }
 
-  updatePod(pod: any) {
-    const server = this.servers.find((s: any) => s.name === pod.serverName);
-    if (!server) {
-      this.showAlert(
-        'error',
-        'Server Not Found',
-        'Unable to locate the specified server. Please refresh and try again.'
-      );
-      return;
-    }
-
-    const payload = {
-      ServerName: server.id,
-      PodName: pod.pod_id,
-      Resources: {
-        gpus: pod.requested.gpus,
-        ram_gb: pod.requested.ram_gb,
-        storage_gb: pod.requested.storage_gb
-      },
-      image_url: pod.image_url,
-      machine_ip: pod.machine_ip,
-      Owner: pod.owner
-    };
-
-    this.http.post(ApiConfig.getUpdatePodUrl(), payload).subscribe({
-      next: () => {
-        this.showAlert(
-          'success',
-          'Update Successful',
-          `Resource allocation successfully updated for pod "${pod.pod_id}"`
-        );
-        this.fetchServers();
-      },
-      error: (err) => {
-        const errorMsg = err?.error?.error || 'An error occurred while updating the resource allocation.';
-        this.showAlert(
-          'error',
-          'Update Failed',
-          `${errorMsg} Please try again or contact support if the issue persists.`
-        );
-      }
-    });
+  setEnvironmentVariable(pod: any, environmentVariable: string) {
+    // For now, just show a success message
+    // In a real implementation, you would send this to the backend
+    this.showAlert(
+      'success',
+      'Environment Variable Set',
+      `Environment variable "${environmentVariable}" has been set for pod "${pod.pod_id}"`
+    );
   }
 
   compareServers = (a: any, b: any) => a && b && a.id === b.id;

@@ -64,13 +64,13 @@
           "gpus": 0
         },
         "available": {
-          "cpus": 3.6999999999999997,
-          "ram_gb": 106.70000000000002,
-          "storage_gb": 121,
+          "cpus": 1.6999999999999997,
+          "ram_gb": 104.70000000000002,
+          "storage_gb": 119,
           "gpus": 0
         },
         "actual_usage": {
-          "cpus": 0.04762583600000001,
+          "cpus": 0.05046163299999999,
           "ram_gb": 2.0,
           "storage_gb": 0.0,
           "gpus": 0
@@ -83,7 +83,7 @@
         "setup_method": "api_automated",
         "setup_timestamp": "2025-07-24T17:50:09.024446",
         "configured_by": "api",
-        "last_updated": "2025-07-24T22:49:13.010980",
+        "last_updated": "2025-07-28T10:37:48.666786",
         "live_data_fresh": true
       },
       "pods": [
@@ -227,9 +227,25 @@
             "gpus": 0
           },
           "owner": "unknown",
-          "status": "pending",
+          "status": "online",
           "timestamp": "2025-07-24T17:41:20+00:00",
-          "pod_ip": null
+          "pod_ip": "10.1.0.69"
+        },
+        {
+          "pod_id": "testpod44444",
+          "namespace": "custom-apps",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 1,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-25T06:04:27+00:00",
+          "pod_ip": "10.1.0.70"
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-c2xx2",
@@ -552,10 +568,10 @@
           "pod_ip": "10.1.0.41"
         },
         {
-          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-2x6g6",
-          "namespace": "dev-combinedragvectorization-185-2",
+          "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-42t9j",
+          "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
           "requested": {
             "cpus": 0,
             "ram_gb": 0,
@@ -564,142 +580,14 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-24T13:33:36+00:00",
-          "pod_ip": "10.1.0.56"
-        },
-        {
-          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-584lz",
-          "namespace": "dev-combinedragvectorization-185-2",
-          "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
-            "storage_gb": 0,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-24T13:33:05+00:00",
-          "pod_ip": "10.1.0.25"
-        },
-        {
-          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-fxzdj",
-          "namespace": "dev-combinedragvectorization-185-2",
-          "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
-            "storage_gb": 0,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-24T06:39:53+00:00",
-          "pod_ip": "10.1.0.23"
-        },
-        {
-          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-gqtc7",
-          "namespace": "dev-combinedragvectorization-185-2",
-          "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
-            "storage_gb": 0,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-24T13:33:21+00:00",
-          "pod_ip": "10.1.0.39"
-        },
-        {
-          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-lgr4h",
-          "namespace": "dev-combinedragvectorization-185-2",
-          "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
-            "storage_gb": 0,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-24T13:33:36+00:00",
-          "pod_ip": "10.1.0.64"
-        },
-        {
-          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-m4x4q",
-          "namespace": "dev-combinedragvectorization-185-2",
-          "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
-            "storage_gb": 0,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-24T13:33:21+00:00",
-          "pod_ip": "10.1.0.46"
-        },
-        {
-          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-rg7hl",
-          "namespace": "dev-combinedragvectorization-185-2",
-          "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
-            "storage_gb": 0,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-24T13:33:21+00:00",
-          "pod_ip": "10.1.0.7"
-        },
-        {
-          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-sq6s7",
-          "namespace": "dev-combinedragvectorization-185-2",
-          "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
-            "storage_gb": 0,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-24T13:33:05+00:00",
-          "pod_ip": "10.1.0.4"
-        },
-        {
-          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-vmzph",
-          "namespace": "dev-combinedragvectorization-185-2",
-          "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
-            "storage_gb": 0,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-24T13:32:35+00:00",
+          "timestamp": "2025-07-28T03:40:02+00:00",
           "pod_ip": "10.1.0.47"
         },
         {
-          "pod_id": "dev-combinedragvectorization-185-2-6545c795fc-zpjj2",
-          "namespace": "dev-combinedragvectorization-185-2",
+          "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-85x2w",
+          "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-185-2:v1",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
           "requested": {
             "cpus": 0,
             "ram_gb": 0,
@@ -708,7 +596,135 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-24T13:33:21+00:00",
+          "timestamp": "2025-07-28T03:40:30+00:00",
+          "pod_ip": "10.1.0.71"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-blxsw",
+          "namespace": "dev-combinedragvectorization-200-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T03:40:15+00:00",
+          "pod_ip": "10.1.0.7"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-d2ck5",
+          "namespace": "dev-combinedragvectorization-200-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T03:40:15+00:00",
+          "pod_ip": "10.1.0.4"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-df2qv",
+          "namespace": "dev-combinedragvectorization-200-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T03:40:15+00:00",
+          "pod_ip": "10.1.0.56"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-gzxqk",
+          "namespace": "dev-combinedragvectorization-200-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T03:40:15+00:00",
+          "pod_ip": "10.1.0.25"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-h2dt8",
+          "namespace": "dev-combinedragvectorization-200-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T03:40:30+00:00",
+          "pod_ip": "10.1.0.23"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-hxxml",
+          "namespace": "dev-combinedragvectorization-200-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T03:40:02+00:00",
+          "pod_ip": "10.1.0.46"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-tm2rc",
+          "namespace": "dev-combinedragvectorization-200-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T03:40:02+00:00",
+          "pod_ip": "10.1.0.39"
+        },
+        {
+          "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-xpb54",
+          "namespace": "dev-combinedragvectorization-200-2",
+          "server_id": "cloud-node-01",
+          "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T03:37:38+00:00",
           "pod_ip": "10.1.0.10"
         },
         {
@@ -1103,6 +1119,6 @@
     "ui_refresh_interval": 5,
     "auto_refresh_enabled": true,
     "last_refresh": null,
-    "last_live_refresh": "2025-07-24T21:54:01.134393"
+    "last_live_refresh": "2025-07-28T10:37:48.682003"
   }
 }

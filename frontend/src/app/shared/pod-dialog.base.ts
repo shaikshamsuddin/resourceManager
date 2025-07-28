@@ -37,6 +37,8 @@ export class PodDialogBase {
   }
 
   protected getMaxAvailable(resource: string): number {
+    // Frontend validation uses master.json data for immediate feedback
+    // Backend will perform additional validation against live Kubernetes data
     return this.serverResources?.available?.[resource] || 0;
   }
 

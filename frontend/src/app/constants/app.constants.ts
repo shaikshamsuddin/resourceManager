@@ -60,7 +60,6 @@ export class ApiEndpoints {
   static readonly SERVERS = '/servers';
   static readonly CREATE_POD = '/create';
   static readonly DELETE_POD = '/delete';
-  static readonly UPDATE_POD = '/update';
   static readonly RESOURCE_VALIDATION = '/resource-validation';
   static readonly HEALTH_CHECK = '/health';
 }
@@ -124,7 +123,6 @@ export class SuccessMessages {
   // Standard success messages
   static readonly POD_CREATED = 'Pod created successfully';
   static readonly POD_DELETED = 'Pod deleted successfully';
-  static readonly POD_UPDATED = 'Pod updated successfully';
   static readonly OPERATION_SUCCESS = 'Operation completed successfully';
   static readonly DATA_LOADED = 'Data loaded successfully';
   static readonly CONFIGURATION_SAVED = 'Configuration saved successfully';
@@ -176,7 +174,6 @@ export class EventTypes {
   // Custom event types
   static readonly POD_CREATED = 'podCreated';
   static readonly POD_DELETED = 'podDeleted';
-  static readonly POD_UPDATED = 'podUpdated';
   static readonly SERVER_SELECTED = 'serverSelected';
   static readonly FILTER_CHANGED = 'filterChanged';
   static readonly SORT_CHANGED = 'sortChanged';
