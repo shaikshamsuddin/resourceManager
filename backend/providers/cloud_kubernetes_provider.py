@@ -202,7 +202,8 @@ class CloudKubernetesProvider:
                 except Exception as e:
                     print(f"⚠️  Azure VM connection failed (will be configured via API): {e}")
                     # Don't fail startup - let users configure via API
-                    self.client = None
+                    self.core_v1 = None
+                    self.apps_v1 = None
                     return
             else:
                 # Standard cloud connection (Azure AKS, GKE, etc.)
@@ -212,13 +213,15 @@ class CloudKubernetesProvider:
                 except Exception as e:
                     print(f"⚠️  Cloud connection failed: {e}")
                     # Don't fail startup - let users configure via API
-                    self.client = None
+                    self.core_v1 = None
+                    self.apps_v1 = None
                     return
                 
         except Exception as e:
             print(f"⚠️  Kubernetes client initialization failed: {e}")
             # Don't fail startup - let users configure via API
-            self.client = None
+            self.core_v1 = None
+            self.apps_v1 = None
     
     def _setup_azure_vm_connection(self, vm_ip: str):
         """Setup connection to Azure VM Kubernetes cluster."""
@@ -366,30 +369,39 @@ class CloudKubernetesProvider:
             raise Exception(f"Failed to generate kubeconfig with password: {e}")
     
     def _ensure_initialized(self):
-        """Ensure the Kubernetes client is initialized before use."""
-        if not self._initialized:
+        """Ensure Kubernetes client is initialized."""
+        if self.core_v1 is None or self.apps_v1 is None:
+            print("Initializing Kubernetes client...")
             if self.server_config:
                 try:
-                    # Initialize with server configuration
                     self._initialize_with_server_config(self.server_config)
                 except Exception as e:
-                    print(f"Failed to initialize cloud Kubernetes client with server config: {e}")
-                    raise
-            else:
-                try:
-                    # Try to load cloud kubeconfig (Azure AKS, GKE, Azure VM, etc.)
+                    print(f"Failed to initialize with server config: {e}")
+                    # Try standard initialization
                     self._initialize_kubernetes_client()
-                except Exception as e:
-                    print(f"Failed to initialize cloud Kubernetes client: {e}")
-                    raise
-            
-            if self.core_v1 is None:
-                self.core_v1 = client.CoreV1Api()
-            if self.apps_v1 is None:
-                self.apps_v1 = client.AppsV1Api()
-            
-            self._initialized = True
-
+            else:
+                self._initialize_kubernetes_client()
+        
+        # OPTIMIZATION: Add connection health check with timeout
+        if self.core_v1:
+            try:
+                # Quick health check with timeout
+                import signal
+                def timeout_handler(signum, frame):
+                    raise TimeoutError("Kubernetes connection timeout")
+                
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(5)  # 5 second timeout
+                
+                # Test connection
+                self.core_v1.list_namespace()
+                signal.alarm(0)  # Cancel timeout
+                
+            except (TimeoutError, Exception) as e:
+                print(f"Kubernetes connection check failed: {e}")
+                # Reinitialize if connection is broken
+                self._initialize_kubernetes_client()
+    
     def get_servers_with_pods(self) -> List[Dict]:
         """
         Get cloud Kubernetes nodes and their pods.
@@ -787,6 +799,9 @@ class CloudKubernetesProvider:
             # Remove deprecated assert_hostname parameter
             # configuration.assert_hostname = False
             
+            # OPTIMIZATION: Add timeout configuration
+            configuration.timeout = 10  # 10 second timeout for API calls
+            
             # Create API client with updated configuration
             self.core_v1 = client.CoreV1Api(api_client=client.ApiClient(configuration))
             self.apps_v1 = client.AppsV1Api(api_client=client.ApiClient(configuration))
@@ -808,39 +823,45 @@ class CloudKubernetesProvider:
             image_url = pod_data.get('image_url', 'nginx:latest')
             namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'custom-apps'
 
-            # Create namespace if it doesn't exist
-            try:
-                self.core_v1.read_namespace(namespace)
-            except Exception:
-                ns_body = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace))
-                self.core_v1.create_namespace(ns_body)
+            # OPTIMIZATION: Skip namespace creation if it's 'default' (always exists)
+            if namespace != 'default':
+                try:
+                    self.core_v1.read_namespace(namespace)
+                except Exception:
+                    ns_body = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace))
+                    self.core_v1.create_namespace(ns_body)
 
-            # Define resource requirements
-            resource_requirements = client.V1ResourceRequirements(
-                requests={
-                    'cpu': str(resources.get('cpus', 0) or 1),
-                    'memory': f"{resources.get('ram_gb', 1)}Gi",
-                    'ephemeral-storage': f"{resources.get('storage_gb', 1)}Gi"
-                }
-            )
+            # OPTIMIZATION: Use minimal resource requirements
+            resource_requests = {}
+            if resources.get('cpus', 0):
+                resource_requests['cpu'] = str(resources.get('cpus', 1))
+            if resources.get('ram_gb', 0):
+                resource_requests['memory'] = f"{resources.get('ram_gb', 1)}Gi"
+            if resources.get('storage_gb', 0):
+                resource_requests['ephemeral-storage'] = f"{resources.get('storage_gb', 1)}Gi"
 
-            # Define container
+            # Only add resource requirements if specified
+            resource_requirements = None
+            if resource_requests:
+                resource_requirements = client.V1ResourceRequirements(requests=resource_requests)
+
+            # Define container with minimal configuration
             container = client.V1Container(
                 name=pod_name,
-                image=image_url,
-                resources=resource_requirements
+                image=image_url
             )
+            
+            # Add resource requirements only if specified
+            if resource_requirements:
+                container.resources = resource_requirements
 
-            # Define pod spec
-            pod_spec = client.V1PodSpec(containers=[container], restart_policy='Always')
+            # Define pod spec with minimal configuration
+            pod_spec = client.V1PodSpec(containers=[container])
 
-            # Define pod metadata
+            # Define pod metadata with minimal labels
             pod_metadata = client.V1ObjectMeta(
                 name=pod_name,
-                labels={
-                    'app': pod_name,
-                    'owner': pod_data.get('Owner', 'unknown')
-                }
+                labels={'app': pod_name}
             )
 
             # Define pod
@@ -849,7 +870,7 @@ class CloudKubernetesProvider:
                 spec=pod_spec
             )
 
-            # Create pod
+            # Create pod with timeout
             self.core_v1.create_namespaced_pod(namespace=namespace, body=pod)
             return {'status': 'success', 'message': f'Pod {pod_name} created in namespace {namespace}'}
         except ApiException as e:

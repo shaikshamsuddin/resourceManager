@@ -255,20 +255,36 @@ export class App {
 
   deployPod(podData: any, serverId: string) {
     const payload = { ...podData, server_id: serverId };
+    
+    // Show loading state
+    this.showAlert(
+      'info',
+      'Creating Pod',
+      `Creating pod "${podData.PodName}" on server ${serverId}...`
+    );
+    
     this.http.post(ApiConfig.getCreatePodUrl(), payload).subscribe({
-      next: () => {
-        this.showAlert(
-          'success',
-          'Deployment Successful',
-          `Pod "${podData.PodName}" has been successfully deployed to the selected server.`
-        );
+      next: (response: any) => {
+        if (response.type === 'success') {
+          this.showAlert(
+            'success',
+            'Pod Created Successfully!',
+            `Pod "${podData.PodName}" has been successfully created on the server. You can now see it in the Pod Overview table.`
+          );
+        } else {
+          this.showAlert(
+            'error',
+            'Pod Creation Failed',
+            response.message || 'An error occurred while creating the pod.'
+          );
+        }
         this.fetchServers();
       },
       error: (err) => {
-        const errorMsg = err?.error?.error || 'An error occurred during deployment.';
+        const errorMsg = err?.error?.error || err?.error?.message || 'An error occurred during pod creation.';
         this.showAlert(
           'error',
-          'Deployment Failed',
+          'Pod Creation Failed',
           `${errorMsg} Please check the server resources and try again.`
         );
       }
@@ -478,10 +494,17 @@ export class App {
   }
 
   showAlert(type: 'success' | 'error' | 'info', title: string, message: string, details?: string[]) {
-    this.dialog.open(AlertDialogComponent, {
+    const dialogRef = this.dialog.open(AlertDialogComponent, {
       data: { type, title, message, details },
       position: { top: '40px' }
     });
+
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+      if (dialogRef.componentInstance) {
+        dialogRef.close();
+      }
+    }, 5000);
   }
 
   // Helper functions for pod status

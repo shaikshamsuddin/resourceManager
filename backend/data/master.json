@@ -216,7 +216,39 @@
           "pod_ip": "10.1.0.45"
         },
         {
-          "pod_id": "test123newpod",
+          "pod_id": "newpod-000001998",
+          "namespace": "centific",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "pending",
+          "timestamp": "2025-07-28T14:41:58+00:00",
+          "pod_ip": null
+        },
+        {
+          "pod_id": "pod-resource-manager",
+          "namespace": "custom-apps",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T14:17:51+00:00",
+          "pod_ip": "10.1.0.85"
+        },
+        {
+          "pod_id": "test-pod-000007",
           "namespace": "custom-apps",
           "server_id": "cloud-node-01",
           "image_url": "nginx:latest",
@@ -228,8 +260,8 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-24T17:41:20+00:00",
-          "pod_ip": "10.1.0.69"
+          "timestamp": "2025-07-28T14:01:15+00:00",
+          "pod_ip": "10.1.0.84"
         },
         {
           "pod_id": "testpod44444",
@@ -1110,6 +1142,54 @@
           "status": "online",
           "timestamp": "2025-07-22T03:57:04+00:00",
           "pod_ip": "10.1.0.31"
+        },
+        {
+          "pod_id": "nginx-deployment-764dd87c46-57vhg",
+          "namespace": "testrollbackns",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:1.21",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T10:40:24+00:00",
+          "pod_ip": "10.1.0.81"
+        },
+        {
+          "pod_id": "nginx-deployment-764dd87c46-dtr9d",
+          "namespace": "testrollbackns",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:1.21",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T10:40:25+00:00",
+          "pod_ip": "10.1.0.82"
+        },
+        {
+          "pod_id": "nginx-deployment-764dd87c46-r6hps",
+          "namespace": "testrollbackns",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:1.21",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-28T10:40:26+00:00",
+          "pod_ip": "10.1.0.83"
         }
       ],
       "status": "Online"

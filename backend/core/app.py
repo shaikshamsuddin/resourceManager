@@ -307,26 +307,44 @@ def create_pod():
         if not isinstance(resources, dict):
             return jsonify({'error': 'Resources must be a dictionary/object'}), 400
         
-        # Get server data for validation - ensure we get fresh live data
-        server_data = server_manager.get_server_with_pods(server_id)
+        # OPTIMIZATION: Use master.json for initial validation (fast)
+        servers = server_manager.get_all_servers_static()
+        server_data = next((s for s in servers if s.get('server_id') == server_id), None)
+        
         if not server_data:
             return jsonify({'error': f"Server '{server_id}' not found"}), 404
         
-        # Backend validation: Validate against live Kubernetes data (not master.json)
-        # This ensures accuracy even if master.json is slightly outdated
+        # Frontend validation: Use master.json data (fast)
         ok, err = validate_resource_request(server_data, resources)
         if not ok:
             return jsonify({'error': err}), 400
         
+        # Get fresh live data for backend validation
+        print(f"🔍 Validating pod creation for {pod_name} on server {server_id}")
+        live_server_data = server_manager.get_server_with_pods(server_id)
+        if live_server_data:
+            # Backend validation: Validate against live Kubernetes data
+            ok, err = validate_resource_request(live_server_data, resources)
+            if not ok:
+                return jsonify({'error': err}), 400
+        
         # Create pod using server manager
+        print(f"🚀 Creating pod {pod_name} on server {server_id}")
         result = server_manager.create_pod(server_id, req)
         
         if 'error' in result:
+            print(f"❌ Pod creation failed: {result['error']}")
             return jsonify(result), 500
         else:
-            return jsonify({'type': 'success', 'message': 'Pod created', 'pod': result}), 200
+            print(f"✅ Pod {pod_name} created successfully")
+            return jsonify({
+                'type': 'success', 
+                'message': f'Pod {pod_name} created successfully on server {server_id}',
+                'pod': result
+            }), 200
             
     except Exception as e:
+        print(f"❌ Pod creation error: {e}")
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
 
 

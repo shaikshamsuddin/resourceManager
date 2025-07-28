@@ -240,14 +240,23 @@ class ServerManager:
     
     def create_pod(self, server_id: str, pod_data: Dict) -> Dict:
         """Create a pod on the specified server."""
-        self.reload_config()  # Always reload config before operation
+        # OPTIMIZATION: Only reload config if provider doesn't exist
         if server_id not in self.server_providers:
-            return {"error": f"Server {server_id} not found"}
+            self.reload_config()
+            if server_id not in self.server_providers:
+                return {"error": f"Server {server_id} not found"}
+        
         try:
             provider = self.server_providers[server_id]["provider"]
             result = provider.create_pod(pod_data)
-            # Optionally, after creation, reload pods from Kubernetes and update master.json
-            self.sync_pods_from_kubernetes(server_id)
+            
+            # OPTIMIZATION: Sync pods synchronously after successful creation
+            if result.get('status') == 'success':
+                try:
+                    self.sync_pods_from_kubernetes(server_id)
+                except Exception as e:
+                    print(f"Sync failed but pod was created: {e}")
+            
             return result
         except Exception as e:
             return {"error": f"Failed to create pod: {e}"}

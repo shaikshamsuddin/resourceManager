@@ -37,6 +37,12 @@ import { DefaultValues, ResourceType } from '../constants/app.constants';
                  (ngModelChange)="onPodNameChange($event)">
           <mat-error *ngIf="nameError">{{ nameError }}</mat-error>
         </mat-form-field>
+        <mat-form-field appearance="outline" style="width: 100%" [class.error-field]="namespaceError">
+          <mat-label>Namespace</mat-label>
+          <input matInput [(ngModel)]="pod.namespace" name="namespace" required
+                 (ngModelChange)="onNamespaceChange($event)">
+          <mat-error *ngIf="namespaceError">{{ namespaceError }}</mat-error>
+        </mat-form-field>
         <div class="form-section-title">Resources</div>
         <mat-form-field appearance="outline" [class.error-field]="resourceErrors['gpus']">
           <mat-label>GPUs</mat-label>
@@ -123,7 +129,7 @@ import { DefaultValues, ResourceType } from '../constants/app.constants';
 export class AddPodDialogComponent extends PodDialogBase {
   @Output() podCreated = new EventEmitter<any>();
 
-
+  namespaceError: string = '';
 
   pod = {
     PodName: '',
@@ -134,7 +140,8 @@ export class AddPodDialogComponent extends PodDialogBase {
     } as PodResources,
     image_url: DefaultValues.DEFAULT_IMAGE,
     ServerName: '',
-    ServerDisplayName: ''
+    ServerDisplayName: '',
+    namespace: 'custom-apps'
   };
 
   constructor(
@@ -154,9 +161,51 @@ export class AddPodDialogComponent extends PodDialogBase {
     this.validatePodName(podName);
   }
 
+  onNamespaceChange(namespace: string) {
+    this.validateNamespace(namespace);
+  }
+
+  validateNamespace(namespace: string): boolean {
+    // Kubernetes namespace naming rules:
+    // - Must be a valid DNS subdomain name
+    // - Must contain only lowercase alphanumeric characters, '-' or '.'
+    // - Must start and end with an alphanumeric character
+    // - Must be no more than 253 characters
+    
+    if (!namespace || namespace.trim() === '') {
+      this.namespaceError = 'Namespace is required';
+      return false;
+    }
+    
+    const trimmedNamespace = namespace.trim();
+    
+    if (trimmedNamespace.length > 253) {
+      this.namespaceError = 'Namespace must be 253 characters or less';
+      return false;
+    }
+    
+    // Check for valid DNS subdomain name pattern
+    const namespaceRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;
+    if (!namespaceRegex.test(trimmedNamespace)) {
+      this.namespaceError = 'Namespace must contain only lowercase alphanumeric characters, hyphens, and dots. Must start and end with alphanumeric character.';
+      return false;
+    }
+    
+    // Check for reserved namespaces
+    const reservedNamespaces = ['kube-system', 'kube-public', 'kube-node-lease'];
+    if (reservedNamespaces.includes(trimmedNamespace)) {
+      this.namespaceError = 'Cannot use reserved namespace names';
+      return false;
+    }
+    
+    this.namespaceError = '';
+    return true;
+  }
+
   onSubmit() {
     this.validateAllResources(this.pod.Resources);
-    if (!this.validatePodName(this.pod.PodName) || this.hasResourceErrors()) {
+    this.validateNamespace(this.pod.namespace);
+    if (!this.validatePodName(this.pod.PodName) || this.hasResourceErrors() || this.namespaceError) {
       return;
     }
     this.podCreated.emit(this.pod);
