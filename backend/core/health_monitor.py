@@ -16,7 +16,7 @@ from config.constants import (
     ClusterStatus, HealthStatus, HealthCheckType, HealthCheckConfig,
     ErrorMessages, SuccessMessages, LogLevels
 )
-from core.k8s_client import k8s_client
+from providers.cloud_kubernetes_provider import CloudKubernetesProvider
 
 
 class HealthCheckResult:
@@ -122,16 +122,40 @@ class ClusterHealthMonitor:
             self._consecutive_failures = 0
     
     def _check_cluster_connectivity(self) -> HealthCheckResult:
-        """Check if we can connect to the Kubernetes cluster with automatic port detection and fixing."""
+        """Check if we can connect to the Kubernetes cluster using the same client as pod operations."""
         start_time = time.time()
         
-        # Try multiple approaches to connect
-        connection_attempts = []
-        
         try:
-            # First attempt: Try with current k8s_client configuration
-            k8s_client.initialize()
-            k8s_client.core_v1.list_namespace()
+            # Create a temporary provider to test connection
+            # This uses the same configuration as the pod operations
+            import json
+            import os
+            
+            # Load master.json to get server configuration
+            config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+            with open(config_path, 'r') as f:
+                master_config = json.load(f)
+            
+            # Find the first Kubernetes server
+            kubernetes_servers = [s for s in master_config.get('servers', []) 
+                                if s.get('type') == 'kubernetes' and 
+                                not s.get('connection_coordinates', {}).get('is_dummy', False)]
+            
+            if not kubernetes_servers:
+                return HealthCheckResult(
+                    check_type=HealthCheckType.CLUSTER_CONNECTIVITY.value,
+                    status=HealthStatus.FAIL.value,
+                    details="No Kubernetes servers configured",
+                    latency_ms=0
+                )
+            
+            # Use the first Kubernetes server for health check
+            server = kubernetes_servers[0]
+            
+            # Create a temporary provider with the same configuration
+            provider = CloudKubernetesProvider(server)
+            provider._ensure_initialized()
+            provider.core_v1.list_namespace()
             
             latency = int((time.time() - start_time) * 1000)
             return HealthCheckResult(
@@ -142,28 +166,51 @@ class ClusterHealthMonitor:
             )
             
         except Exception as e:
-            connection_attempts.append(f"Initial attempt: {str(e)}")
+            latency = int((time.time() - start_time) * 1000)
+            error_details = f"{ErrorMessages.K8S_CONNECTION_ERROR}: {str(e)}"
             
-            # No additional attempts for minikube since we're using Azure VM cluster
-        
-        # If all attempts fail
-        latency = int((time.time() - start_time) * 1000)
-        error_details = f"{ErrorMessages.K8S_CONNECTION_ERROR}. Attempts: {'; '.join(connection_attempts)}"
-        
-        return HealthCheckResult(
-            check_type=HealthCheckType.CLUSTER_CONNECTIVITY.value,
-            status=HealthStatus.FAIL.value,
-            details=error_details,
-            latency_ms=latency
-        )
+            return HealthCheckResult(
+                check_type=HealthCheckType.CLUSTER_CONNECTIVITY.value,
+                status=HealthStatus.FAIL.value,
+                details=error_details,
+                latency_ms=latency
+            )
     
     def _check_api_server(self) -> HealthCheckResult:
         """Check API server responsiveness."""
         start_time = time.time()
         
         try:
-            # Check API server version
-            version = k8s_client.core_v1.get_api_resources()
+            # Create a temporary provider to test connection
+            # This uses the same configuration as the pod operations
+            import json
+            import os
+            
+            # Load master.json to get server configuration
+            config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+            with open(config_path, 'r') as f:
+                master_config = json.load(f)
+            
+            # Find the first Kubernetes server
+            kubernetes_servers = [s for s in master_config.get('servers', []) 
+                                if s.get('type') == 'kubernetes' and 
+                                not s.get('connection_coordinates', {}).get('is_dummy', False)]
+            
+            if not kubernetes_servers:
+                return HealthCheckResult(
+                    check_type=HealthCheckType.API_SERVER.value,
+                    status=HealthStatus.FAIL.value,
+                    details="No Kubernetes servers configured",
+                    latency_ms=0
+                )
+            
+            # Use the first Kubernetes server for health check
+            server = kubernetes_servers[0]
+            
+            # Create a temporary provider with the same configuration
+            provider = CloudKubernetesProvider(server)
+            provider._ensure_initialized()
+            api_resources = provider.core_v1.get_api_resources()
             
             latency = int((time.time() - start_time) * 1000)
             
@@ -196,7 +243,36 @@ class ClusterHealthMonitor:
         start_time = time.time()
         
         try:
-            nodes = k8s_client.core_v1.list_node()
+            # Create a temporary provider to test connection
+            # This uses the same configuration as the pod operations
+            import json
+            import os
+            
+            # Load master.json to get server configuration
+            config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+            with open(config_path, 'r') as f:
+                master_config = json.load(f)
+            
+            # Find the first Kubernetes server
+            kubernetes_servers = [s for s in master_config.get('servers', []) 
+                                if s.get('type') == 'kubernetes' and 
+                                not s.get('connection_coordinates', {}).get('is_dummy', False)]
+            
+            if not kubernetes_servers:
+                return HealthCheckResult(
+                    check_type=HealthCheckType.NODE_STATUS.value,
+                    status=HealthStatus.FAIL.value,
+                    details="No Kubernetes servers configured",
+                    latency_ms=0
+                )
+            
+            # Use the first Kubernetes server for health check
+            server = kubernetes_servers[0]
+            
+            # Create a temporary provider with the same configuration
+            provider = CloudKubernetesProvider(server)
+            provider._ensure_initialized()
+            nodes = provider.core_v1.list_node()
             
             total_nodes = len(nodes.items)
             ready_nodes = 0
@@ -250,8 +326,38 @@ class ClusterHealthMonitor:
         start_time = time.time()
         
         try:
+            # Create a temporary provider to test connection
+            # This uses the same configuration as the pod operations
+            import json
+            import os
+            
+            # Load master.json to get server configuration
+            config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+            with open(config_path, 'r') as f:
+                master_config = json.load(f)
+            
+            # Find the first Kubernetes server
+            kubernetes_servers = [s for s in master_config.get('servers', []) 
+                                if s.get('type') == 'kubernetes' and 
+                                not s.get('connection_coordinates', {}).get('is_dummy', False)]
+            
+            if not kubernetes_servers:
+                return HealthCheckResult(
+                    check_type=HealthCheckType.POD_STATUS.value,
+                    status=HealthStatus.FAIL.value,
+                    details="No Kubernetes servers configured",
+                    latency_ms=0
+                )
+            
+            # Use the first Kubernetes server for health check
+            server = kubernetes_servers[0]
+            
+            # Create a temporary provider with the same configuration
+            provider = CloudKubernetesProvider(server)
+            provider._ensure_initialized()
+            
             # Get pods from all namespaces
-            pods = k8s_client.core_v1.list_pod_for_all_namespaces()
+            pods = provider.core_v1.list_pod_for_all_namespaces()
             
             total_pods = len(pods.items)
             failed_pods = []

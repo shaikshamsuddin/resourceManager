@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
@@ -15,6 +15,7 @@ import { EnvironmentVariableDialogComponent } from './environment-variable-dialo
 import { AlertDialogComponent } from './alert-dialog/alert-dialog';
 import { ServerConfigDialogComponent } from './server-config-dialog/server-config-dialog';
 import { ServerManagementComponent } from './server-management/server-management';
+import { ConfirmDialogComponent, ConfirmDialogData } from './confirm-dialog/confirm-dialog';
 
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
@@ -46,7 +47,7 @@ import { ApiConfig } from './config/api.config';
   styleUrl: './app.css',
   standalone: true
 })
-export class App {
+export class App implements OnInit, OnDestroy {
   protected readonly title = signal('frontend');
 
   servers: any[] = [];
@@ -62,9 +63,9 @@ export class App {
   
   // Add caching properties
   private lastDataFetch: number = 0;
-  private readonly CACHE_DURATION = 2000; // 2 seconds cache (reduced from 5s)
+  private readonly CACHE_DURATION = 500; // 0.1 seconds cache for very responsive updates
 
-  constructor(private http: HttpClient, private dialog: MatDialog) {
+  constructor(private http: HttpClient, private dialog: MatDialog, private cdr: ChangeDetectorRef) {
     // Validate API configuration on startup
     ApiConfig.validateConfig();
     this.fetchServers();
@@ -90,12 +91,14 @@ export class App {
   startOptimizedPolling() {
     // Single polling mechanism that fetches all data at once
     this.performDataRefresh();
-    this.resourceIntegrityCheckInterval = setInterval(() => this.performDataRefresh(), 30000); // 30 seconds instead of 5-10
+    // Re-enable polling for automatic updates
+    this.resourceIntegrityCheckInterval = setInterval(() => this.performDataRefresh(), 30000); // 30 seconds
+    console.log('Polling enabled for automatic updates');
   }
 
   // New method for immediate data fetch (ignores cache)
   fetchServersImmediate() {
-    console.log('Fetching servers immediately on page load...');
+    console.log('Fetching servers immediately...');
     this.isLoading = true;
     
     this.http.get<any>(ApiConfig.getServersUrl()).subscribe({
@@ -105,6 +108,29 @@ export class App {
         this.lastDataFetch = Date.now();
         this.isLoading = false;
         console.log('Fetched servers immediately:', this.servers);
+        console.log('Pod count:', this.servers.reduce((acc, s) => acc + (s.pods?.length || 0), 0));
+        
+        // Update selected server to reflect new data
+        if (this.selectedServer && this.servers.length > 0) {
+          console.log('Updating selected server with fresh data...');
+          console.log('Current selected server ID:', this.selectedServer.id || this.selectedServer.server_id);
+          
+          const updatedSelectedServer = this.servers.find(s => 
+            s.id === this.selectedServer.id || 
+            s.server_id === this.selectedServer.server_id
+          );
+          
+          if (updatedSelectedServer) {
+            const oldPodCount = this.selectedServer.pods?.length || 0;
+            this.selectedServer = updatedSelectedServer;
+            const newPodCount = this.selectedServer.pods?.length || 0;
+            console.log(`Updated selected server pods: ${oldPodCount} -> ${newPodCount}`);
+          } else {
+            // If selected server not found, use the first server
+            this.selectedServer = this.servers[0];
+            console.log('Selected server not found, using first server:', this.selectedServer.server_name || this.selectedServer.name);
+          }
+        }
         
         // Set default server if no server is currently selected
         if (this.servers.length > 0 && !this.selectedServer) {
@@ -114,12 +140,12 @@ export class App {
         
         // Update status messages
         this.updateStatusMessages();
+        // Force change detection to update the UI
+        this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Error fetching servers on page load:', error);
+        console.error('Error fetching servers:', error);
         this.isLoading = false;
-        // Don't show alert on initial load, just log the error
-        // this.showAlert('error', 'Error', 'Failed to fetch servers');
         
         // Retry after 2 seconds
         setTimeout(() => {
@@ -137,6 +163,7 @@ export class App {
       console.log('Using cached data for polling, skipping API call');
       return;
     }
+    console.log('Performing data refresh, fetching fresh data from API');
     
     // Single API call to get all server data
     this.http.get<any>(ApiConfig.getServersUrl()).subscribe({
@@ -144,6 +171,17 @@ export class App {
         const servers = Array.isArray(response) ? response : (response.servers || []);
         this.servers = servers;
         this.lastDataFetch = now;
+        
+        // Update selected server to reflect new data
+        if (this.selectedServer && this.servers.length > 0) {
+          const updatedSelectedServer = this.servers.find(s => 
+            s.id === this.selectedServer.id || 
+            s.server_id === this.selectedServer.server_id
+          );
+          if (updatedSelectedServer) {
+            this.selectedServer = updatedSelectedServer;
+          }
+        }
         
         // Update status messages
         this.updateStatusMessages();
@@ -185,18 +223,65 @@ export class App {
 
   deletePod(pod: any) {
     if (!this.selectedServer) return;
+    
+    // Show confirmation dialog
+    const confirmData: ConfirmDialogData = {
+      title: 'Confirm Pod Deletion',
+      message: `Are you sure you want to delete pod "${pod.pod_id}" from namespace "${pod.namespace || 'default'}"? This action cannot be undone.`,
+      confirmText: 'Delete Pod',
+      cancelText: 'Cancel',
+      type: 'danger'
+    };
+    
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: confirmData,
+      disableClose: true
+    });
+    
+    dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      if (confirmed) {
+        this.performPodDeletion(pod);
+      }
+    });
+  }
+  
+  private performPodDeletion(pod: any) {
+    console.log('Deleting pod:', pod.pod_id, 'from server:', this.selectedServer.server_id || this.selectedServer.id);
+    console.log('Current selected server pods before deletion:', this.selectedServer.pods?.length || 0);
+    
     const payload = {
       server_id: this.selectedServer.server_id || this.selectedServer.id,
       PodName: pod.pod_id
     };
+    console.log('Delete payload:', payload);
+    
     this.http.post(ApiConfig.getDeletePodUrl(), payload).subscribe({
-      next: () => {
-        this.showAlert(
-          'success',
-          'Pod Decommissioned',
-          `Pod "${pod.pod_id}" has been successfully decommissioned.`
-        );
-        this.fetchServers();
+      next: (response: any) => {
+        console.log('Delete response:', response);
+        if (response.type === 'success') {
+          this.showAlert(
+            'success',
+            'Pod Decommissioned',
+            `Pod "${pod.pod_id}" has been successfully decommissioned.`
+          );
+          // Force immediate data refresh to show the updated pod list
+          console.log('Refreshing data after successful pod deletion...');
+          this.fetchServersImmediate();
+          // Force change detection to update the UI
+          this.cdr.detectChanges();
+        } else {
+          this.showAlert(
+            'error',
+            'Decommission Failed',
+            response.message || 'An error occurred while decommissioning the pod.'
+          );
+          // Still refresh data to show current state
+          console.log('Refreshing data after failed pod deletion...');
+          this.fetchServersImmediate();
+          // Force change detection to update the UI
+          this.cdr.detectChanges();
+        }
       },
       error: (err) => {
         const errorMsg = err?.error?.error || 'An error occurred while decommissioning the pod.';
@@ -278,7 +363,8 @@ export class App {
             response.message || 'An error occurred while creating the pod.'
           );
         }
-        this.fetchServers();
+        // Force immediate data refresh to show the newly created pod
+        this.fetchServersImmediate();
       },
       error: (err) => {
         const errorMsg = err?.error?.error || err?.error?.message || 'An error occurred during pod creation.';
@@ -377,8 +463,13 @@ export class App {
       return [];
     }
     
+    const pods = this.selectedServer.pods || [];
+    console.log('allPods getter - selected server:', this.selectedServer.server_name || this.selectedServer.name);
+    console.log('allPods getter - pod count:', pods.length);
+    console.log('allPods getter - pods:', pods.map((p: any) => ({ pod_id: p.pod_id, status: p.status })));
+    
     // Get pods from the selected server and add serverName property
-    return (this.selectedServer.pods || []).map((p: any) => ({ 
+    return pods.map((p: any) => ({ 
       ...p, 
       serverName: this.selectedServer.server_name || this.selectedServer.name 
     }));

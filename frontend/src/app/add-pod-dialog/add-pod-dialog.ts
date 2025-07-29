@@ -40,7 +40,7 @@ import { DefaultValues, ResourceType } from '../constants/app.constants';
         <mat-form-field appearance="outline" style="width: 100%" [class.error-field]="namespaceError">
           <mat-label>Namespace</mat-label>
           <input matInput [(ngModel)]="pod.namespace" name="namespace" required
-                 (ngModelChange)="onNamespaceChange($event)">
+                 (ngModelChange)="onNamespaceChange($event)" placeholder="Enter namespace name">
           <mat-error *ngIf="namespaceError">{{ namespaceError }}</mat-error>
         </mat-form-field>
         <div class="form-section-title">Resources</div>
@@ -141,7 +141,7 @@ export class AddPodDialogComponent extends PodDialogBase {
     image_url: DefaultValues.DEFAULT_IMAGE,
     ServerName: '',
     ServerDisplayName: '',
-    namespace: 'custom-apps'
+    namespace: ''
   };
 
   constructor(
@@ -173,8 +173,9 @@ export class AddPodDialogComponent extends PodDialogBase {
     // - Must be no more than 253 characters
     
     if (!namespace || namespace.trim() === '') {
-      this.namespaceError = 'Namespace is required';
-      return false;
+      // Allow empty namespace - it will default to 'default' in the backend
+      this.namespaceError = '';
+      return true;
     }
     
     const trimmedNamespace = namespace.trim();

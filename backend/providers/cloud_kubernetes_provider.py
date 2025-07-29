@@ -560,6 +560,7 @@ class CloudKubernetesProvider:
             
             return {
                 "pod_id": pod.metadata.name,
+                "name": pod.metadata.name,  # Add name field for UI compatibility
                 "namespace": pod.metadata.namespace,  # Add namespace information
                 "server_id": f"cloud-node-{(self._get_node_index(pod.spec.node_name, []) or 0) + 1:02d}" if pod.spec.node_name else "unknown",
                 "image_url": pod.spec.containers[0].image if pod.spec.containers else "unknown",
@@ -745,6 +746,7 @@ class CloudKubernetesProvider:
             return PodStatus.UNKNOWN.value
         
         phase = pod.status.phase
+        
         if phase == "Running":
             return PodStatus.ONLINE.value
         elif phase == "Pending":
@@ -821,7 +823,7 @@ class CloudKubernetesProvider:
             pod_name = pod_data.get('PodName') or pod_data.get('pod_id')
             resources = pod_data.get('Resources') or pod_data.get('requested') or {}
             image_url = pod_data.get('image_url', 'nginx:latest')
-            namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'custom-apps'
+            namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'default'
 
             # OPTIMIZATION: Skip namespace creation if it's 'default' (always exists)
             if namespace != 'default':
@@ -880,15 +882,61 @@ class CloudKubernetesProvider:
 
     def delete_pod(self, pod_data: Dict) -> Dict:
         """Delete a pod by name in the specified or default namespace."""
-        self._ensure_initialized()
         try:
+            # Ensure client is initialized
+            self._ensure_initialized()
+            
             pod_name = pod_data.get('PodName') or pod_data.get('pod_id')
-            namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'custom-apps'
+            namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'default'
+            
+            print(f"Attempting to delete pod {pod_name} from namespace {namespace}")
+            
+            # Check if client is properly initialized
+            if not self.core_v1:
+                return {'status': 'error', 'message': 'Kubernetes client not initialized'}
+            
+            # First, check if the pod exists
+            try:
+                self.core_v1.read_namespaced_pod(name=pod_name, namespace=namespace)
+                print(f"Pod {pod_name} exists, proceeding with deletion")
+            except ApiException as e:
+                if e.status == 404:
+                    print(f"Pod {pod_name} not found, already deleted")
+                    return {'status': 'success', 'message': f'Pod {pod_name} was already deleted from namespace {namespace}'}
+                else:
+                    print(f"Error checking pod existence: {e}")
+                    return {'status': 'error', 'message': f'Error checking pod existence: {e}'}
+            
+            # Try to delete the pod
+            print(f"Deleting pod {pod_name} from namespace {namespace}")
             self.core_v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
-            return {'status': 'success', 'message': f'Pod {pod_name} deleted from namespace {namespace}'}
+            
+            # Wait a moment for the deletion to complete
+            import time
+            time.sleep(3)
+            
+            # Verify the pod is actually deleted
+            try:
+                self.core_v1.read_namespaced_pod(name=pod_name, namespace=namespace)
+                # If we get here, the pod still exists
+                print(f"Pod {pod_name} still exists after deletion attempt")
+                return {'status': 'error', 'message': f'Pod {pod_name} still exists after deletion attempt'}
+            except ApiException as e:
+                if e.status == 404:  # Pod not found - deletion successful
+                    print(f"Pod {pod_name} successfully deleted from namespace {namespace}")
+                    return {'status': 'success', 'message': f'Pod {pod_name} deleted from namespace {namespace}'}
+                else:
+                    print(f"Kubernetes API error during verification: {e}")
+                    return {'status': 'error', 'message': f'Kubernetes API error during verification: {e}'}
+                    
         except ApiException as e:
-            return {'status': 'error', 'message': f'Kubernetes API error: {e}'}
+            print(f"Kubernetes API error during deletion: {e}")
+            if e.status == 404:  # Pod not found
+                return {'status': 'success', 'message': f'Pod {pod_name} was already deleted from namespace {namespace}'}
+            else:
+                return {'status': 'error', 'message': f'Kubernetes API error: {e}'}
         except Exception as e:
+            print(f"Unexpected error during pod deletion: {e}")
             return {'status': 'error', 'message': f'Failed to delete pod: {e}'}
 
 

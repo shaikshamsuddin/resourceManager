@@ -89,6 +89,7 @@
       "pods": [
         {
           "pod_id": "paas-ai-baseline-engine-784f6c5b76-25n7m",
+          "name": "paas-ai-baseline-engine-784f6c5b76-25n7m",
           "namespace": "aidf-cli-setup",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_baseline_engine:84644",
@@ -105,6 +106,7 @@
         },
         {
           "pod_id": "paas-ai-frontcontroller-aiservice-d5887f488-zhrnm",
+          "name": "paas-ai-frontcontroller-aiservice-d5887f488-zhrnm",
           "namespace": "aidf-cli-setup",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_frontcontroller:85286",
@@ -121,6 +123,7 @@
         },
         {
           "pod_id": "paas-ai-frontcontroller-pipeline-57f5944b6d-7pz2p",
+          "name": "paas-ai-frontcontroller-pipeline-57f5944b6d-7pz2p",
           "namespace": "aidf-cli-setup",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_frontcontroller:85286",
@@ -137,6 +140,7 @@
         },
         {
           "pod_id": "paas-ai-manifest-engine-9dcbfd48-7fbbl",
+          "name": "paas-ai-manifest-engine-9dcbfd48-7fbbl",
           "namespace": "aidf-cli-setup",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_manifes_engine:86657",
@@ -153,6 +157,7 @@
         },
         {
           "pod_id": "paas-ai-orchestration-engine-6987cd5f9c-cg64q",
+          "name": "paas-ai-orchestration-engine-6987cd5f9c-cg64q",
           "namespace": "aidf-cli-setup",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_ai:85013",
@@ -169,6 +174,7 @@
         },
         {
           "pod_id": "paas-be-5f969974f4-2dqz2",
+          "name": "paas-be-5f969974f4-2dqz2",
           "namespace": "aidf-cli-setup",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_paas_be:85284",
@@ -185,6 +191,7 @@
         },
         {
           "pod_id": "paas-infra-7b9964bd8-p88zl",
+          "name": "paas-infra-7b9964bd8-p88zl",
           "namespace": "aidf-cli-setup",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_pass_infra:86752",
@@ -201,6 +208,7 @@
         },
         {
           "pod_id": "paas-setup-manager-67f899cd5b-xnbt7",
+          "name": "paas-setup-manager-67f899cd5b-xnbt7",
           "namespace": "aidf-cli-setup",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_setup_manager:86658",
@@ -216,24 +224,9 @@
           "pod_ip": "10.1.0.45"
         },
         {
-          "pod_id": "newpod-000001998",
-          "namespace": "centific",
-          "server_id": "cloud-node-01",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 1,
-            "storage_gb": 1,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "pending",
-          "timestamp": "2025-07-28T14:41:58+00:00",
-          "pod_ip": null
-        },
-        {
-          "pod_id": "pod-resource-manager",
-          "namespace": "custom-apps",
+          "pod_id": "newpod-1",
+          "name": "newpod-1",
+          "namespace": "custom-app007",
           "server_id": "cloud-node-01",
           "image_url": "nginx:latest",
           "requested": {
@@ -244,43 +237,46 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-28T14:17:51+00:00",
-          "pod_ip": "10.1.0.85"
+          "timestamp": "2025-07-29T05:55:58+00:00",
+          "pod_ip": "10.1.0.93"
         },
         {
-          "pod_id": "test-pod-000007",
+          "pod_id": "testpod123323",
+          "name": "testpod123323",
+          "namespace": "custom-app07",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 3,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-29T05:37:26+00:00",
+          "pod_ip": "10.1.0.87"
+        },
+        {
+          "pod_id": "newpod-007",
+          "name": "newpod-007",
           "namespace": "custom-apps",
           "server_id": "cloud-node-01",
           "image_url": "nginx:latest",
           "requested": {
-            "cpus": 1,
+            "cpus": 0,
             "ram_gb": 1,
             "storage_gb": 1,
             "gpus": 0
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-28T14:01:15+00:00",
-          "pod_ip": "10.1.0.84"
-        },
-        {
-          "pod_id": "testpod44444",
-          "namespace": "custom-apps",
-          "server_id": "cloud-node-01",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 1,
-            "ram_gb": 1,
-            "storage_gb": 1,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-25T06:04:27+00:00",
-          "pod_ip": "10.1.0.70"
+          "timestamp": "2025-07-29T07:23:03+00:00",
+          "pod_ip": "10.1.0.74"
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-c2xx2",
+          "name": "dev-aiservicesetup1-189-11-cb6987d96-c2xx2",
           "namespace": "dev-aiservicesetup1-189-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
@@ -297,6 +293,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-hwd86",
+          "name": "dev-aiservicesetup1-189-11-cb6987d96-hwd86",
           "namespace": "dev-aiservicesetup1-189-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
@@ -313,6 +310,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-mk4zl",
+          "name": "dev-aiservicesetup1-189-11-cb6987d96-mk4zl",
           "namespace": "dev-aiservicesetup1-189-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
@@ -329,6 +327,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-mv27d",
+          "name": "dev-aiservicesetup1-189-11-cb6987d96-mv27d",
           "namespace": "dev-aiservicesetup1-189-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
@@ -345,6 +344,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-p2npd",
+          "name": "dev-aiservicesetup1-189-11-cb6987d96-p2npd",
           "namespace": "dev-aiservicesetup1-189-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
@@ -361,6 +361,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-q6lmh",
+          "name": "dev-aiservicesetup1-189-11-cb6987d96-q6lmh",
           "namespace": "dev-aiservicesetup1-189-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
@@ -377,6 +378,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-txg6f",
+          "name": "dev-aiservicesetup1-189-11-cb6987d96-txg6f",
           "namespace": "dev-aiservicesetup1-189-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
@@ -393,6 +395,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-vff4n",
+          "name": "dev-aiservicesetup1-189-11-cb6987d96-vff4n",
           "namespace": "dev-aiservicesetup1-189-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
@@ -409,6 +412,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-vk4bs",
+          "name": "dev-aiservicesetup1-189-11-cb6987d96-vk4bs",
           "namespace": "dev-aiservicesetup1-189-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
@@ -425,6 +429,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-zn5vd",
+          "name": "dev-aiservicesetup1-189-11-cb6987d96-zn5vd",
           "namespace": "dev-aiservicesetup1-189-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup1-189-11:v1",
@@ -441,6 +446,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-6flq5",
+          "name": "dev-aiservicesetup2-188-11-75449bb954-6flq5",
           "namespace": "dev-aiservicesetup2-188-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
@@ -457,6 +463,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-8fx7n",
+          "name": "dev-aiservicesetup2-188-11-75449bb954-8fx7n",
           "namespace": "dev-aiservicesetup2-188-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
@@ -473,6 +480,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-95vhr",
+          "name": "dev-aiservicesetup2-188-11-75449bb954-95vhr",
           "namespace": "dev-aiservicesetup2-188-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
@@ -489,6 +497,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-b84pq",
+          "name": "dev-aiservicesetup2-188-11-75449bb954-b84pq",
           "namespace": "dev-aiservicesetup2-188-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
@@ -505,6 +514,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-fnggp",
+          "name": "dev-aiservicesetup2-188-11-75449bb954-fnggp",
           "namespace": "dev-aiservicesetup2-188-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
@@ -521,6 +531,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-hh84d",
+          "name": "dev-aiservicesetup2-188-11-75449bb954-hh84d",
           "namespace": "dev-aiservicesetup2-188-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
@@ -537,6 +548,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-qrrxg",
+          "name": "dev-aiservicesetup2-188-11-75449bb954-qrrxg",
           "namespace": "dev-aiservicesetup2-188-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
@@ -553,6 +565,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-r8sdc",
+          "name": "dev-aiservicesetup2-188-11-75449bb954-r8sdc",
           "namespace": "dev-aiservicesetup2-188-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
@@ -569,6 +582,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-xdskp",
+          "name": "dev-aiservicesetup2-188-11-75449bb954-xdskp",
           "namespace": "dev-aiservicesetup2-188-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
@@ -585,6 +599,7 @@
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-xmvrc",
+          "name": "dev-aiservicesetup2-188-11-75449bb954-xmvrc",
           "namespace": "dev-aiservicesetup2-188-11",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-aiservicesetup2-188-11:v1",
@@ -601,6 +616,7 @@
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-42t9j",
+          "name": "dev-combinedragvectorization-200-2-6866987bcf-42t9j",
           "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
@@ -617,6 +633,7 @@
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-85x2w",
+          "name": "dev-combinedragvectorization-200-2-6866987bcf-85x2w",
           "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
@@ -633,6 +650,7 @@
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-blxsw",
+          "name": "dev-combinedragvectorization-200-2-6866987bcf-blxsw",
           "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
@@ -649,6 +667,7 @@
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-d2ck5",
+          "name": "dev-combinedragvectorization-200-2-6866987bcf-d2ck5",
           "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
@@ -665,6 +684,7 @@
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-df2qv",
+          "name": "dev-combinedragvectorization-200-2-6866987bcf-df2qv",
           "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
@@ -681,6 +701,7 @@
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-gzxqk",
+          "name": "dev-combinedragvectorization-200-2-6866987bcf-gzxqk",
           "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
@@ -697,6 +718,7 @@
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-h2dt8",
+          "name": "dev-combinedragvectorization-200-2-6866987bcf-h2dt8",
           "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
@@ -713,6 +735,7 @@
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-hxxml",
+          "name": "dev-combinedragvectorization-200-2-6866987bcf-hxxml",
           "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
@@ -729,6 +752,7 @@
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-tm2rc",
+          "name": "dev-combinedragvectorization-200-2-6866987bcf-tm2rc",
           "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
@@ -745,6 +769,7 @@
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-xpb54",
+          "name": "dev-combinedragvectorization-200-2-6866987bcf-xpb54",
           "namespace": "dev-combinedragvectorization-200-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-combinedragvectorization-200-2:v1",
@@ -761,6 +786,7 @@
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-bfgx9",
+          "name": "dev-copyfromblobtocosmos-146-2-859b7f664-bfgx9",
           "namespace": "dev-copyfromblobtocosmos-146-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
@@ -777,6 +803,7 @@
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-cpzkp",
+          "name": "dev-copyfromblobtocosmos-146-2-859b7f664-cpzkp",
           "namespace": "dev-copyfromblobtocosmos-146-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
@@ -793,6 +820,7 @@
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-f6klk",
+          "name": "dev-copyfromblobtocosmos-146-2-859b7f664-f6klk",
           "namespace": "dev-copyfromblobtocosmos-146-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
@@ -809,6 +837,7 @@
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-fwj95",
+          "name": "dev-copyfromblobtocosmos-146-2-859b7f664-fwj95",
           "namespace": "dev-copyfromblobtocosmos-146-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
@@ -825,6 +854,7 @@
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-hfq2v",
+          "name": "dev-copyfromblobtocosmos-146-2-859b7f664-hfq2v",
           "namespace": "dev-copyfromblobtocosmos-146-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
@@ -841,6 +871,7 @@
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-jt8w6",
+          "name": "dev-copyfromblobtocosmos-146-2-859b7f664-jt8w6",
           "namespace": "dev-copyfromblobtocosmos-146-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
@@ -857,6 +888,7 @@
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-jv6cw",
+          "name": "dev-copyfromblobtocosmos-146-2-859b7f664-jv6cw",
           "namespace": "dev-copyfromblobtocosmos-146-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
@@ -873,6 +905,7 @@
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-k6556",
+          "name": "dev-copyfromblobtocosmos-146-2-859b7f664-k6556",
           "namespace": "dev-copyfromblobtocosmos-146-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
@@ -889,6 +922,7 @@
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-lbfdt",
+          "name": "dev-copyfromblobtocosmos-146-2-859b7f664-lbfdt",
           "namespace": "dev-copyfromblobtocosmos-146-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
@@ -905,6 +939,7 @@
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-zcfvx",
+          "name": "dev-copyfromblobtocosmos-146-2-859b7f664-zcfvx",
           "namespace": "dev-copyfromblobtocosmos-146-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-copyfromblobtocosmos-146-2:v1",
@@ -921,6 +956,7 @@
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-8p827",
+          "name": "dev-yolov8-176-2-dfd7f4665-8p827",
           "namespace": "dev-yolov8-176-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
@@ -937,6 +973,7 @@
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-9v9fk",
+          "name": "dev-yolov8-176-2-dfd7f4665-9v9fk",
           "namespace": "dev-yolov8-176-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
@@ -953,6 +990,7 @@
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-cw9p8",
+          "name": "dev-yolov8-176-2-dfd7f4665-cw9p8",
           "namespace": "dev-yolov8-176-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
@@ -969,6 +1007,7 @@
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-dpxfn",
+          "name": "dev-yolov8-176-2-dfd7f4665-dpxfn",
           "namespace": "dev-yolov8-176-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
@@ -985,6 +1024,7 @@
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-fqqqh",
+          "name": "dev-yolov8-176-2-dfd7f4665-fqqqh",
           "namespace": "dev-yolov8-176-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
@@ -1001,6 +1041,7 @@
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-k5j96",
+          "name": "dev-yolov8-176-2-dfd7f4665-k5j96",
           "namespace": "dev-yolov8-176-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
@@ -1017,6 +1058,7 @@
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-kp4cp",
+          "name": "dev-yolov8-176-2-dfd7f4665-kp4cp",
           "namespace": "dev-yolov8-176-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
@@ -1033,6 +1075,7 @@
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-mww7z",
+          "name": "dev-yolov8-176-2-dfd7f4665-mww7z",
           "namespace": "dev-yolov8-176-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
@@ -1049,6 +1092,7 @@
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-qftpj",
+          "name": "dev-yolov8-176-2-dfd7f4665-qftpj",
           "namespace": "dev-yolov8-176-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
@@ -1065,6 +1109,7 @@
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-wmdsj",
+          "name": "dev-yolov8-176-2-dfd7f4665-wmdsj",
           "namespace": "dev-yolov8-176-2",
           "server_id": "cloud-node-01",
           "image_url": "loopaiservicealgos.azurecr.io/dev-yolov8-176-2:v1",
@@ -1081,6 +1126,7 @@
         },
         {
           "pod_id": "ingress-nginx-admission-create-7sv2z",
+          "name": "ingress-nginx-admission-create-7sv2z",
           "namespace": "ingress-nginx",
           "server_id": "cloud-node-01",
           "image_url": "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1@sha256:36d05b4077fb8e3d13663702fa337f124675ba8667cbd949c03a8e8ea6fa4366",
@@ -1097,6 +1143,7 @@
         },
         {
           "pod_id": "ingress-nginx-admission-patch-blk9m",
+          "name": "ingress-nginx-admission-patch-blk9m",
           "namespace": "ingress-nginx",
           "server_id": "cloud-node-01",
           "image_url": "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1@sha256:36d05b4077fb8e3d13663702fa337f124675ba8667cbd949c03a8e8ea6fa4366",
@@ -1113,6 +1160,7 @@
         },
         {
           "pod_id": "ingress-nginx-controller-7bfd769f7b-vbcsz",
+          "name": "ingress-nginx-controller-7bfd769f7b-vbcsz",
           "namespace": "ingress-nginx",
           "server_id": "cloud-node-01",
           "image_url": "registry.k8s.io/ingress-nginx/controller:v1.11.1@sha256:e6439a12b52076965928e83b7b56aae6731231677b01e81818bce7fa5c60161a",
@@ -1129,6 +1177,7 @@
         },
         {
           "pod_id": "nginx-ingress-microk8s-controller-bthvx",
+          "name": "nginx-ingress-microk8s-controller-bthvx",
           "namespace": "ingress",
           "server_id": "cloud-node-01",
           "image_url": "registry.k8s.io/ingress-nginx/controller:v1.11.5",
@@ -1144,10 +1193,11 @@
           "pod_ip": "10.1.0.31"
         },
         {
-          "pod_id": "nginx-deployment-764dd87c46-57vhg",
-          "namespace": "testrollbackns",
+          "pod_id": "rollbackdeployment-866f4bdc99-89kvc",
+          "name": "rollbackdeployment-866f4bdc99-89kvc",
+          "namespace": "rollbacktest",
           "server_id": "cloud-node-01",
-          "image_url": "nginx:1.21",
+          "image_url": "nginx:latest",
           "requested": {
             "cpus": 0.1,
             "ram_gb": 0.1,
@@ -1156,14 +1206,15 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-28T10:40:24+00:00",
-          "pod_ip": "10.1.0.81"
+          "timestamp": "2025-07-29T09:05:12+00:00",
+          "pod_ip": "10.1.0.121"
         },
         {
-          "pod_id": "nginx-deployment-764dd87c46-dtr9d",
-          "namespace": "testrollbackns",
+          "pod_id": "rollbackdeployment-866f4bdc99-d2cvd",
+          "name": "rollbackdeployment-866f4bdc99-d2cvd",
+          "namespace": "rollbacktest",
           "server_id": "cloud-node-01",
-          "image_url": "nginx:1.21",
+          "image_url": "nginx:latest",
           "requested": {
             "cpus": 0.1,
             "ram_gb": 0.1,
@@ -1172,14 +1223,15 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-28T10:40:25+00:00",
-          "pod_ip": "10.1.0.82"
+          "timestamp": "2025-07-29T09:05:14+00:00",
+          "pod_ip": "10.1.0.120"
         },
         {
-          "pod_id": "nginx-deployment-764dd87c46-r6hps",
-          "namespace": "testrollbackns",
+          "pod_id": "rollbackdeployment-866f4bdc99-p29hj",
+          "name": "rollbackdeployment-866f4bdc99-p29hj",
+          "namespace": "rollbacktest",
           "server_id": "cloud-node-01",
-          "image_url": "nginx:1.21",
+          "image_url": "nginx:latest",
           "requested": {
             "cpus": 0.1,
             "ram_gb": 0.1,
@@ -1188,8 +1240,93 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-28T10:40:26+00:00",
-          "pod_ip": "10.1.0.83"
+          "timestamp": "2025-07-29T09:05:10+00:00",
+          "pod_ip": "10.1.0.119"
+        },
+        {
+          "pod_id": "test-no-custom-apps",
+          "name": "test-no-custom-apps",
+          "namespace": "test-namespace",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 0,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-29T07:25:30+00:00",
+          "pod_ip": "10.1.0.76"
+        },
+        {
+          "pod_id": "azure-pod",
+          "name": "azure-pod",
+          "namespace": "testing",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-29T09:06:24+00:00",
+          "pod_ip": "10.1.0.123"
+        },
+        {
+          "pod_id": "nginx-deployment-f576985cc-9cgd4",
+          "name": "nginx-deployment-f576985cc-9cgd4",
+          "namespace": "testrollbackns",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:alpine",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-29T06:04:57+00:00",
+          "pod_ip": "10.1.0.100"
+        },
+        {
+          "pod_id": "nginx-deployment-f576985cc-bgqtd",
+          "name": "nginx-deployment-f576985cc-bgqtd",
+          "namespace": "testrollbackns",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:alpine",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-29T06:04:58+00:00",
+          "pod_ip": "10.1.0.101"
+        },
+        {
+          "pod_id": "nginx-deployment-f576985cc-hnwhd",
+          "name": "nginx-deployment-f576985cc-hnwhd",
+          "namespace": "testrollbackns",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:alpine",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-29T06:04:59+00:00",
+          "pod_ip": "10.1.0.102"
         }
       ],
       "status": "Online"
@@ -1205,7 +1342,6 @@
         "host": "0.0.0.0",
         "port": 6443,
         "username": "dummyuser",
-        "kubeconfig_path": "dummy-test-server-001_kubeconfig",
         "kubeconfig_data": {
           "apiVersion": "v1",
           "clusters": [

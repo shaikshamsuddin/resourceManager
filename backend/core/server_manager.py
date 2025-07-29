@@ -253,6 +253,9 @@ class ServerManager:
             # OPTIMIZATION: Sync pods synchronously after successful creation
             if result.get('status') == 'success':
                 try:
+                    # Add a small delay to allow pod to start transitioning from Pending to Running
+                    import time
+                    time.sleep(2)
                     self.sync_pods_from_kubernetes(server_id)
                 except Exception as e:
                     print(f"Sync failed but pod was created: {e}")
@@ -263,25 +266,64 @@ class ServerManager:
 
     def delete_pod(self, server_id: str, pod_name: str, pod_data: Dict = None) -> Dict:
         """Delete a pod from the specified server and update master.json only if successful."""
+        print(f"ServerManager: Deleting pod {pod_name} from server {server_id}")
+        
         self.reload_config()
         if server_id not in self.server_providers:
+            print(f"ServerManager: Server {server_id} not found")
             return {"error": f"Server {server_id} not found"}
+        
         try:
+            # Find the pod in master.json to get its namespace
+            pod_namespace = None
+            for server in self.master_config.get('servers', []):
+                if server.get('id') == server_id:
+                    for pod in server.get('pods', []):
+                        if pod.get('pod_id') == pod_name or pod.get('name') == pod_name:
+                            pod_namespace = pod.get('namespace', 'default')
+                            print(f"ServerManager: Found pod {pod_name} in namespace {pod_namespace}")
+                            break
+                    break
+            
+            if not pod_namespace:
+                print(f"ServerManager: Pod {pod_name} not found in master.json, using default namespace")
+                pod_namespace = 'default'
+            
             provider = self.server_providers[server_id]["provider"]
-            # Pass pod_data for namespace support
-            pod_data = pod_data or {"PodName": pod_name}
+            # Pass pod_data with namespace information
+            pod_data = pod_data or {"PodName": pod_name, "namespace": pod_namespace}
+            print(f"ServerManager: Calling provider delete_pod with data: {pod_data}")
+            
             result = provider.delete_pod(pod_data)
+            print(f"ServerManager: Provider delete result: {result}")
+            
             if result.get('status') == 'success':
-                # Remove pod from master.json
-                self.master_config = self._load_master_config()
-                for server in self.master_config.get('servers', []):
-                    if server.get('id') == server_id:
-                        server['pods'] = [p for p in server.get('pods', []) if p.get('pod_id') != pod_name and p.get('name') != pod_name]
-                config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
-                with open(config_path, 'w') as f:
-                    json.dump(self.master_config, f, indent=2)
+                print(f"ServerManager: Pod deletion successful, syncing pods from Kubernetes")
+                # Sync pods from Kubernetes to update master.json with fresh data
+                try:
+                    import time
+                    time.sleep(2)  # Small delay to allow deletion to complete
+                    sync_result = self.sync_pods_from_kubernetes(server_id)
+                    print(f"ServerManager: Sync result: {sync_result}")
+                except Exception as e:
+                    print(f"ServerManager: Sync failed but pod was deleted: {e}")
+                    # Fallback: manually remove from master.json
+                    self.master_config = self._load_master_config()
+                    for server in self.master_config.get('servers', []):
+                        if server.get('id') == server_id:
+                            original_count = len(server.get('pods', []))
+                            server['pods'] = [p for p in server.get('pods', []) if p.get('pod_id') != pod_name and p.get('name') != pod_name]
+                            new_count = len(server.get('pods', []))
+                            print(f"ServerManager: Removed {original_count - new_count} pods from master.json")
+                    config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+                    with open(config_path, 'w') as f:
+                        json.dump(self.master_config, f, indent=2)
+            else:
+                print(f"ServerManager: Pod deletion failed: {result}")
+            
             return result
         except Exception as e:
+            print(f"ServerManager: Exception during pod deletion: {e}")
             return {"error": f"Failed to delete pod: {e}"}
     
 
@@ -300,17 +342,20 @@ class ServerManager:
             provider = self.server_providers[server_id]["provider"]
             # Fetch live pods from provider
             servers_data = provider.get_servers_with_pods()
+            
             # Flatten all pods from all nodes (if node-based)
             live_pods = []
             for node in servers_data:
                 if "pods" in node:
                     for pod in node["pods"]:
                         live_pods.append(pod)
+            
             # Update master.json
             self.master_config = self._load_master_config()
             for server in self.master_config.get("servers", []):
                 if server.get("id") == server_id:
                     server["pods"] = live_pods
+            
             # Write back to master.json
             config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
             with open(config_path, 'w') as f:
