@@ -1449,6 +1449,87 @@
           "timestamp": "2025-07-28T12:00:00+00:00"
         }
       ]
+    },
+    {
+      "id": "kubernetes-4-246-163-135",
+      "name": "Azure VM Kubernetes (4.246.163.135)",
+      "type": "kubernetes",
+      "environment": "live",
+      "live_refresh_interval": 60,
+      "connection_coordinates": {
+        "method": "kubeconfig",
+        "host": "4.246.163.135",
+        "port": 16443,
+        "username": "azureuser",
+        "kubeconfig_path": "kubernetes-4-246-163-135_kubeconfig",
+        "kubeconfig_data": {
+          "apiVersion": "v1",
+          "clusters": [
+            {
+              "cluster": {
+                "server": "https://4.246.163.135:16443",
+                "insecure-skip-tls-verify": true
+              },
+              "name": "microk8s-cluster"
+            }
+          ],
+          "contexts": [
+            {
+              "context": {
+                "cluster": "microk8s-cluster",
+                "user": "admin"
+              },
+              "name": "microk8s"
+            }
+          ],
+          "current-context": "microk8s",
+          "kind": "Config",
+          "preferences": {},
+          "users": [
+            {
+              "name": "admin",
+              "user": {
+                "username": "azureuser",
+                "password": "azureuser@12345"
+              }
+            }
+          ]
+        },
+        "insecure_skip_tls_verify": true,
+        "password": "azureuser@12345"
+      },
+      "resources": {
+        "total": {
+          "cpus": 0,
+          "ram_gb": 0,
+          "storage_gb": 0,
+          "gpus": 0
+        },
+        "allocated": {
+          "cpus": 0,
+          "ram_gb": 0,
+          "storage_gb": 0,
+          "gpus": 0
+        },
+        "available": {
+          "cpus": 0,
+          "ram_gb": 0,
+          "storage_gb": 0,
+          "gpus": 0
+        }
+      },
+      "metadata": {
+        "location": "Kubernetes Server",
+        "environment": "live",
+        "description": "Kubernetes cluster on 4.246.163.135",
+        "setup_method": "api_automated",
+        "setup_timestamp": "2025-07-30T14:55:07.030190",
+        "configured_by": "api",
+        "last_updated": "2025-07-30T14:55:07.158204",
+        "live_data_fresh": false
+      },
+      "pods": [],
+      "status": "configured"
     }
   ],
   "config": {
