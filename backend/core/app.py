@@ -37,6 +37,7 @@ from config.utils import (
 from core.server_manager import server_manager
 from core.health_monitor import health_monitor
 from config.constants import Ports, PodStatus, ConfigKeys, APP_CONFIG
+from core.k8s_client import k8s_client
 
 # Import server configuration API
 from core.server_configuration_api import server_config_bp
@@ -547,6 +548,57 @@ def detailed_health_check():
             'error': f'Detailed health check failed: {str(e)}',
             'timestamp': datetime.now().isoformat()
         }), 500
+
+
+@app.route('/delete-namespace', methods=['POST'])
+def delete_namespace():
+    """
+    Delete a Kubernetes namespace and all its pods/resources
+    ---
+    tags:
+      - Namespace
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            namespace:
+              type: string
+              description: Namespace to delete
+    responses:
+      200:
+        description: Namespace deleted
+        examples:
+          application/json:
+            type: success
+            code: 200
+            message: Namespace deleted successfully
+      400:
+        description: Bad request
+        examples:
+          application/json:
+            type: error
+            code: 400
+            message: Namespace not provided
+      500:
+        description: Server error
+        examples:
+          application/json:
+            type: error
+            code: 500
+            message: Failed to delete namespace
+    """
+    data = request.get_json(force=True)
+    namespace = data.get('namespace')
+    if not namespace:
+        return jsonify({'type': 'error', 'code': 400, 'message': 'Namespace not provided'}), 400
+    try:
+        k8s_client.delete_namespace(namespace)
+        return jsonify({'type': 'success', 'code': 200, 'message': f'Namespace "{namespace}" deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'type': 'error', 'code': 500, 'message': f'Failed to delete namespace: {str(e)}'}), 500
 
 
 

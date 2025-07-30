@@ -1110,3 +1110,209 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
 }
 
 /* Responsive breakpoints for server cards */
+
+/* Namespace-based table styles */
+.namespace-card {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.namespace-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.namespace-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.namespace-header:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-1px);
+}
+
+.namespace-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+
+.namespace-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.expand-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.namespace-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.namespace-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.namespace-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.pod-count {
+  font-weight: 600;
+  color: #333;
+}
+
+.status-summary {
+  font-weight: 600;
+  color: #333;
+  font-size: 13px;
+}
+
+.resource-summary {
+  opacity: 0.8;
+}
+
+.namespace-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.namespace-delete-btn {
+  color: rgba(255, 255, 255, 0.8) !important;
+  transition: all 0.3s ease;
+}
+
+.namespace-delete-btn:hover {
+  color: #ff6b6b !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  transform: scale(1.1);
+}
+
+.pods-expanded {
+  background: white;
+  border-top: 1px solid #e0e0e0;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.pods-table {
+  width: 100%;
+  margin: 0;
+}
+
+.pods-table .mat-header-cell {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.pods-table .mat-cell {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.pods-table .mat-row:hover {
+  background-color: #f8f9fa;
+}
+
+.resource-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resource-item {
+  font-size: 12px;
+  color: #6c757d;
+  padding: 2px 6px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.no-namespaces {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #6c757d;
+  text-align: center;
+}
+
+.no-namespaces mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.no-namespaces p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Responsive design for namespace cards */
+@media (max-width: 768px) {
+  .namespace-header-content {
+    padding: 12px 16px;
+  }
+  
+  .namespace-name {
+    font-size: 16px;
+  }
+  
+  .namespace-stats {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .pods-table {
+    font-size: 12px;
+  }
+  
+  .pods-table .mat-cell {
+    padding: 8px 12px;
+  }
+}
