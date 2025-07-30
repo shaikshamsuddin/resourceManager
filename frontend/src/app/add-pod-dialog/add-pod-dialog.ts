@@ -23,7 +23,7 @@ import { DefaultValues, ResourceType } from '../constants/app.constants';
     MatIconModule
   ],
   template: `
-    <h2 mat-dialog-title>Deploy New Pod</h2>
+    <h2 mat-dialog-title>Deploy New Pod(s)</h2>
     <mat-dialog-content>
       <form #podForm="ngForm" class="pod-form" (ngSubmit)="onSubmit()">
         <mat-form-field appearance="outline" >
@@ -31,17 +31,18 @@ import { DefaultValues, ResourceType } from '../constants/app.constants';
           <input matInput [(ngModel)]="pod.ServerDisplayName" name="ServerDisplayName" readonly>
         </mat-form-field>
         <div class="form-section-title">Pod Details</div>
-        <mat-form-field appearance="outline" style="width: 100%" [class.error-field]="nameError">
-          <mat-label>Pod Name</mat-label>
-          <input matInput [(ngModel)]="pod.PodName" name="PodName" required
-                 (ngModelChange)="onPodNameChange($event)">
-          <mat-error *ngIf="nameError">{{ nameError }}</mat-error>
-        </mat-form-field>
         <mat-form-field appearance="outline" style="width: 100%" [class.error-field]="namespaceError">
           <mat-label>Namespace</mat-label>
           <input matInput [(ngModel)]="pod.namespace" name="namespace" required
                  (ngModelChange)="onNamespaceChange($event)" placeholder="Enter namespace name">
           <mat-error *ngIf="namespaceError">{{ namespaceError }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline" style="width: 100%" [class.error-field]="replicaError">
+          <mat-label>Replica Count</mat-label>
+          <input matInput type="number" [(ngModel)]="pod.replicas" name="replicas" required
+                 (ngModelChange)="onReplicaChange($event)" min="1" max="100" placeholder="Number of pod replicas">
+          <mat-hint>Number of identical pods to deploy (1-100)</mat-hint>
+          <mat-error *ngIf="replicaError">{{ replicaError }}</mat-error>
         </mat-form-field>
         <div class="form-section-title">Resources</div>
         <mat-form-field appearance="outline" [class.error-field]="resourceErrors['gpus']">
@@ -77,7 +78,7 @@ import { DefaultValues, ResourceType } from '../constants/app.constants';
         <mat-dialog-actions align="end">
           <button mat-button type="button" (click)="onCancel()">Cancel</button>
           <button mat-raised-button color="primary" type="submit" 
-                  [disabled]="!podForm.form.valid || hasErrors()">Deploy Pod</button>
+                  [disabled]="!podForm.form.valid || hasErrors()">Deploy</button>
         </mat-dialog-actions>
       </form>
     </mat-dialog-content>
@@ -130,9 +131,9 @@ export class AddPodDialogComponent extends PodDialogBase {
   @Output() podCreated = new EventEmitter<any>();
 
   namespaceError: string = '';
+  replicaError: string = '';
 
   pod = {
-    PodName: '',
     Resources: {
       [ResourceType.GPUS]: DefaultValues.DEFAULT_GPUS,
       [ResourceType.RAM_GB]: DefaultValues.DEFAULT_MEMORY_GB,
@@ -141,7 +142,8 @@ export class AddPodDialogComponent extends PodDialogBase {
     image_url: DefaultValues.DEFAULT_IMAGE,
     ServerName: '',
     ServerDisplayName: '',
-    namespace: ''
+    namespace: '',
+    replicas: 1
   };
 
   constructor(
@@ -157,12 +159,12 @@ export class AddPodDialogComponent extends PodDialogBase {
     this.validateResources(resource, this.pod.Resources);
   }
 
-  onPodNameChange(podName: string) {
-    this.validatePodName(podName);
-  }
-
   onNamespaceChange(namespace: string) {
     this.validateNamespace(namespace);
+  }
+
+  onReplicaChange(replicas: number) {
+    this.validateReplicas(replicas);
   }
 
   validateNamespace(namespace: string): boolean {
@@ -203,10 +205,31 @@ export class AddPodDialogComponent extends PodDialogBase {
     return true;
   }
 
+  validateReplicas(replicas: number): boolean {
+    if (!replicas || replicas < 1) {
+      this.replicaError = 'Replica count must be at least 1';
+      return false;
+    }
+    
+    if (replicas > 100) {
+      this.replicaError = 'Replica count cannot exceed 100';
+      return false;
+    }
+    
+    if (!Number.isInteger(replicas)) {
+      this.replicaError = 'Replica count must be a whole number';
+      return false;
+    }
+    
+    this.replicaError = '';
+    return true;
+  }
+
   onSubmit() {
     this.validateAllResources(this.pod.Resources);
     this.validateNamespace(this.pod.namespace);
-    if (!this.validatePodName(this.pod.PodName) || this.hasResourceErrors() || this.namespaceError) {
+    this.validateReplicas(this.pod.replicas);
+    if (this.hasResourceErrors() || this.namespaceError || this.replicaError) {
       return;
     }
     this.podCreated.emit(this.pod);

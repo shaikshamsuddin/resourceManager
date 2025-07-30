@@ -351,8 +351,8 @@ export class App implements OnInit, OnDestroy {
     // Show loading state
     this.showAlert(
       'info',
-      'Creating Pod',
-      `Creating pod "${podData.PodName}" on server ${serverId}...`
+      'Creating Pod(s)',
+      `Creating ${podData.replicas || 1} pod(s) in namespace "${podData.namespace || 'default'}" on server ${serverId}...`
     );
     
     this.http.post(ApiConfig.getCreatePodUrl(), payload).subscribe({
@@ -360,27 +360,27 @@ export class App implements OnInit, OnDestroy {
         if (response.type === 'success') {
           this.showAlert(
             'success',
-            'Pod Created Successfully!',
-            `Pod "${podData.PodName}" has been successfully created on the server. You can now see it in the Pod Overview table.`
+            'Pod(s) Created Successfully!',
+            response.message || 'Pod(s) have been successfully created. You can now see them in the Pods Overview table.'
           );
         } else {
           this.showAlert(
             'error',
             'Pod Creation Failed',
-            response.message || 'An error occurred while creating the pod.'
+            response.message || 'An error occurred while creating the pod(s).'
           );
         }
-        // Force immediate data refresh to show the newly created pod
+        // Force immediate data refresh to show the newly created pods
         this.fetchServersImmediate();
       },
-      error: (err) => {
-        const errorMsg = err?.error?.error || err?.error?.message || 'An error occurred during pod creation.';
-        this.showAlert(
-          'error',
-          'Pod Creation Failed',
-          `${errorMsg} Please check the server resources and try again.`
-        );
-      }
+              error: (err) => {
+          const errorMsg = err?.error?.error || err?.error?.message || 'An error occurred during pod creation.';
+          this.showAlert(
+            'error',
+            'Pod Creation Failed',
+            `${errorMsg} Please check the server resources and try again.`
+          );
+        }
     });
   }
 

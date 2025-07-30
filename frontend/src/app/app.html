@@ -177,11 +177,15 @@
 <mat-card class="overview-card">
   <div class="overview-header-row">
     <div>
-      <div class="overview-title">Pods Overview ({{ allPods.length }} pods)</div>
+      <div class="overview-title">
+        Pods Overview
+        <span class="pod-count-subtitle">({{ allPods.length }} pods) - </span>
+        <span class="server-name-subtitle">{{ selectedServer ? (selectedServer.server_name || selectedServer.name) : '' }}</span>
+      </div>
       <div class="overview-desc">Namespace-based view with collapsible pods. Click to expand/collapse namespaces.</div>
     </div>
     <button mat-raised-button color="accent" (click)="openAddPodDialog()">
-      Deploy New Pod{{ selectedServer ? ' to ' + (selectedServer.server_name || selectedServer.name) : '' }}
+      Deploy New Pod(s)
     </button>
   </div>
   <div style="max-height: 400px; overflow: auto;">

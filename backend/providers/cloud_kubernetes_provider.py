@@ -817,13 +817,16 @@ class CloudKubernetesProvider:
             self.apps_v1 = client.AppsV1Api()
 
     def create_pod(self, pod_data: Dict) -> Dict:
-        """Create a pod in a dynamic namespace (from payload or default to 'default')."""
+        """Create multiple pod replicas in a dynamic namespace (from payload or default to 'default')."""
         self._ensure_initialized()
         try:
-            pod_name = pod_data.get('PodName') or pod_data.get('pod_id')
+            # Generate a unique base name for the deployment
+            import uuid
+            base_name = pod_data.get('PodName') or f"deployment-{uuid.uuid4().hex[:8]}"
             resources = pod_data.get('Resources') or pod_data.get('requested') or {}
             image_url = pod_data.get('image_url', 'nginx:latest')
             namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'default'
+            replicas = pod_data.get('replicas', 1)
 
             # OPTIMIZATION: Skip namespace creation if it's 'default' (always exists)
             if namespace != 'default':
@@ -849,7 +852,7 @@ class CloudKubernetesProvider:
 
             # Define container with minimal configuration
             container = client.V1Container(
-                name=pod_name,
+                name=base_name,
                 image=image_url
             )
             
@@ -857,24 +860,39 @@ class CloudKubernetesProvider:
             if resource_requirements:
                 container.resources = resource_requirements
 
-            # Define pod spec with minimal configuration
-            pod_spec = client.V1PodSpec(containers=[container])
-
-            # Define pod metadata with minimal labels
-            pod_metadata = client.V1ObjectMeta(
-                name=pod_name,
-                labels={'app': pod_name}
+            # Define pod template spec
+            pod_template_spec = client.V1PodTemplateSpec(
+                metadata=client.V1ObjectMeta(labels={'app': base_name}),
+                spec=client.V1PodSpec(containers=[container])
             )
 
-            # Define pod
-            pod = client.V1Pod(
-                metadata=pod_metadata,
-                spec=pod_spec
+            # Define deployment spec
+            deployment_spec = client.V1DeploymentSpec(
+                replicas=replicas,
+                selector=client.V1LabelSelector(match_labels={'app': base_name}),
+                template=pod_template_spec
             )
 
-            # Create pod with timeout
-            self.core_v1.create_namespaced_pod(namespace=namespace, body=pod)
-            return {'status': 'success', 'message': f'Pod {pod_name} created in namespace {namespace}'}
+            # Define deployment metadata
+            deployment_metadata = client.V1ObjectMeta(
+                name=base_name,
+                labels={'app': base_name}
+            )
+
+            # Define deployment
+            deployment = client.V1Deployment(
+                metadata=deployment_metadata,
+                spec=deployment_spec
+            )
+
+            # Create deployment with timeout
+            self.apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment)
+            return {
+                'status': 'success', 
+                'message': f'Deployment {base_name} created with {replicas} replicas in namespace {namespace}',
+                'deployment_name': base_name,
+                'replicas': replicas
+            }
         except ApiException as e:
             return {'status': 'error', 'message': f'Kubernetes API error: {e}'}
         except Exception as e:
