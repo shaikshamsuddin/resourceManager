@@ -39,6 +39,7 @@ export class ApiConfig {
     SERVERS: '/servers',
     CREATE_POD: '/create',
     DELETE_POD: '/delete',
+    DELETE_NAMESPACE: '/delete-namespace',
     
     // Server configuration endpoints
     SERVER_CONFIG: '/api/server-config',
@@ -79,6 +80,10 @@ export class ApiConfig {
   
   static getDeletePodUrl(): string {
     return `${this.BASE_URL}${this.ENDPOINTS.DELETE_POD}`;
+  }
+  
+  static getDeleteNamespaceUrl(): string {
+    return `${this.BASE_URL}${this.ENDPOINTS.DELETE_NAMESPACE}`;
   }
   
 

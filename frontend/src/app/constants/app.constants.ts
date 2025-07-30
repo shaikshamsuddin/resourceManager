@@ -137,6 +137,12 @@ export class UIConstants {
   static readonly MAX_RETRIES = 3;
   static readonly RETRY_DELAY = 1000;
 
+  // Alert timing constants
+  static readonly ALERT_TIMEOUT_SUCCESS = 8000;  // 8 seconds for success alerts
+  static readonly ALERT_TIMEOUT_ERROR = 10000;   // 10 seconds for error alerts
+  static readonly ALERT_TIMEOUT_INFO = 5000;     // 5 seconds for info alerts
+  static readonly ALERT_DATA_REFRESH_DELAY = 1000; // 1 second delay for data refresh after success
+
   // Form validation
   static readonly MIN_POD_NAME_LENGTH = 1;
   static readonly MAX_POD_NAME_LENGTH = 63;

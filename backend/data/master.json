@@ -309,9 +309,9 @@
           "pod_ip": "10.1.0.11"
         },
         {
-          "pod_id": "newpod-1",
-          "name": "newpod-1",
-          "namespace": "custom-app007",
+          "pod_id": "deployment-f0f99d12-646b67fff5-hk9s8",
+          "name": "deployment-f0f99d12-646b67fff5-hk9s8",
+          "namespace": "cherrylady",
           "server_id": "cloud-node-01",
           "image_url": "nginx:latest",
           "requested": {
@@ -322,8 +322,25 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-29T05:55:58+00:00",
-          "pod_ip": "10.1.0.183"
+          "timestamp": "2025-07-30T13:03:29+00:00",
+          "pod_ip": "10.1.0.13"
+        },
+        {
+          "pod_id": "deployment-f0f99d12-646b67fff5-mlqlw",
+          "name": "deployment-f0f99d12-646b67fff5-mlqlw",
+          "namespace": "cherrylady",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T13:03:29+00:00",
+          "pod_ip": "10.1.0.15"
         },
         {
           "pod_id": "deployment-c7192fcf-554648f5f9-vxckt",
@@ -1210,6 +1227,57 @@
           "pod_ip": "10.1.0.3"
         },
         {
+          "pod_id": "deployment-feb601a9-794db9fc79-ft9dc",
+          "name": "deployment-feb601a9-794db9fc79-ft9dc",
+          "namespace": "evergreen",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T13:12:42+00:00",
+          "pod_ip": "10.1.0.51"
+        },
+        {
+          "pod_id": "deployment-feb601a9-794db9fc79-fvqwn",
+          "name": "deployment-feb601a9-794db9fc79-fvqwn",
+          "namespace": "evergreen",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T13:12:42+00:00",
+          "pod_ip": "10.1.0.61"
+        },
+        {
+          "pod_id": "deployment-feb601a9-794db9fc79-w29dn",
+          "name": "deployment-feb601a9-794db9fc79-w29dn",
+          "namespace": "evergreen",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T13:12:42+00:00",
+          "pod_ip": "10.1.0.6"
+        },
+        {
           "pod_id": "ingress-nginx-admission-create-7sv2z",
           "name": "ingress-nginx-admission-create-7sv2z",
           "namespace": "ingress-nginx",
@@ -1329,21 +1397,89 @@
           "pod_ip": "10.1.0.204"
         },
         {
-          "pod_id": "test-no-custom-apps",
-          "name": "test-no-custom-apps",
+          "pod_id": "deployment-13a7fda8-7d8d87dc48-9gpwc",
+          "name": "deployment-13a7fda8-7d8d87dc48-9gpwc",
           "namespace": "test-namespace",
           "server_id": "cloud-node-01",
           "image_url": "nginx:latest",
           "requested": {
-            "cpus": 0,
-            "ram_gb": 0,
+            "cpus": 0.1,
+            "ram_gb": 0.1,
             "storage_gb": 0,
             "gpus": 0
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-29T07:25:30+00:00",
-          "pod_ip": "10.1.0.155"
+          "timestamp": "2025-07-30T12:52:56+00:00",
+          "pod_ip": "10.1.0.22"
+        },
+        {
+          "pod_id": "deployment-37c14f36-6696f49b9b-dhj4s",
+          "name": "deployment-37c14f36-6696f49b9b-dhj4s",
+          "namespace": "test-namespace",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T12:54:36+00:00",
+          "pod_ip": "10.1.0.5"
+        },
+        {
+          "pod_id": "deployment-37c14f36-6696f49b9b-dx8kl",
+          "name": "deployment-37c14f36-6696f49b9b-dx8kl",
+          "namespace": "test-namespace",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T12:54:36+00:00",
+          "pod_ip": "10.1.0.55"
+        },
+        {
+          "pod_id": "deployment-37c14f36-6696f49b9b-jth62",
+          "name": "deployment-37c14f36-6696f49b9b-jth62",
+          "namespace": "test-namespace",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T12:54:36+00:00",
+          "pod_ip": "10.1.0.23"
+        },
+        {
+          "pod_id": "deployment-2bc03fe7-66bf886764-j9l2j",
+          "name": "deployment-2bc03fe7-66bf886764-j9l2j",
+          "namespace": "test-success-alert",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0.1,
+            "ram_gb": 0.1,
+            "storage_gb": 0,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T13:00:38+00:00",
+          "pod_ip": "10.1.0.56"
         },
         {
           "pod_id": "azure-pod",
@@ -1412,6 +1548,74 @@
           "status": "online",
           "timestamp": "2025-07-29T06:04:59+00:00",
           "pod_ip": "10.1.0.177"
+        },
+        {
+          "pod_id": "deployment-97b1d9b8-5b9dfc9f87-7pgj9",
+          "name": "deployment-97b1d9b8-5b9dfc9f87-7pgj9",
+          "namespace": "vikram123",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T12:57:20+00:00",
+          "pod_ip": "10.1.0.8"
+        },
+        {
+          "pod_id": "deployment-97b1d9b8-5b9dfc9f87-lp4qd",
+          "name": "deployment-97b1d9b8-5b9dfc9f87-lp4qd",
+          "namespace": "vikram123",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T12:57:20+00:00",
+          "pod_ip": "10.1.0.45"
+        },
+        {
+          "pod_id": "deployment-97b1d9b8-5b9dfc9f87-ts5wz",
+          "name": "deployment-97b1d9b8-5b9dfc9f87-ts5wz",
+          "namespace": "vikram123",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T12:57:20+00:00",
+          "pod_ip": "10.1.0.42"
+        },
+        {
+          "pod_id": "deployment-fee84a0a-6cc95578c-kqdqd",
+          "name": "deployment-fee84a0a-6cc95578c-kqdqd",
+          "namespace": "vikram123",
+          "server_id": "cloud-node-01",
+          "image_url": "nginx:latest",
+          "requested": {
+            "cpus": 0,
+            "ram_gb": 1,
+            "storage_gb": 1,
+            "gpus": 0
+          },
+          "owner": "unknown",
+          "status": "online",
+          "timestamp": "2025-07-30T12:51:12+00:00",
+          "pod_ip": "10.1.0.27"
         }
       ],
       "status": "Online"
