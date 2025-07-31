@@ -23,6 +23,7 @@ export interface PodDialogData {
 
 export class PodDialogBase {
   protected resourceErrors: { [key: string]: string } = {};
+  protected nameError: string = '';
   protected serverResources: ServerResources;
   protected resourceFields = ['gpus', 'ram_gb', 'storage_gb'];
   protected existingPods: any[] = [];
@@ -58,12 +59,18 @@ export class PodDialogBase {
     this.resourceFields.forEach(resource => this.validateResources(resource, resources));
   }
 
+  protected validatePodName(podName: string): boolean {
+    const isDuplicate = this.existingPods.some(pod => pod.pod_id === podName);
+    this.nameError = isDuplicate ? 'Pod name not available' : '';
+    return !isDuplicate;
+  }
+
   protected hasResourceErrors(): boolean {
     return Object.keys(this.resourceErrors).length > 0;
   }
 
   protected hasErrors(): boolean {
-    return this.hasResourceErrors();
+    return this.hasResourceErrors() || !!this.nameError;
   }
 
   protected onCancel(): void {

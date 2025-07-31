@@ -102,7 +102,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-23T09:37:50+00:00",
-          "pod_ip": "10.1.0.41"
+          "pod_ip": "10.1.0.49"
         },
         {
           "pod_id": "paas-ai-frontcontroller-aiservice-d5887f488-zhrnm",
@@ -119,7 +119,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-23T09:37:48+00:00",
-          "pod_ip": "10.1.0.159"
+          "pod_ip": "10.1.0.19"
         },
         {
           "pod_id": "paas-ai-frontcontroller-pipeline-57f5944b6d-7pz2p",
@@ -136,7 +136,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-23T09:37:48+00:00",
-          "pod_ip": "10.1.0.63"
+          "pod_ip": "10.1.0.37"
         },
         {
           "pod_id": "paas-ai-manifest-engine-9dcbfd48-7fbbl",
@@ -153,7 +153,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-23T09:37:47+00:00",
-          "pod_ip": "10.1.0.169"
+          "pod_ip": "10.1.0.63"
         },
         {
           "pod_id": "paas-ai-orchestration-engine-6987cd5f9c-cg64q",
@@ -170,7 +170,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T10:28:24+00:00",
-          "pod_ip": "10.1.0.174"
+          "pod_ip": "10.1.0.29"
         },
         {
           "pod_id": "paas-be-5f969974f4-2dqz2",
@@ -187,7 +187,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-23T09:37:47+00:00",
-          "pod_ip": "10.1.0.193"
+          "pod_ip": "10.1.0.21"
         },
         {
           "pod_id": "paas-infra-7b9964bd8-p88zl",
@@ -204,7 +204,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-23T09:37:49+00:00",
-          "pod_ip": "10.1.0.191"
+          "pod_ip": "10.1.0.28"
         },
         {
           "pod_id": "paas-setup-manager-67f899cd5b-xnbt7",
@@ -221,92 +221,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-23T09:37:49+00:00",
-          "pod_ip": "10.1.0.19"
-        },
-        {
-          "pod_id": "paas-baseline-5cc86455c-bbgbd",
-          "name": "paas-baseline-5cc86455c-bbgbd",
-          "namespace": "aidf-rollbacks-setup",
-          "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_setup_manager:86658",
-          "requested": {
-            "cpus": 0.25,
-            "ram_gb": 0.25,
-            "storage_gb": 0,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-30T08:41:23+00:00",
-          "pod_ip": "10.1.0.16"
-        },
-        {
-          "pod_id": "paas-infra-6b87849598-vhn2n",
-          "name": "paas-infra-6b87849598-vhn2n",
-          "namespace": "aidf-rollbacks-setup",
-          "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_setup_manager:86031",
-          "requested": {
-            "cpus": 0.25,
-            "ram_gb": 0.25,
-            "storage_gb": 0,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-30T08:41:23+00:00",
-          "pod_ip": "10.1.0.25"
-        },
-        {
-          "pod_id": "paas-setup-manager-fdd858c96-xr85q",
-          "name": "paas-setup-manager-fdd858c96-xr85q",
-          "namespace": "aidf-rollbacks-setup",
-          "server_id": "cloud-node-01",
-          "image_url": "loopaiservicealgos.azurecr.io/loop2.0_dev_setup_manager:86031",
-          "requested": {
-            "cpus": 0.25,
-            "ram_gb": 0.25,
-            "storage_gb": 0,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-30T08:41:39+00:00",
-          "pod_ip": "10.1.0.26"
-        },
-        {
-          "pod_id": "newpod-0077",
-          "name": "newpod-0077",
-          "namespace": "centific",
-          "server_id": "cloud-node-01",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 1,
-            "storage_gb": 1,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-30T07:08:48+00:00",
-          "pod_ip": "10.1.0.57"
-        },
-        {
-          "pod_id": "newpod-187878",
-          "name": "newpod-187878",
-          "namespace": "centific",
-          "server_id": "cloud-node-01",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 1,
-            "storage_gb": 1,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-07-30T07:09:26+00:00",
-          "pod_ip": "10.1.0.11"
+          "pod_ip": "10.1.0.45"
         },
         {
           "pod_id": "newpod-1",
@@ -323,24 +238,24 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-29T05:55:58+00:00",
-          "pod_ip": "10.1.0.183"
+          "pod_ip": "10.1.0.93"
         },
         {
-          "pod_id": "deployment-c7192fcf-554648f5f9-vxckt",
-          "name": "deployment-c7192fcf-554648f5f9-vxckt",
-          "namespace": "custom-app1998",
+          "pod_id": "testpod123323",
+          "name": "testpod123323",
+          "namespace": "custom-app07",
           "server_id": "cloud-node-01",
           "image_url": "nginx:latest",
           "requested": {
             "cpus": 0,
-            "ram_gb": 1,
+            "ram_gb": 3,
             "storage_gb": 1,
             "gpus": 0
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-30T11:47:19+00:00",
-          "pod_ip": "10.1.0.47"
+          "timestamp": "2025-07-29T05:37:26+00:00",
+          "pod_ip": "10.1.0.87"
         },
         {
           "pod_id": "newpod-007",
@@ -357,7 +272,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-29T07:23:03+00:00",
-          "pod_ip": "10.1.0.189"
+          "pod_ip": "10.1.0.74"
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-c2xx2",
@@ -374,7 +289,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:53+00:00",
-          "pod_ip": "10.1.0.164"
+          "pod_ip": "10.1.0.16"
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-hwd86",
@@ -391,7 +306,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:53+00:00",
-          "pod_ip": "10.1.0.34"
+          "pod_ip": "10.1.0.5"
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-mk4zl",
@@ -408,7 +323,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:53+00:00",
-          "pod_ip": "10.1.0.37"
+          "pod_ip": "10.1.0.36"
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-mv27d",
@@ -425,7 +340,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:38+00:00",
-          "pod_ip": "10.1.0.32"
+          "pod_ip": "10.1.0.11"
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-p2npd",
@@ -459,7 +374,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:53+00:00",
-          "pod_ip": "10.1.0.1"
+          "pod_ip": "10.1.0.57"
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-txg6f",
@@ -476,7 +391,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:08+00:00",
-          "pod_ip": "10.1.0.179"
+          "pod_ip": "10.1.0.60"
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-vff4n",
@@ -493,7 +408,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:08+00:00",
-          "pod_ip": "10.1.0.186"
+          "pod_ip": "10.1.0.59"
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-vk4bs",
@@ -510,7 +425,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:38+00:00",
-          "pod_ip": "10.1.0.24"
+          "pod_ip": "10.1.0.38"
         },
         {
           "pod_id": "dev-aiservicesetup1-189-11-cb6987d96-zn5vd",
@@ -527,7 +442,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:31:53+00:00",
-          "pod_ip": "10.1.0.101"
+          "pod_ip": "10.1.0.52"
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-6flq5",
@@ -544,7 +459,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:38+00:00",
-          "pod_ip": "10.1.0.38"
+          "pod_ip": "10.1.0.51"
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-8fx7n",
@@ -561,7 +476,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:53+00:00",
-          "pod_ip": "10.1.0.172"
+          "pod_ip": "10.1.0.30"
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-95vhr",
@@ -578,7 +493,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:53+00:00",
-          "pod_ip": "10.1.0.171"
+          "pod_ip": "10.1.0.17"
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-b84pq",
@@ -595,7 +510,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:38+00:00",
-          "pod_ip": "10.1.0.157"
+          "pod_ip": "10.1.0.54"
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-fnggp",
@@ -612,7 +527,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:08+00:00",
-          "pod_ip": "10.1.0.181"
+          "pod_ip": "10.1.0.43"
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-hh84d",
@@ -629,7 +544,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:38+00:00",
-          "pod_ip": "10.1.0.185"
+          "pod_ip": "10.1.0.12"
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-qrrxg",
@@ -646,7 +561,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:08+00:00",
-          "pod_ip": "10.1.0.43"
+          "pod_ip": "10.1.0.53"
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-r8sdc",
@@ -663,7 +578,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:53+00:00",
-          "pod_ip": "10.1.0.151"
+          "pod_ip": "10.1.0.50"
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-xdskp",
@@ -680,7 +595,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:31:53+00:00",
-          "pod_ip": "10.1.0.192"
+          "pod_ip": "10.1.0.35"
         },
         {
           "pod_id": "dev-aiservicesetup2-188-11-75449bb954-xmvrc",
@@ -697,7 +612,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:53+00:00",
-          "pod_ip": "10.1.0.62"
+          "pod_ip": "10.1.0.41"
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-42t9j",
@@ -714,7 +629,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-28T03:40:02+00:00",
-          "pod_ip": "10.1.0.14"
+          "pod_ip": "10.1.0.47"
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-85x2w",
@@ -731,7 +646,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-28T03:40:30+00:00",
-          "pod_ip": "10.1.0.187"
+          "pod_ip": "10.1.0.71"
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-blxsw",
@@ -748,7 +663,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-28T03:40:15+00:00",
-          "pod_ip": "10.1.0.178"
+          "pod_ip": "10.1.0.7"
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-d2ck5",
@@ -765,7 +680,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-28T03:40:15+00:00",
-          "pod_ip": "10.1.0.188"
+          "pod_ip": "10.1.0.4"
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-df2qv",
@@ -782,7 +697,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-28T03:40:15+00:00",
-          "pod_ip": "10.1.0.54"
+          "pod_ip": "10.1.0.56"
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-gzxqk",
@@ -799,7 +714,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-28T03:40:15+00:00",
-          "pod_ip": "10.1.0.198"
+          "pod_ip": "10.1.0.25"
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-h2dt8",
@@ -816,7 +731,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-28T03:40:30+00:00",
-          "pod_ip": "10.1.0.168"
+          "pod_ip": "10.1.0.23"
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-hxxml",
@@ -833,7 +748,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-28T03:40:02+00:00",
-          "pod_ip": "10.1.0.201"
+          "pod_ip": "10.1.0.46"
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-tm2rc",
@@ -850,7 +765,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-28T03:40:02+00:00",
-          "pod_ip": "10.1.0.182"
+          "pod_ip": "10.1.0.39"
         },
         {
           "pod_id": "dev-combinedragvectorization-200-2-6866987bcf-xpb54",
@@ -867,7 +782,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-28T03:37:38+00:00",
-          "pod_ip": "10.1.0.156"
+          "pod_ip": "10.1.0.10"
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-bfgx9",
@@ -884,7 +799,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:20+00:00",
-          "pod_ip": "10.1.0.160"
+          "pod_ip": "10.1.0.27"
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-cpzkp",
@@ -901,7 +816,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:35+00:00",
-          "pod_ip": "10.1.0.197"
+          "pod_ip": "10.1.0.18"
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-f6klk",
@@ -918,7 +833,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:20+00:00",
-          "pod_ip": "10.1.0.196"
+          "pod_ip": "10.1.0.44"
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-fwj95",
@@ -935,7 +850,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:35+00:00",
-          "pod_ip": "10.1.0.154"
+          "pod_ip": "10.1.0.13"
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-hfq2v",
@@ -952,7 +867,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:05+00:00",
-          "pod_ip": "10.1.0.190"
+          "pod_ip": "10.1.0.15"
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-jt8w6",
@@ -969,7 +884,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:20+00:00",
-          "pod_ip": "10.1.0.158"
+          "pod_ip": "10.1.0.40"
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-jv6cw",
@@ -986,7 +901,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:35+00:00",
-          "pod_ip": "10.1.0.167"
+          "pod_ip": "10.1.0.20"
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-k6556",
@@ -1003,7 +918,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:05+00:00",
-          "pod_ip": "10.1.0.170"
+          "pod_ip": "10.1.0.9"
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-lbfdt",
@@ -1020,7 +935,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-22T09:45:23+00:00",
-          "pod_ip": "10.1.0.2"
+          "pod_ip": "10.1.0.42"
         },
         {
           "pod_id": "dev-copyfromblobtocosmos-146-2-859b7f664-zcfvx",
@@ -1037,7 +952,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:20+00:00",
-          "pod_ip": "10.1.0.199"
+          "pod_ip": "10.1.0.22"
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-8p827",
@@ -1054,7 +969,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:35+00:00",
-          "pod_ip": "10.1.0.128"
+          "pod_ip": "10.1.0.34"
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-9v9fk",
@@ -1071,7 +986,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:20+00:00",
-          "pod_ip": "10.1.0.195"
+          "pod_ip": "10.1.0.33"
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-cw9p8",
@@ -1088,7 +1003,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:35+00:00",
-          "pod_ip": "10.1.0.165"
+          "pod_ip": "10.1.0.32"
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-dpxfn",
@@ -1105,7 +1020,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:20+00:00",
-          "pod_ip": "10.1.0.72"
+          "pod_ip": "10.1.0.55"
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-fqqqh",
@@ -1122,7 +1037,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:05+00:00",
-          "pod_ip": "10.1.0.52"
+          "pod_ip": "10.1.0.8"
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-k5j96",
@@ -1139,7 +1054,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:20+00:00",
-          "pod_ip": "10.1.0.18"
+          "pod_ip": "10.1.0.26"
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-kp4cp",
@@ -1156,7 +1071,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:20+00:00",
-          "pod_ip": "10.1.0.194"
+          "pod_ip": "10.1.0.48"
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-mww7z",
@@ -1173,7 +1088,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:33:05+00:00",
-          "pod_ip": "10.1.0.184"
+          "pod_ip": "10.1.0.24"
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-qftpj",
@@ -1190,7 +1105,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-24T13:32:35+00:00",
-          "pod_ip": "10.1.0.200"
+          "pod_ip": "10.1.0.14"
         },
         {
           "pod_id": "dev-yolov8-176-2-dfd7f4665-wmdsj",
@@ -1207,7 +1122,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-23T06:36:14+00:00",
-          "pod_ip": "10.1.0.3"
+          "pod_ip": "10.1.0.61"
         },
         {
           "pod_id": "ingress-nginx-admission-create-7sv2z",
@@ -1258,7 +1173,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-21T17:47:44+00:00",
-          "pod_ip": "10.1.0.28"
+          "pod_ip": "10.1.0.6"
         },
         {
           "pod_id": "nginx-ingress-microk8s-controller-bthvx",
@@ -1275,11 +1190,11 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-22T03:57:04+00:00",
-          "pod_ip": "10.1.0.21"
+          "pod_ip": "10.1.0.31"
         },
         {
-          "pod_id": "rollbackdeployment-866f4bdc99-h6k4p",
-          "name": "rollbackdeployment-866f4bdc99-h6k4p",
+          "pod_id": "rollbackdeployment-866f4bdc99-89kvc",
+          "name": "rollbackdeployment-866f4bdc99-89kvc",
           "namespace": "rollbacktest",
           "server_id": "cloud-node-01",
           "image_url": "nginx:latest",
@@ -1291,12 +1206,12 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-29T11:39:17+00:00",
-          "pod_ip": "10.1.0.175"
+          "timestamp": "2025-07-29T09:05:12+00:00",
+          "pod_ip": "10.1.0.121"
         },
         {
-          "pod_id": "rollbackdeployment-866f4bdc99-t448d",
-          "name": "rollbackdeployment-866f4bdc99-t448d",
+          "pod_id": "rollbackdeployment-866f4bdc99-d2cvd",
+          "name": "rollbackdeployment-866f4bdc99-d2cvd",
           "namespace": "rollbacktest",
           "server_id": "cloud-node-01",
           "image_url": "nginx:latest",
@@ -1308,12 +1223,12 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-29T11:39:13+00:00",
-          "pod_ip": "10.1.0.203"
+          "timestamp": "2025-07-29T09:05:14+00:00",
+          "pod_ip": "10.1.0.120"
         },
         {
-          "pod_id": "rollbackdeployment-866f4bdc99-zs4n6",
-          "name": "rollbackdeployment-866f4bdc99-zs4n6",
+          "pod_id": "rollbackdeployment-866f4bdc99-p29hj",
+          "name": "rollbackdeployment-866f4bdc99-p29hj",
           "namespace": "rollbacktest",
           "server_id": "cloud-node-01",
           "image_url": "nginx:latest",
@@ -1325,8 +1240,8 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-07-29T11:39:15+00:00",
-          "pod_ip": "10.1.0.204"
+          "timestamp": "2025-07-29T09:05:10+00:00",
+          "pod_ip": "10.1.0.119"
         },
         {
           "pod_id": "test-no-custom-apps",
@@ -1343,7 +1258,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-29T07:25:30+00:00",
-          "pod_ip": "10.1.0.155"
+          "pod_ip": "10.1.0.76"
         },
         {
           "pod_id": "azure-pod",
@@ -1360,7 +1275,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-29T09:06:24+00:00",
-          "pod_ip": "10.1.0.49"
+          "pod_ip": "10.1.0.123"
         },
         {
           "pod_id": "nginx-deployment-f576985cc-9cgd4",
@@ -1377,7 +1292,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-29T06:04:57+00:00",
-          "pod_ip": "10.1.0.180"
+          "pod_ip": "10.1.0.100"
         },
         {
           "pod_id": "nginx-deployment-f576985cc-bgqtd",
@@ -1394,7 +1309,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-29T06:04:58+00:00",
-          "pod_ip": "10.1.0.17"
+          "pod_ip": "10.1.0.101"
         },
         {
           "pod_id": "nginx-deployment-f576985cc-hnwhd",
@@ -1411,7 +1326,7 @@
           "owner": "unknown",
           "status": "online",
           "timestamp": "2025-07-29T06:04:59+00:00",
-          "pod_ip": "10.1.0.177"
+          "pod_ip": "10.1.0.102"
         }
       ],
       "status": "Online"

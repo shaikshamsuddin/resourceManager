@@ -229,12 +229,9 @@ export class AddPodDialogComponent extends PodDialogBase {
     this.validateAllResources(this.pod.Resources);
     this.validateNamespace(this.pod.namespace);
     this.validateReplicas(this.pod.replicas);
-    
-    // Only check for resource errors, namespace errors, and replica errors
     if (this.hasResourceErrors() || this.namespaceError || this.replicaError) {
       return;
     }
-    
     this.podCreated.emit(this.pod);
     this.dialogRef.close();
   }
