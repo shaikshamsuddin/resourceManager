@@ -63,10 +63,12 @@ body {
 .led-container:hover {
   background-color: rgba(0, 0, 0, 0.08);
   border-color: rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .led-container:active {
+  transform: translateY(0);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -82,6 +84,7 @@ body {
 .led-container:hover .led-icon {
   color: #333;
   opacity: 1;
+  transform: scale(1.05);
 }
 
 
@@ -263,6 +266,7 @@ body {
 .server-sub-card.unselected:hover {
   opacity: 0.8;
   filter: grayscale(10%);
+  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
@@ -274,6 +278,7 @@ body {
 
 .server-sub-card:not(.selected):not(.default):not(.unselected):hover {
   opacity: 1;
+  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
@@ -341,6 +346,7 @@ body {
 .server-status-leds .led-container:hover {
   background-color: rgba(0, 0, 0, 0.08);
   border-color: rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -356,6 +362,7 @@ body {
 .server-status-leds .led-container:hover .led-icon {
   color: #333;
   opacity: 1;
+  transform: scale(1.05);
 }
 
 .server-status-leds .led-container.disabled {
@@ -401,12 +408,11 @@ body {
 .overview-card {
   width: 100%;
   margin: 0 auto 24px auto;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 245, 245, 0.8) 100%);
+  background: #fff;
   border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(63, 63, 63, 0.05);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
   padding: 28px 36px 24px 36px;
-  border: 1px solid rgba(224, 224, 224, 0.8);
-  backdrop-filter: blur(10px);
+  border: 1px solid #ddd;
 }
 
 .overview-title {
@@ -431,7 +437,7 @@ body {
 
 .overview-desc {
   font-size: 0.98rem;
-  color: #999;
+  color: #666;
   margin-bottom: 12px;
 }
 
@@ -662,6 +668,7 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
   .choose-server-header {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
   
   .choose-server-row {
@@ -1123,20 +1130,17 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
   margin-bottom: 16px;
   border-radius: 8px;
   overflow: hidden;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 245, 245, 0.8) 100%);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(224, 224, 224, 0.8);
 }
 
 .namespace-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  background: linear-gradient(135deg, rgba(250, 250, 250, 0.95) 0%, rgba(240, 240, 240, 0.9) 100%);
+  transform: translateY(-2px);
 }
 
 .namespace-header {
-  background: linear-gradient(135deg, #757575 0%, #9e9e9e 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -1145,7 +1149,8 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
 }
 
 .namespace-header:hover {
-  background: linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%);
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-1px);
 }
 
 .namespace-header-content {
@@ -1221,6 +1226,7 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
 .namespace-delete-btn:hover {
   color: #ff6b6b !important;
   background-color: rgba(255, 255, 255, 0.1) !important;
+  transform: scale(1.1);
 }
 
 .pods-expanded {
@@ -1323,202 +1329,4 @@ button[mat-raised-button]:hover, button[mat-button]:hover {
   .pods-table .mat-cell {
     padding: 8px 12px;
   }
-}
-
-
-
-/* Row highlighting for selected server */
-.mat-mdc-row.selected-row {
-  background: linear-gradient(135deg, rgba(240, 240, 240, 0.95) 0%, rgba(230, 230, 230, 0.9) 100%) !important;
-  border: 3px solid #000000 !important;
-  border-radius: 4px !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  outline: 2px solid #000000 !important;
-  outline-offset: -2px !important;
-}
-
-.mat-mdc-row.selected-row:hover {
-  background: linear-gradient(135deg, rgba(235, 235, 235, 0.95) 0%, rgba(225, 225, 225, 0.9) 100%) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.mat-mdc-row.selected-row .mat-mdc-cell {
-  background-color: transparent !important;
-  font-weight: 600;
-  color: #212121;
-}
-
-/* Ensure selected row has higher z-index */
-.mat-mdc-row.selected-row {
-  position: relative;
-  z-index: 2;
-}
-
-/* Selection indicator removed to prevent layout shifts */
-
-/* Hover effect for non-selected rows */
-.mat-mdc-row:not(.selected-row):hover {
-  background-color: #f5f5f5;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-/* Row selection - no animation */
-
-/* Selection hint icon styling */
-.selection-hint-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-  margin-right: 8px;
-  color: #424242;
-  vertical-align: middle;
-}
-
-/* LED styling for table cells */
-.server-status-leds {
-  display: flex;
-  gap: 12px; /* Increased gap to prevent overlap */
-  align-items: center;
-  pointer-events: none; /* Prevent container from capturing events */
-  position: relative;
-  width: 100%;
-  justify-content: flex-start;
-}
-
-.server-status-leds .led-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-  pointer-events: auto; /* Re-enable pointer events for individual LEDs */
-  position: relative; /* Ensure proper stacking context */
-  z-index: 10; /* Ensure LEDs are above other elements */
-  user-select: none; /* Prevent text selection */
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  min-width: 32px; /* Ensure minimum clickable area */
-  min-height: 32px; /* Ensure minimum clickable area */
-  border: 1px solid transparent; /* Invisible border for click area */
-}
-
-.server-status-leds .led-container:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-.server-status-leds .led-container:active {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.server-status-leds .led-content {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  pointer-events: none; /* Prevent content from interfering with click */
-}
-
-.server-status-leds .led-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-  transition: color 0.2s ease;
-  pointer-events: none; /* Prevent icon from interfering with click */
-  user-select: none;
-}
-
-.server-status-leds .led-container:hover .led-icon {
-  color: #1976d2;
-}
-
-.server-status-leds .resource-integrity-led,
-.server-status-leds .server-status-led {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-  transition: transform 0.2s ease;
-  pointer-events: none; /* Prevent LED dot from interfering with click */
-  user-select: none;
-}
-
-.server-status-leds .led-container:hover .resource-integrity-led,
-.server-status-leds .led-container:hover .server-status-led {
-  transform: scale(1.2);
-}
-
-/* Specific styling for each LED type */
-.server-status-leds .resource-integrity-container {
-  /* Ensure this LED is isolated */
-  position: relative;
-  z-index: 11;
-  isolation: isolate; /* Create new stacking context */
-  margin-right: 4px; /* Extra spacing between LEDs */
-}
-
-.server-status-leds .server-connection-container {
-  /* Ensure this LED is isolated */
-  position: relative;
-  z-index: 11;
-  isolation: isolate; /* Create new stacking context */
-  margin-left: 4px; /* Extra spacing between LEDs */
-}
-
-/* Stacked Alert Styling */
-.stacked-alert-dialog {
-  position: fixed !important;
-  z-index: 1000;
-  max-width: 400px;
-  min-width: 300px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
-  animation: slideInRight 0.3s ease-out;
-}
-
-.stacked-alert-dialog .mat-mdc-dialog-container {
-  padding: 0;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.stacked-alert-dialog .mat-mdc-dialog-surface {
-  border-radius: 8px;
-  box-shadow: none;
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-/* Alert positioning and stacking */
-.stacked-alert-dialog:nth-child(1) {
-  z-index: 1000;
-}
-
-.stacked-alert-dialog:nth-child(2) {
-  z-index: 999;
-}
-
-.stacked-alert-dialog:nth-child(3) {
-  z-index: 998;
-}
-
-.stacked-alert-dialog:nth-child(4) {
-  z-index: 997;
-}
-
-.stacked-alert-dialog:nth-child(5) {
-  z-index: 996;
 }

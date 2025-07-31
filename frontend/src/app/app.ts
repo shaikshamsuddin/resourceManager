@@ -591,89 +591,22 @@ export class App implements OnInit, OnDestroy {
     );
   }
 
-  // Global alert management
-  private activeAlerts: Array<{id: string, dialogRef: any, type: string, title: string, message: string}> = [];
-  private readonly MAX_ALERTS = 5; // Maximum number of stacked alerts
-  private readonly ALERT_OFFSET = 130; // Vertical offset between alerts (increased from 80)
-
   showAlert(type: 'success' | 'error' | 'info', title: string, message: string, details?: string[]) {
-    // Generate unique ID for this alert
-    const alertId = `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Calculate position for this alert (top of stack) with increased spacing
-    const topPosition = 20 + (this.activeAlerts.length * this.ALERT_OFFSET);
-    
     const dialogRef = this.dialog.open(AlertDialogComponent, {
-      data: { type, title, message, details, alertId },
-      position: { top: `${topPosition}px`, right: '20px' },
-      panelClass: 'stacked-alert-dialog'
+      data: { type, title, message, details },
+      position: { top: '40px' }
     });
-
-    // Add to active alerts array
-    this.activeAlerts.push({
-      id: alertId,
-      dialogRef: dialogRef,
-      type,
-      title,
-      message
-    });
-
-    // Limit the number of alerts
-    if (this.activeAlerts.length > this.MAX_ALERTS) {
-      const oldestAlert = this.activeAlerts.shift();
-      if (oldestAlert) {
-        oldestAlert.dialogRef.close();
-      }
-    }
-
-    // Reposition all alerts
-    this.repositionAlerts();
 
     // Auto-dismiss after 5 seconds
     setTimeout(() => {
-      this.removeAlert(alertId);
+      if (dialogRef.componentInstance) {
+        dialogRef.close();
+      }
     }, 5000);
   }
 
-  private removeAlert(alertId: string) {
-    const alertIndex = this.activeAlerts.findIndex(alert => alert.id === alertId);
-    if (alertIndex !== -1) {
-      const alert = this.activeAlerts[alertIndex];
-      alert.dialogRef.close();
-      this.activeAlerts.splice(alertIndex, 1);
-      this.repositionAlerts();
-    }
-  }
-
-  private repositionAlerts() {
-    this.activeAlerts.forEach((alert, index) => {
-      const newTopPosition = 20 + (index * this.ALERT_OFFSET);
-      const dialogRef = alert.dialogRef;
-      if (dialogRef && dialogRef.componentInstance) {
-        // Update the dialog position with increased spacing
-        dialogRef.updatePosition({ top: `${newTopPosition}px`, right: '20px' });
-      }
-    });
-  }
-
-  clearAlerts() {
-    // Close all active alerts
-    this.activeAlerts.forEach(alert => {
-      alert.dialogRef.close();
-    });
-    this.activeAlerts = [];
-  }
-
-  // Server-specific health tracking
-  private serverHealthData: { [serverId: string]: { resourceIntegrity?: string, lastChecked?: number } } = {};
-  private lastLedClickTime: { [key: string]: number } = {};
-  private readonly LED_CLICK_DEBOUNCE = 1000; // 1 second debounce
-
   // Helper functions for pod status
   getStatusColor(status: string): string {
-    if (!status) return 'status-unknown';
-    
-    const normalizedStatus = status.toLowerCase();
     const statusColors: { [key: string]: string } = {
       'online': 'status-success',
       'starting': 'status-success',
@@ -683,17 +616,12 @@ export class App implements OnInit, OnDestroy {
       'failed': 'status-error',
       'error': 'status-error',
       'timeout': 'status-error',
-      'offline': 'status-error',
-      'configured': 'status-pending',
       'unknown': 'status-unknown'
     };
-    return statusColors[normalizedStatus] || 'status-unknown';
+    return statusColors[status] || 'status-unknown';
   }
 
   getStatusIcon(status: string): string {
-    if (!status) return 'help_outline';
-    
-    const normalizedStatus = status.toLowerCase();
     const statusIcons: { [key: string]: string } = {
       'online': 'check_circle',
       'starting': 'hourglass_empty',
@@ -703,17 +631,12 @@ export class App implements OnInit, OnDestroy {
       'failed': 'error',
       'error': 'error_outline',
       'timeout': 'schedule',
-      'offline': 'error',
-      'configured': 'settings',
       'unknown': 'help_outline'
     };
-    return statusIcons[normalizedStatus] || 'help_outline';
+    return statusIcons[status] || 'help_outline';
   }
 
   getStatusDisplayName(status: string): string {
-    if (!status) return 'Unknown';
-    
-    const normalizedStatus = status.toLowerCase();
     const statusNames: { [key: string]: string } = {
       'online': 'Online',
       'starting': 'Starting',
@@ -723,156 +646,14 @@ export class App implements OnInit, OnDestroy {
       'failed': 'Failed',
       'error': 'Error',
       'timeout': 'Timeout',
-      'offline': 'Offline',
-      'configured': 'Configured',
       'unknown': 'Unknown'
     };
-    return statusNames[normalizedStatus] || 'Unknown';
-  }
-
-  // LED interaction methods
-  checkResourceIntegrity(server: any, event?: Event) {
-    // Prevent row selection and event bubbling when clicking on LED
-    if (event) {
-      event.stopPropagation();
-      event.preventDefault();
-    }
-    
-    const serverId = server.server_id || server.id;
-    if (!serverId) return;
-
-    // Debounce to prevent rapid clicks
-    const clickKey = `resource_${serverId}`;
-    const now = Date.now();
-    if (this.lastLedClickTime[clickKey] && (now - this.lastLedClickTime[clickKey]) < this.LED_CLICK_DEBOUNCE) {
-      console.log('Resource Integrity LED click debounced');
-      return;
-    }
-    this.lastLedClickTime[clickKey] = now;
-
-    console.log('Resource Integrity LED clicked for server:', server.server_name || server.name);
-    
-    // Show info alert first
-    this.showAlert('info', 'Checking Resource Integrity', `Checking resource allocation for server ${server.server_name || server.name}...`);
-    
-    this.http.post(ApiConfig.getResourceValidationUrl(), { server_id: serverId }).subscribe({
-      next: (response: any) => {
-        if (response.type === 'success') {
-          this.serverHealthData[serverId] = {
-            resourceIntegrity: response.message,
-            lastChecked: Date.now()
-          };
-          this.showAlert('success', 'Resource Integrity Check', response.message);
-        } else {
-          this.serverHealthData[serverId] = {
-            resourceIntegrity: response.message || 'Resource integrity check failed',
-            lastChecked: Date.now()
-          };
-          this.showAlert('error', 'Resource Integrity Check Failed', response.message || 'Failed to check resource integrity');
-        }
-      },
-      error: (err) => {
-        const errorMsg = err?.error?.message || 'Failed to check resource integrity';
-        this.serverHealthData[serverId] = {
-          resourceIntegrity: errorMsg,
-          lastChecked: Date.now()
-        };
-        this.showAlert('error', 'Resource Integrity Check Failed', errorMsg);
-      }
-    });
-  }
-
-  checkServerConnection(server: any, event?: Event) {
-    // Prevent row selection and event bubbling when clicking on LED
-    if (event) {
-      event.stopPropagation();
-      event.preventDefault();
-    }
-    
-    const serverId = server.server_id || server.id;
-    if (!serverId) return;
-
-    // Debounce to prevent rapid clicks
-    const clickKey = `connection_${serverId}`;
-    const now = Date.now();
-    if (this.lastLedClickTime[clickKey] && (now - this.lastLedClickTime[clickKey]) < this.LED_CLICK_DEBOUNCE) {
-      console.log('Server Connection LED click debounced');
-      return;
-    }
-    this.lastLedClickTime[clickKey] = now;
-
-    console.log('Server Connection LED clicked for server:', server.server_name || server.name);
-    
-    // Show info alert first
-    this.showAlert('info', 'Checking Server Connection', `Checking connection status for server ${server.server_name || server.name}...`);
-    
-    this.http.post(ApiConfig.getServerConfigTestUrl(serverId), {}).subscribe({
-      next: (response: any) => {
-        if (response.type === 'success') {
-          this.showAlert('success', 'Server Connection Check', `Server connection test successful`);
-          // Refresh server data to update status
-          this.fetchServersImmediate();
-        } else {
-          this.showAlert('error', 'Server Connection Check Failed', response.message || 'Failed to check server connection');
-        }
-      },
-      error: (err) => {
-        const errorMsg = err?.error?.message || 'Failed to check server connection';
-        this.showAlert('error', 'Server Connection Check Failed', errorMsg);
-      }
-    });
-  }
-
-  getResourceIntegrityMessage(server: any): string {
-    const serverId = server.server_id || server.id;
-    if (!serverId || !this.serverHealthData[serverId]) {
-      return 'Click to check resource integrity';
-    }
-    
-    const data = this.serverHealthData[serverId];
-    if (!data.resourceIntegrity) {
-      return 'Click to check resource integrity';
-    }
-    
-    const timeAgo = data.lastChecked ? this.getTimeAgo(data.lastChecked) : '';
-    return `${data.resourceIntegrity}${timeAgo ? ` (${timeAgo})` : ''}`;
-  }
-
-  getResourceIntegrityStatus(server: any): 'valid' | 'invalid' | 'unknown' {
-    const serverId = server.server_id || server.id;
-    if (!serverId || !this.serverHealthData[serverId]?.resourceIntegrity) {
-      return 'unknown';
-    }
-    
-    const message = this.serverHealthData[serverId].resourceIntegrity;
-    if (message.includes('valid') || message.includes('Azure VM resource allocation is valid')) {
-      return 'valid';
-    } else if (message.includes('invalid') || message.includes('error') || message.includes('failed')) {
-      return 'invalid';
-    }
-    return 'unknown';
-  }
-
-  private getTimeAgo(timestamp: number): string {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    
-    if (minutes < 1) return 'just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
+    return statusNames[status] || 'Unknown';
   }
 
 
 
-  selectServer(server: any, event?: Event) {
-    // Prevent event bubbling if event is provided
-    if (event) {
-      event.stopPropagation();
-    }
-    
+  selectServer(server: any) {
     // Set the selected server
     this.selectedServer = server;
     console.log('Selected server:', server);

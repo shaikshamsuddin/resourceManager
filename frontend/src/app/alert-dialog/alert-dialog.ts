@@ -24,8 +24,8 @@ import { MatIconModule } from '@angular/material/icon';
         <ul *ngIf="data.details && data.details.length" class="alert-details">
           <li *ngFor="let detail of data.details">{{ detail }}</li>
         </ul>
-        <div class="progress-container">
-          <div class="progress-bar" [style.width.%]="progressPercentage"></div>
+        <div class="countdown" *ngIf="countdown > 0">
+          Auto-dismiss in {{ countdown }}s
         </div>
       </div>
       <button mat-icon-button (click)="dialogRef.close()" class="close-button">
@@ -106,30 +106,11 @@ import { MatIconModule } from '@angular/material/icon';
       font-size: 0.9rem;
     }
 
-    .progress-container {
-      margin-top: 12px;
-      height: 4px;
-      background-color: rgba(0, 0, 0, 0.1);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
-    .progress-bar {
-      height: 100%;
-      border-radius: 2px;
-      transition: width 0.3s ease;
-    }
-
-    .success .progress-bar {
-      background-color: #4caf50;
-    }
-
-    .error .progress-bar {
-      background-color: #f44336;
-    }
-
-    .info .progress-bar {
-      background-color: #2196f3;
+    .countdown {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      font-style: italic;
     }
 
     @media (max-width: 600px) {
@@ -146,11 +127,7 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class AlertDialogComponent implements OnInit, OnDestroy {
   countdown: number = 5;
-  progressPercentage: number = 100;
   private countdownInterval: any;
-  private progressInterval: any;
-  private readonly TOTAL_TIME = 5; // 5 seconds total
-  private startTime: number = Date.now();
 
   constructor(
     public dialogRef: MatDialogRef<AlertDialogComponent>,
@@ -163,18 +140,7 @@ export class AlertDialogComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Start smooth progress bar update (every 100ms)
-    this.progressInterval = setInterval(() => {
-      const elapsed = (Date.now() - this.startTime) / 1000;
-      const remaining = Math.max(0, this.TOTAL_TIME - elapsed);
-      this.progressPercentage = (remaining / this.TOTAL_TIME) * 100;
-      
-      if (remaining <= 0) {
-        this.dialogRef.close();
-      }
-    }, 100); // Update every 100ms for smooth animation
-
-    // Start countdown timer (every 1 second for display purposes)
+    // Start countdown timer
     this.countdownInterval = setInterval(() => {
       this.countdown--;
       if (this.countdown <= 0) {
@@ -186,9 +152,6 @@ export class AlertDialogComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.countdownInterval) {
       clearInterval(this.countdownInterval);
-    }
-    if (this.progressInterval) {
-      clearInterval(this.progressInterval);
     }
   }
 

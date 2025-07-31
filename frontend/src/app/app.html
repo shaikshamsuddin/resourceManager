@@ -57,20 +57,68 @@
   </div>
 </mat-card>
 
-<!-- 2. Servers Overview & Selection Card -->
-<mat-card class="overview-card">
-  <div class="overview-header-row">
-    <div>
-      <div class="overview-title">Servers Overview</div>
-      <div class="overview-desc">
-        <mat-icon class="selection-hint-icon">touch_app</mat-icon>
-        Select a server to manage its pods. Click on any row to select the server for pod deployment.
-      </div>
+<!-- 2. Choose a Server Card -->
+<mat-card class="choose-server-card">
+  <div class="choose-server-header">
+    <div class="choose-server-title">Choose a Server to Deploy Pod</div>
+    <div class="server-actions">
+      <button mat-raised-button color="primary" (click)="openServerConfigDialog()">
+        Configure Server
+      </button>
     </div>
-    <button mat-raised-button color="primary" (click)="openServerConfigDialog()">
-      Configure Server
-    </button>
   </div>
+  <div class="choose-server-row">
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading servers...</p>
+    </div>
+    
+    <!-- Server cards -->
+    <mat-card *ngFor="let server of servers" class="server-sub-card"
+      [class.selected]="selectedServer && (server.server_id === selectedServer.server_id || server.id === selectedServer.id)"
+      [class.default]="!selectedServer && server === servers[0]"
+      [class.unselected]="selectedServer && (server.server_id !== selectedServer.server_id && server.id !== selectedServer.id)"
+      (click)="selectServer(server)">
+
+      <div class="server-name">{{ server.server_name || server.name }}</div>
+      <div class="server-ip">{{ server.metadata?.location || server.ip || 'N/A' }}</div>
+      <div class="server-status" [class.online]="server.status === 'Online'"
+        [class.offline]="server.status === 'Offline'">{{ server.status || 'Online' }}</div>
+      <div class="server-pods" *ngIf="server.pods">{{ server.pods.length }} pods</div>
+
+      <!-- Server Status LEDs - Bottom Row (Non-clickable) -->
+      <div class="server-status-leds">
+        <!-- Resource Integrity LED for this server -->
+        <div class="led-container disabled"
+          [title]="resourceIntegrityMessage || 'Resource integrity status unknown'">
+          <mat-icon class="led-icon">verified</mat-icon>
+          <span class="resource-integrity-led" [ngClass]="{
+            'led-green': resourceIntegrityMessage === 'Azure VM resource allocation is valid', 
+            'led-red': resourceIntegrityMessage && resourceIntegrityMessage !== 'Azure VM resource allocation is valid',
+            'led-grey': !resourceIntegrityMessage
+          }"></span>
+        </div>
+
+        <!-- Server Connection LED -->
+        <div class="led-container disabled"
+          [title]="'Server Connection: ' + (server.status || 'Online')">
+          <mat-icon class="led-icon">cloud</mat-icon>
+          <span class="server-status-led" [ngClass]="{
+            'led-green': server.status === 'Online', 
+            'led-red': server.status === 'Offline' || server.status === 'ERROR',
+            'led-grey': !server.status
+          }"></span>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+</mat-card>
+
+<!-- 3. Server Overview Card -->
+<mat-card class="overview-card">
+  <div class="overview-title">Server Overview</div>
+  <div class="overview-desc">Detailed status and resource utilization of the selected Kubernetes server.</div>
   <div style="max-height: 400px; overflow: auto;">
     <table mat-table [dataSource]="servers" class="mat-elevation-z1">
       <ng-container matColumnDef="actions">
@@ -88,7 +136,6 @@
           </div>
         </td>
       </ng-container>
-
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef> Server Name </th>
         <td mat-cell *matCellDef="let s">{{ s.server_name || s.name }}</td>
@@ -99,12 +146,8 @@
       </ng-container>
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef> Status </th>
-        <td mat-cell *matCellDef="let s">
-          <span class="status-badge" [ngClass]="getStatusColor(s.status)">
-            <mat-icon>{{ getStatusIcon(s.status) }}</mat-icon>
-            {{ getStatusDisplayName(s.status) }}
-          </span>
-        </td>
+        <td mat-cell *matCellDef="let s"><span [class.online]="s.status === 'Online'"
+            [class.offline]="s.status === 'Offline'">{{ s.status || 'Online' }}</span></td>
       </ng-container>
       <ng-container matColumnDef="pods">
         <th mat-header-cell *matHeaderCellDef> Pods </th>
@@ -122,47 +165,9 @@
         <th mat-header-cell *matHeaderCellDef> CPUs </th>
         <td mat-cell *matCellDef="let s">{{ s.resources?.total?.cpus || 0 }}</td>
       </ng-container>
-      <ng-container matColumnDef="leds">
-        <th mat-header-cell *matHeaderCellDef> Health </th>
-        <td mat-cell *matCellDef="let s">
-          <div class="server-status-leds">
-            <!-- Resource Integrity LED -->
-            <div class="led-container resource-integrity-container"
-              (mousedown)="checkResourceIntegrity(s, $event)"
-              (touchstart)="checkResourceIntegrity(s, $event)"
-              [title]="getResourceIntegrityMessage(s) || 'Click to check resource integrity'">
-              <div class="led-content">
-                <mat-icon class="led-icon">verified</mat-icon>
-                <span class="resource-integrity-led" [ngClass]="{
-                  'led-green': getResourceIntegrityStatus(s) === 'valid', 
-                  'led-red': getResourceIntegrityStatus(s) === 'invalid',
-                  'led-grey': getResourceIntegrityStatus(s) === 'unknown'
-                }"></span>
-              </div>
-            </div>
-
-            <!-- Server Connection LED -->
-            <div class="led-container server-connection-container"
-              (mousedown)="checkServerConnection(s, $event)"
-              (touchstart)="checkServerConnection(s, $event)"
-              [title]="'Server Connection: ' + (s.status || 'Online') + ' - Click to refresh'">
-              <div class="led-content">
-                <mat-icon class="led-icon">cloud</mat-icon>
-                <span class="server-status-led" [ngClass]="{
-                  'led-green': s.status === 'Online', 
-                  'led-red': s.status === 'Offline' || s.status === 'ERROR',
-                  'led-grey': !s.status
-                }"></span>
-              </div>
-            </div>
-          </div>
-        </td>
-      </ng-container>
       <tr mat-header-row
-        *matHeaderRowDef="['actions', 'name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus', 'leds']; sticky: true"></tr>
-      <tr mat-row *matRowDef="let row; columns: ['actions', 'name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus', 'leds'];"
-          [ngClass]="{'selected-row': selectedServer && (row.server_id === selectedServer.server_id || row.id === selectedServer.id)}"
-          (click)="selectServer(row)">
+        *matHeaderRowDef="['actions', 'name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus']; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: ['actions', 'name', 'ip', 'status', 'pods', 'ram', 'gpus', 'cpus'];">
       </tr>
     </table>
   </div>
@@ -177,7 +182,7 @@
         <span class="pod-count-subtitle">({{ allPods.length }} pods) - </span>
         <span class="server-name-subtitle">{{ selectedServer ? (selectedServer.server_name || selectedServer.name) : '' }}</span>
       </div>
-      <div class="overview-desc">Namespace-based view with collapsible pods.</div>
+      <div class="overview-desc">Namespace-based view with collapsible pods. Click to expand/collapse namespaces.</div>
     </div>
     <button mat-raised-button color="accent" (click)="openAddPodDialog()">
       Deploy New Pod(s)
