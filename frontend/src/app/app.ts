@@ -59,9 +59,6 @@ export class App implements OnInit, OnDestroy {
   azureVMStatus: string = 'unknown';
   azureVMStatusInterval: any;
   isReconnecting: boolean = false;
-  
-  // Namespace-based view properties
-  namespaceGroups: any[] = [];
   isLoading: boolean = true; // Add loading state
   
   // Add caching properties
@@ -143,8 +140,6 @@ export class App implements OnInit, OnDestroy {
         
         // Update status messages
         this.updateStatusMessages();
-        // Update namespace groups for the new table
-        this.updateNamespaceGroups();
         // Force change detection to update the UI
         this.cdr.detectChanges();
       },
@@ -190,8 +185,6 @@ export class App implements OnInit, OnDestroy {
         
         // Update status messages
         this.updateStatusMessages();
-        // Update namespace groups for the new table
-        this.updateNamespaceGroups();
         
         // Set default server if no server is currently selected
         if (this.servers.length > 0 && !this.selectedServer) {
@@ -658,9 +651,6 @@ export class App implements OnInit, OnDestroy {
     this.selectedServer = server;
     console.log('Selected server:', server);
     
-    // Immediately update namespace groups for the new selected server
-    this.updateNamespaceGroups();
-    
     // No popup - just silently select the server
   }
 
@@ -758,88 +748,5 @@ export class App implements OnInit, OnDestroy {
           );
         }
       });
-  }
-
-  // Namespace-based view methods
-  updateNamespaceGroups() {
-    const allPods = this.allPods;
-    const namespaceMap = new Map<string, any[]>();
-    
-    // Group pods by namespace
-    allPods.forEach((pod: any) => {
-      const namespace = pod.namespace || 'default';
-      if (!namespaceMap.has(namespace)) {
-        namespaceMap.set(namespace, []);
-      }
-      namespaceMap.get(namespace)!.push(pod);
-    });
-    
-    // Convert to array format for template
-    this.namespaceGroups = Array.from(namespaceMap.entries()).map(([name, pods]) => ({
-      name,
-      pods,
-      expanded: false // Start collapsed
-    }));
-  }
-
-  toggleNamespace(namespaceName: string) {
-    const namespace = this.namespaceGroups.find(ns => ns.name === namespaceName);
-    if (namespace) {
-      namespace.expanded = !namespace.expanded;
-    }
-  }
-
-  getNamespaceResourceSummary(namespace: any): string {
-    const totalRAM = namespace.pods.reduce((sum: number, pod: any) => sum + (pod.requested?.ram_gb || 0), 0);
-    const totalGPU = namespace.pods.reduce((sum: number, pod: any) => sum + (pod.requested?.gpus || 0), 0);
-    const totalCPU = namespace.pods.reduce((sum: number, pod: any) => sum + (pod.requested?.cpus || 0), 0);
-    
-    return `RAM: ${totalRAM.toFixed(1)}GB, GPU: ${totalGPU}, CPU: ${totalCPU.toFixed(1)}`;
-  }
-
-  getNamespaceStatusSummary(namespace: any): string {
-    const statusCounts: { [key: string]: number } = {};
-    
-    namespace.pods.forEach((pod: any) => {
-      const status = pod.status || 'Unknown';
-      statusCounts[status] = (statusCounts[status] || 0) + 1;
-    });
-    
-    const summaryParts: string[] = [];
-    
-    // Add counts for common statuses in order of importance
-    if (statusCounts['Running']) summaryParts.push(`${statusCounts['Running']} Running`);
-    if (statusCounts['Pending']) summaryParts.push(`${statusCounts['Pending']} Pending`);
-    if (statusCounts['Failed']) summaryParts.push(`${statusCounts['Failed']} Failed`);
-    if (statusCounts['Succeeded']) summaryParts.push(`${statusCounts['Succeeded']} Succeeded`);
-    if (statusCounts['Terminating']) summaryParts.push(`${statusCounts['Terminating']} Terminating`);
-    
-    // Add any other statuses
-    Object.keys(statusCounts).forEach(status => {
-      if (!['Running', 'Pending', 'Failed', 'Succeeded', 'Terminating'].includes(status)) {
-        summaryParts.push(`${statusCounts[status]} ${status}`);
-      }
-    });
-    
-    return summaryParts.join(', ');
-  }
-
-  deleteNamespace(namespaceName: string, event: Event) {
-    event.stopPropagation(); // Prevent namespace toggle
-    const namespace = this.namespaceGroups.find(ns => ns.name === namespaceName);
-    if (!namespace) return;
-    const podCount = namespace.pods.length;
-    const message = `Are you sure you want to delete the namespace "${namespaceName}" and all ${podCount} pods within it? This action cannot be undone.`;
-    if (!confirm(message)) return;
-    this.http.post<any>('/delete-namespace', { namespace: namespaceName }).subscribe({
-      next: (res) => {
-        this.showAlert('success', 'Namespace Deleted', res.message);
-        this.fetchServers();
-      },
-      error: (err) => {
-        const msg = err?.error?.message || 'Failed to delete namespace';
-        this.showAlert('error', 'Delete Namespace Failed', msg);
-      }
-    });
   }
 }
