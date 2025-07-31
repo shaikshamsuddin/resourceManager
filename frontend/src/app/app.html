@@ -120,7 +120,7 @@
   <div class="overview-title">Server Overview</div>
   <div class="overview-desc">Detailed status and resource utilization of the selected Kubernetes server.</div>
   <div style="max-height: 400px; overflow: auto;">
-    <table mat-table [dataSource]="servers" class="mat-elevation-z1">
+    <table mat-table [dataSource]="selectedServer ? [selectedServer] : []" class="mat-elevation-z1">
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef> Actions </th>
         <td mat-cell *matCellDef="let s">
