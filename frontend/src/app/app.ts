@@ -22,7 +22,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiConfig } from './config/api.config';
-import { UIConstants } from './constants/app.constants';
 
 
 @Component({
@@ -364,28 +363,24 @@ export class App implements OnInit, OnDestroy {
             'Pod(s) Created Successfully!',
             response.message || 'Pod(s) have been successfully created. You can now see them in the Pods Overview table.'
           );
-          // Delay data refresh to ensure success alert is visible
-          setTimeout(() => {
-            this.fetchServersImmediate();
-          }, 1000);
         } else {
           this.showAlert(
             'error',
             'Pod Creation Failed',
             response.message || 'An error occurred while creating the pod(s).'
           );
-          // Force immediate data refresh to show the newly created pods
-          this.fetchServersImmediate();
         }
+        // Force immediate data refresh to show the newly created pods
+        this.fetchServersImmediate();
       },
-      error: (err) => {
-        const errorMsg = err?.error?.error || err?.error?.message || 'An error occurred during pod creation.';
-        this.showAlert(
-          'error',
-          'Pod Creation Failed',
-          `${errorMsg} Please check the server resources and try again.`
-        );
-      }
+              error: (err) => {
+          const errorMsg = err?.error?.error || err?.error?.message || 'An error occurred during pod creation.';
+          this.showAlert(
+            'error',
+            'Pod Creation Failed',
+            `${errorMsg} Please check the server resources and try again.`
+          );
+        }
     });
   }
 
@@ -634,13 +629,10 @@ export class App implements OnInit, OnDestroy {
     // Reposition all alerts
     this.repositionAlerts();
 
-    // Auto-dismiss after different times based on type using constants
-    const timeout = type === 'success' ? UIConstants.ALERT_TIMEOUT_SUCCESS : 
-                   type === 'error' ? UIConstants.ALERT_TIMEOUT_ERROR : 
-                   UIConstants.ALERT_TIMEOUT_INFO;
+    // Auto-dismiss after 5 seconds
     setTimeout(() => {
       this.removeAlert(alertId);
-    }, timeout);
+    }, 5000);
   }
 
   private removeAlert(alertId: string) {
@@ -1055,53 +1047,17 @@ export class App implements OnInit, OnDestroy {
     event.stopPropagation(); // Prevent namespace toggle
     const namespace = this.namespaceGroups.find(ns => ns.name === namespaceName);
     if (!namespace) return;
-    
     const podCount = namespace.pods.length;
     const message = `Are you sure you want to delete the namespace "${namespaceName}" and all ${podCount} pods within it? This action cannot be undone.`;
     if (!confirm(message)) return;
-    
-    // Use the selected server's ID
-    const serverId = this.selectedServer?.server_id || this.selectedServer?.id;
-    if (!serverId) {
-      this.showAlert('error', 'Delete Namespace Failed', 'No server selected. Please select a server first.');
-      return;
-    }
-    
-    const payload = {
-      namespace: namespaceName,
-      server_id: serverId
-    };
-    
-    this.http.post<any>(ApiConfig.getDeleteNamespaceUrl(), payload).subscribe({
+    this.http.post<any>('/delete-namespace', { namespace: namespaceName }).subscribe({
       next: (res) => {
         this.showAlert('success', 'Namespace Deleted', res.message);
         this.fetchServers();
       },
       error: (err) => {
-        console.error('Delete namespace error:', err);
-        
-        // Extract detailed error message from various possible locations
-        let errorMessage = 'Failed to delete namespace';
-        let errorDetails: string[] = [];
-        
-        if (err?.error?.message) {
-          errorMessage = err.error.message;
-        } else if (err?.message) {
-          errorMessage = err.message;
-        }
-        
-        // Add additional context if available
-        if (err?.error?.details) {
-          errorDetails.push(err.error.details);
-        }
-        if (err?.status) {
-          errorDetails.push(`HTTP Status: ${err.status}`);
-        }
-        if (err?.statusText) {
-          errorDetails.push(`Status: ${err.statusText}`);
-        }
-        
-        this.showAlert('error', 'Delete Namespace Failed', errorMessage, errorDetails);
+        const msg = err?.error?.message || 'Failed to delete namespace';
+        this.showAlert('error', 'Delete Namespace Failed', msg);
       }
     });
   }

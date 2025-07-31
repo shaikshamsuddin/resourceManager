@@ -377,21 +377,30 @@ class CloudKubernetesProvider:
                     self._initialize_with_server_config(self.server_config)
                 except Exception as e:
                     print(f"Failed to initialize with server config: {e}")
-                    # Don't fall back to old connection method - only use master.json data
-                    raise Exception(f"Failed to initialize Kubernetes client with server config: {e}")
+                    # Try standard initialization
+                    self._initialize_kubernetes_client()
             else:
-                raise Exception("No server_config provided - cannot initialize Kubernetes client")
+                self._initialize_kubernetes_client()
         
         # OPTIMIZATION: Add connection health check with timeout
         if self.core_v1:
             try:
-                # Test connection without signal-based timeout
-                self.core_v1.list_namespace()
+                # Quick health check with timeout
+                import signal
+                def timeout_handler(signum, frame):
+                    raise TimeoutError("Kubernetes connection timeout")
                 
-            except Exception as e:
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(5)  # 5 second timeout
+                
+                # Test connection
+                self.core_v1.list_namespace()
+                signal.alarm(0)  # Cancel timeout
+                
+            except (TimeoutError, Exception) as e:
                 print(f"Kubernetes connection check failed: {e}")
-                # Don't reinitialize with old method - only use server_config
-                raise Exception(f"Kubernetes connection failed: {e}")
+                # Reinitialize if connection is broken
+                self._initialize_kubernetes_client()
     
     def get_servers_with_pods(self) -> List[Dict]:
         """

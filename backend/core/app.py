@@ -573,9 +573,6 @@ def delete_namespace():
             namespace:
               type: string
               description: Namespace to delete
-            server_id:
-              type: string
-              description: Server ID to delete namespace from
     responses:
       200:
         description: Namespace deleted
@@ -601,60 +598,13 @@ def delete_namespace():
     """
     data = request.get_json(force=True)
     namespace = data.get('namespace')
-    server_id = data.get('server_id', 'kubernetes-4-246-178-26')  # Default to our Azure VM
-    
     if not namespace:
         return jsonify({'type': 'error', 'code': 400, 'message': 'Namespace not provided'}), 400
-    
     try:
-        # Use server manager to delete namespace
-        provider = server_manager.get_server_provider(server_id)
-        if not provider:
-            return jsonify({'type': 'error', 'code': 404, 'message': f'Server {server_id} not found'}), 404
-        
-        # Ensure provider is initialized
-        if not provider.core_v1:
-            print(f"Provider for server {server_id} not initialized, initializing now...")
-            provider._ensure_initialized()
-        
-        if not provider.core_v1:
-            return jsonify({'type': 'error', 'code': 500, 'message': f'Failed to initialize provider for server {server_id}'}), 500
-        
-        # Delete namespace using the provider
-        provider.core_v1.delete_namespace(name=namespace)
+        k8s_client.delete_namespace(namespace)
         return jsonify({'type': 'success', 'code': 200, 'message': f'Namespace "{namespace}" deleted successfully'}), 200
     except Exception as e:
-        error_message = str(e)
-        
-        # Provide more user-friendly error messages
-        if "not found" in error_message.lower():
-            return jsonify({
-                'type': 'error', 
-                'code': 404, 
-                'message': f'Namespace "{namespace}" not found on server {server_id}',
-                'details': error_message
-            }), 404
-        elif "forbidden" in error_message.lower() or "unauthorized" in error_message.lower():
-            return jsonify({
-                'type': 'error', 
-                'code': 403, 
-                'message': f'Permission denied: Cannot delete namespace "{namespace}"',
-                'details': error_message
-            }), 403
-        elif "timeout" in error_message.lower():
-            return jsonify({
-                'type': 'error', 
-                'code': 408, 
-                'message': f'Request timeout: Unable to delete namespace "{namespace}"',
-                'details': error_message
-            }), 408
-        else:
-            return jsonify({
-                'type': 'error', 
-                'code': 500, 
-                'message': f'Failed to delete namespace "{namespace}": {error_message}',
-                'details': error_message
-            }), 500
+        return jsonify({'type': 'error', 'code': 500, 'message': f'Failed to delete namespace: {str(e)}'}), 500
 
 
 
