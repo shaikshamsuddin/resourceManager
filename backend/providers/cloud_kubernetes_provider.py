@@ -46,23 +46,28 @@ class CloudKubernetesProvider:
                 print(f"⏭️  Skipping initialization for dummy server: {server_config.get('id')}")
                 return
             
+            server_id = server_config.get('id', 'unknown')
+            print(f"🔧 Initializing Kubernetes client for server: {server_id}")
+            
             kubeconfig_data = connection_coords.get('kubeconfig_data')
             
             if kubeconfig_data:
                 # Use kubeconfig data from master.json
-                print(f"Initializing with kubeconfig data for server: {server_config.get('id')}")
+                print(f"🔧 Using kubeconfig data for server: {server_id}")
                 self._load_kubeconfig_from_data(kubeconfig_data)
             else:
                 # Fall back to file path
                 kubeconfig_path = connection_coords.get('kubeconfig_path')
                 if kubeconfig_path:
-                    print(f"Initializing with kubeconfig file: {kubeconfig_path}")
+                    print(f"🔧 Using kubeconfig file: {kubeconfig_path}")
                     self._load_kubeconfig_from_file(kubeconfig_path)
                 else:
                     raise Exception("No kubeconfig data or path found in server configuration")
+            
+            print(f"✅ Kubernetes client initialized for server: {server_id}")
                     
         except Exception as e:
-            print(f"Failed to initialize with server config: {e}")
+            print(f"❌ Failed to initialize with server config: {e}")
             raise
     
     def _load_kubeconfig_from_data(self, kubeconfig_data: Dict):
@@ -124,7 +129,7 @@ class CloudKubernetesProvider:
             raise Exception("No valid authentication method found in kubeconfig")
             
         except Exception as e:
-            print(f"Failed to load kubeconfig from data: {e}")
+            print(f"❌ Failed to load kubeconfig from data: {e}")
             raise
     
     def _load_kubeconfig_with_credentials(self, kubeconfig_data: Dict):
@@ -145,6 +150,8 @@ class CloudKubernetesProvider:
             username = user['user']['username']
             password = user['user']['password']
             
+            print(f"🔧 Connecting to {server} with username: {username}")
+            
             # Create configuration with basic auth
             configuration = client.Configuration()
             configuration.host = server
@@ -156,10 +163,10 @@ class CloudKubernetesProvider:
             self.core_v1 = client.CoreV1Api(api_client=client.ApiClient(configuration))
             self.apps_v1 = client.AppsV1Api(api_client=client.ApiClient(configuration))
             
-            print(f"Successfully loaded kubeconfig with credentials for {username}@{server}")
+            print(f"✅ Successfully loaded kubeconfig with credentials for {username}@{server}")
             
         except Exception as e:
-            print(f"Failed to load kubeconfig with credentials: {e}")
+            print(f"❌ Failed to load kubeconfig with credentials: {e}")
             raise
     
     def _load_kubeconfig_from_file(self, kubeconfig_path: str):
@@ -175,6 +182,8 @@ class CloudKubernetesProvider:
             if not os.path.exists(kubeconfig_path):
                 raise Exception(f"Kubeconfig file not found: {kubeconfig_path}")
             
+            print(f"🔧 Loading kubeconfig from file: {kubeconfig_path}")
+            
             # Load the kubeconfig
             k8s_config.load_kube_config(config_file=kubeconfig_path)
             
@@ -182,10 +191,10 @@ class CloudKubernetesProvider:
             self.core_v1 = client.CoreV1Api()
             self.apps_v1 = client.AppsV1Api()
             
-            print(f"Successfully loaded kubeconfig from file: {kubeconfig_path}")
+            print(f"✅ Successfully loaded kubeconfig from file: {kubeconfig_path}")
             
         except Exception as e:
-            print(f"Failed to load kubeconfig from file: {e}")
+            print(f"❌ Failed to load kubeconfig from file: {e}")
             raise
         
     def _initialize_kubernetes_client(self):
@@ -371,12 +380,13 @@ class CloudKubernetesProvider:
     def _ensure_initialized(self):
         """Ensure Kubernetes client is initialized."""
         if self.core_v1 is None or self.apps_v1 is None:
-            print("Initializing Kubernetes client...")
+            print("🔧 Initializing Kubernetes client...")
             if self.server_config:
                 try:
                     self._initialize_with_server_config(self.server_config)
+                    print("✅ Kubernetes client initialized successfully")
                 except Exception as e:
-                    print(f"Failed to initialize with server config: {e}")
+                    print(f"❌ Failed to initialize with server config: {e}")
                     # Don't fall back to old connection method - only use master.json data
                     raise Exception(f"Failed to initialize Kubernetes client with server config: {e}")
             else:
@@ -385,11 +395,13 @@ class CloudKubernetesProvider:
         # OPTIMIZATION: Add connection health check with timeout
         if self.core_v1:
             try:
+                print("🔍 Testing Kubernetes connection...")
                 # Test connection without signal-based timeout
                 self.core_v1.list_namespace()
+                print("✅ Kubernetes connection test successful")
                 
             except Exception as e:
-                print(f"Kubernetes connection check failed: {e}")
+                print(f"❌ Kubernetes connection check failed: {e}")
                 # Don't reinitialize with old method - only use server_config
                 raise Exception(f"Kubernetes connection failed: {e}")
     
@@ -419,8 +431,11 @@ class CloudKubernetesProvider:
             # Initialize client on first use
             self._ensure_initialized()
             
+            print("🔍 Fetching Kubernetes nodes and pods...")
             nodes = self.core_v1.list_node()
             pods = self.core_v1.list_pod_for_all_namespaces()
+            
+            print(f"📊 Found {len(nodes.items)} nodes and {len(pods.items)} pods")
             
             # Create node list
             node_list = []
@@ -454,10 +469,14 @@ class CloudKubernetesProvider:
                 actual_usage = self._get_actual_resource_usage(node['name'])
                 node['resources']['actual_usage'] = actual_usage
             
+            print(f"✅ Successfully fetched data for {len(node_list)} nodes")
             return node_list
             
         except ApiException as e:
-            print(f"Error getting cloud Kubernetes data: {e}")
+            print(f"❌ Error getting cloud Kubernetes data: {e}")
+            return []
+        except Exception as e:
+            print(f"❌ Unexpected error getting cloud Kubernetes data: {e}")
             return []
     
     def _extract_node_resources(self, node) -> Dict:
@@ -562,7 +581,7 @@ class CloudKubernetesProvider:
                 "pod_ip": pod.status.pod_ip if pod.status and pod.status.pod_ip else None
             }
         except Exception as e:
-            print(f"Error extracting pod info: {e}")
+            print(f"⚠️  Error extracting pod info: {e}")
             return None
     
     def _extract_pod_resources(self, pod) -> Dict:
@@ -714,7 +733,7 @@ class CloudKubernetesProvider:
             return total_usage
             
         except Exception as e:
-            print(f"Warning: Could not get metrics from Kubernetes API: {e}")
+            print(f"⚠️  Warning: Could not get metrics from Kubernetes API: {e}")
             # Return empty usage if metrics API is not available
             return {
                 "cpus": 0.0,
@@ -802,7 +821,7 @@ class CloudKubernetesProvider:
             print("✅ Configured insecure TLS for Azure VM connection")
             
         except Exception as e:
-            print(f"Warning: Could not configure insecure TLS: {e}")
+            print(f"⚠️  Warning: Could not configure insecure TLS: {e}")
             # Fall back to standard client creation
             self.core_v1 = client.CoreV1Api()
             self.apps_v1 = client.AppsV1Api()
@@ -819,13 +838,20 @@ class CloudKubernetesProvider:
             namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'default'
             replicas = pod_data.get('replicas', 1)
 
+            print(f"🔧 Creating deployment '{base_name}' with {replicas} replicas in namespace '{namespace}'")
+            print(f"🔧 Image: {image_url}")
+            print(f"🔧 Resources: {resources}")
+
             # OPTIMIZATION: Skip namespace creation if it's 'default' (always exists)
             if namespace != 'default':
                 try:
                     self.core_v1.read_namespace(namespace)
+                    print(f"✅ Namespace '{namespace}' already exists")
                 except Exception:
+                    print(f"🔧 Creating namespace '{namespace}'")
                     ns_body = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace))
                     self.core_v1.create_namespace(ns_body)
+                    print(f"✅ Namespace '{namespace}' created")
 
             # OPTIMIZATION: Use minimal resource requirements
             resource_requests = {}
@@ -840,6 +866,7 @@ class CloudKubernetesProvider:
             resource_requirements = None
             if resource_requests:
                 resource_requirements = client.V1ResourceRequirements(requests=resource_requests)
+                print(f"🔧 Resource requirements: {resource_requests}")
 
             # Define container with minimal configuration
             container = client.V1Container(
@@ -876,18 +903,26 @@ class CloudKubernetesProvider:
                 spec=deployment_spec
             )
 
+            print(f"🚀 Creating deployment in Kubernetes...")
             # Create deployment with timeout
-            self.apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment)
+            result = self.apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment)
+            print(f"✅ Deployment created successfully: {result.metadata.name}")
+            
             return {
                 'status': 'success', 
                 'message': f'Deployment {base_name} created with {replicas} replicas in namespace {namespace}',
                 'deployment_name': base_name,
-                'replicas': replicas
+                'replicas': replicas,
+                'namespace': namespace
             }
         except ApiException as e:
-            return {'status': 'error', 'message': f'Kubernetes API error: {e}'}
+            error_msg = f'Kubernetes API error: {e}'
+            print(f"❌ {error_msg}")
+            return {'status': 'error', 'message': error_msg}
         except Exception as e:
-            return {'status': 'error', 'message': f'Failed to create pod: {e}'}
+            error_msg = f'Failed to create pod: {e}'
+            print(f"❌ {error_msg}")
+            return {'status': 'error', 'message': error_msg}
 
     def delete_pod(self, pod_data: Dict) -> Dict:
         """Delete a pod by name in the specified or default namespace."""
@@ -898,7 +933,7 @@ class CloudKubernetesProvider:
             pod_name = pod_data.get('PodName') or pod_data.get('pod_id')
             namespace = pod_data.get('namespace') or pod_data.get('Namespace') or 'default'
             
-            print(f"Attempting to delete pod {pod_name} from namespace {namespace}")
+            print(f"🗑️  Attempting to delete pod {pod_name} from namespace {namespace}")
             
             # Check if client is properly initialized
             if not self.core_v1:
@@ -907,17 +942,17 @@ class CloudKubernetesProvider:
             # First, check if the pod exists
             try:
                 self.core_v1.read_namespaced_pod(name=pod_name, namespace=namespace)
-                print(f"Pod {pod_name} exists, proceeding with deletion")
+                print(f"✅ Pod {pod_name} exists, proceeding with deletion")
             except ApiException as e:
                 if e.status == 404:
-                    print(f"Pod {pod_name} not found, already deleted")
+                    print(f"✅ Pod {pod_name} not found, already deleted")
                     return {'status': 'success', 'message': f'Pod {pod_name} was already deleted from namespace {namespace}'}
                 else:
-                    print(f"Error checking pod existence: {e}")
+                    print(f"❌ Error checking pod existence: {e}")
                     return {'status': 'error', 'message': f'Error checking pod existence: {e}'}
             
             # Try to delete the pod
-            print(f"Deleting pod {pod_name} from namespace {namespace}")
+            print(f"🗑️  Deleting pod {pod_name} from namespace {namespace}")
             self.core_v1.delete_namespaced_pod(name=pod_name, namespace=namespace)
             
             # Wait a moment for the deletion to complete
@@ -928,24 +963,24 @@ class CloudKubernetesProvider:
             try:
                 self.core_v1.read_namespaced_pod(name=pod_name, namespace=namespace)
                 # If we get here, the pod still exists
-                print(f"Pod {pod_name} still exists after deletion attempt")
+                print(f"❌ Pod {pod_name} still exists after deletion attempt")
                 return {'status': 'error', 'message': f'Pod {pod_name} still exists after deletion attempt'}
             except ApiException as e:
                 if e.status == 404:  # Pod not found - deletion successful
-                    print(f"Pod {pod_name} successfully deleted from namespace {namespace}")
+                    print(f"✅ Pod {pod_name} successfully deleted from namespace {namespace}")
                     return {'status': 'success', 'message': f'Pod {pod_name} deleted from namespace {namespace}'}
                 else:
-                    print(f"Kubernetes API error during verification: {e}")
+                    print(f"❌ Kubernetes API error during verification: {e}")
                     return {'status': 'error', 'message': f'Kubernetes API error during verification: {e}'}
                     
         except ApiException as e:
-            print(f"Kubernetes API error during deletion: {e}")
+            print(f"❌ Kubernetes API error during deletion: {e}")
             if e.status == 404:  # Pod not found
                 return {'status': 'success', 'message': f'Pod {pod_name} was already deleted from namespace {namespace}'}
             else:
                 return {'status': 'error', 'message': f'Kubernetes API error: {e}'}
         except Exception as e:
-            print(f"Unexpected error during pod deletion: {e}")
+            print(f"❌ Unexpected error during pod deletion: {e}")
             return {'status': 'error', 'message': f'Failed to delete pod: {e}'}
 
 
