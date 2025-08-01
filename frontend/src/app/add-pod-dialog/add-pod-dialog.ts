@@ -23,7 +23,7 @@ import { DefaultValues, ResourceType } from '../constants/app.constants';
     MatIconModule
   ],
   template: `
-    <h2 mat-dialog-title>Deploy New Pod(s)</h2>
+    <h2 mat-dialog-title>Deploy New Pod</h2>
     <mat-dialog-content>
       <form #podForm="ngForm" class="pod-form" (ngSubmit)="onSubmit()">
         <mat-form-field appearance="outline" >
@@ -31,18 +31,11 @@ import { DefaultValues, ResourceType } from '../constants/app.constants';
           <input matInput [(ngModel)]="pod.ServerDisplayName" name="ServerDisplayName" readonly>
         </mat-form-field>
         <div class="form-section-title">Pod Details</div>
-        <mat-form-field appearance="outline" style="width: 100%" [class.error-field]="namespaceError">
-          <mat-label>Namespace</mat-label>
-          <input matInput [(ngModel)]="pod.namespace" name="namespace" required
-                 (ngModelChange)="onNamespaceChange($event)" placeholder="Enter namespace name">
-          <mat-error *ngIf="namespaceError">{{ namespaceError }}</mat-error>
-        </mat-form-field>
-        <mat-form-field appearance="outline" style="width: 100%" [class.error-field]="replicaError">
-          <mat-label>Replica Count</mat-label>
-          <input matInput type="number" [(ngModel)]="pod.replicas" name="replicas" required
-                 (ngModelChange)="onReplicaChange($event)" min="1" max="100" placeholder="Number of pod replicas">
-          <mat-hint>Number of identical pods to deploy (1-100)</mat-hint>
-          <mat-error *ngIf="replicaError">{{ replicaError }}</mat-error>
+        <mat-form-field appearance="outline" style="width: 100%" [class.error-field]="PodNameError">
+          <mat-label>PodName</mat-label>
+          <input matInput [(ngModel)]="pod.pod_name" name="pod_name" required
+                 (ngModelChange)="onPodNameChange($event)" placeholder="Enter PodName">
+          <mat-error *ngIf="PodNameError">{{ PodNameError }}</mat-error>
         </mat-form-field>
         <div class="form-section-title">Resources</div>
         <mat-form-field appearance="outline" [class.error-field]="resourceErrors['gpus']">
@@ -130,7 +123,7 @@ import { DefaultValues, ResourceType } from '../constants/app.constants';
 export class AddPodDialogComponent extends PodDialogBase {
   @Output() podCreated = new EventEmitter<any>();
 
-  namespaceError: string = '';
+  PodNameError: string = '';
   replicaError: string = '';
 
   pod = {
@@ -142,7 +135,7 @@ export class AddPodDialogComponent extends PodDialogBase {
     image_url: DefaultValues.DEFAULT_IMAGE,
     ServerName: '',
     ServerDisplayName: '',
-    namespace: '',
+    pod_name: '',
     replicas: 1
   };
 
@@ -159,77 +152,68 @@ export class AddPodDialogComponent extends PodDialogBase {
     this.validateResources(resource, this.pod.Resources);
   }
 
-  onNamespaceChange(namespace: string) {
-    this.validateNamespace(namespace);
+  onPodNameChange(PodName: string) {
+    this.validatePodName(PodName);
   }
 
-  onReplicaChange(replicas: number) {
-    this.validateReplicas(replicas);
-  }
+  // onReplicaChange(replicas: number) {
+  //   this.validateReplicas(replicas);
+  // }
 
-  validateNamespace(namespace: string): boolean {
+  validatepodName(PodName: string): boolean {
     // Kubernetes namespace naming rules:
     // - Must be a valid DNS subdomain name
     // - Must contain only lowercase alphanumeric characters, '-' or '.'
     // - Must start and end with an alphanumeric character
     // - Must be no more than 253 characters
     
-    if (!namespace || namespace.trim() === '') {
+
+    if (!PodName || PodName.trim() === '') {
       // Allow empty namespace - it will default to 'default' in the backend
-      this.namespaceError = '';
+      this.PodNameError = '';
       return true;
     }
-    
-    const trimmedNamespace = namespace.trim();
-    
-    if (trimmedNamespace.length > 253) {
-      this.namespaceError = 'Namespace must be 253 characters or less';
+    const trimmedPodName = PodName.trim();
+
+    if (PodName.length > 253) {
+      this.PodNameError = 'Namespace must be 253 characters or less';
       return false;
     }
-    
+
     // Check for valid DNS subdomain name pattern
-    const namespaceRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;
-    if (!namespaceRegex.test(trimmedNamespace)) {
-      this.namespaceError = 'Namespace must contain only lowercase alphanumeric characters, hyphens, and dots. Must start and end with alphanumeric character.';
+    const podNameRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/;
+    if (!podNameRegex.test(trimmedPodName)) {
+      this.PodNameError = 'podname must contain only lowercase alphanumeric characters, hyphens, and dots. Must start and end with alphanumeric character.';
       return false;
     }
-    
-    // Check for reserved namespaces
-    const reservedNamespaces = ['kube-system', 'kube-public', 'kube-node-lease'];
-    if (reservedNamespaces.includes(trimmedNamespace)) {
-      this.namespaceError = 'Cannot use reserved namespace names';
-      return false;
-    }
-    
-    this.namespaceError = '';
     return true;
   }
 
-  validateReplicas(replicas: number): boolean {
-    if (!replicas || replicas < 1) {
-      this.replicaError = 'Replica count must be at least 1';
-      return false;
-    }
+  // validateReplicas(replicas: number): boolean {
+  //   if (!replicas || replicas < 1) {
+  //     this.replicaError = 'Replica count must be at least 1';
+  //     return false;
+  //   }
     
-    if (replicas > 100) {
-      this.replicaError = 'Replica count cannot exceed 100';
-      return false;
-    }
+  //   if (replicas > 100) {
+  //     this.replicaError = 'Replica count cannot exceed 100';
+  //     return false;
+  //   }
     
-    if (!Number.isInteger(replicas)) {
-      this.replicaError = 'Replica count must be a whole number';
-      return false;
-    }
+  //   if (!Number.isInteger(replicas)) {
+  //     this.replicaError = 'Replica count must be a whole number';
+  //     return false;
+  //   }
     
-    this.replicaError = '';
-    return true;
-  }
+  //   this.replicaError = '';
+  //   return true;
+  // }
 
   onSubmit() {
     this.validateAllResources(this.pod.Resources);
-    this.validateNamespace(this.pod.namespace);
-    this.validateReplicas(this.pod.replicas);
-    if (this.hasResourceErrors() || this.namespaceError || this.replicaError) {
+    this.validatePodName(this.pod.pod_name);
+    // this.validateReplicas(this.pod.replicas);
+    if (this.hasResourceErrors() || this.PodNameError || this.replicaError) {
       return;
     }
     this.podCreated.emit(this.pod);

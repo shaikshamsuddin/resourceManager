@@ -227,7 +227,7 @@ export class App implements OnInit, OnDestroy {
     // Show confirmation dialog
     const confirmData: ConfirmDialogData = {
       title: 'Confirm Pod Deletion',
-      message: `Are you sure you want to delete pod "${pod.pod_id}" from namespace "${pod.namespace || 'default'}"? This action cannot be undone.`,
+      message: `Are you sure you want to delete pod "${pod.pod_id}" ? This action cannot be undone.`,
       confirmText: 'Delete Pod',
       cancelText: 'Cancel',
       type: 'danger'
@@ -252,7 +252,7 @@ export class App implements OnInit, OnDestroy {
     
     const payload = {
       server_id: this.selectedServer.server_id || this.selectedServer.id,
-      PodName: pod.pod_id
+      pod_name: pod.pod_id
     };
     console.log('Delete payload:', payload);
     
@@ -345,7 +345,7 @@ export class App implements OnInit, OnDestroy {
     this.showAlert(
       'info',
       'Creating Pod(s)',
-      `Creating ${podData.replicas || 1} pod(s) in namespace "${podData.namespace || 'default'}" on server ${serverId}...`
+      `Creating pod on server ${serverId}...`
     );
     
     this.http.post(ApiConfig.getCreatePodUrl(), payload).subscribe({

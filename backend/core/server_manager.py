@@ -327,7 +327,6 @@ class ServerManager:
         ok, err = validate_resource_request(server_data, pod_data.get('Resources', {}))
         if not ok:
             raise ValueError(err)
-        
         provider = self.server_providers[server_id]["provider"]
         
         # Get fresh live data for backend validation
