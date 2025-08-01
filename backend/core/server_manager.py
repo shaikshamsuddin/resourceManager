@@ -10,11 +10,20 @@ warnings.filterwarnings('ignore', category=Warning, module='urllib3')
 
 import os
 import json
+import time
+import uuid
+from datetime import datetime
+from flask import  jsonify
 from typing import Dict, List, Optional
 from kubernetes import client, config
 from providers.cloud_kubernetes_provider import CloudKubernetesProvider
 from config.types import MasterConfig, ServerConfig
-
+from config.utils import (
+    get_available_resources,
+    validate_resource_request,
+    create_pod_k8s,
+    delete_pod_k8s
+)
 
 class ServerManager:
     """Manages server configurations and Kubernetes providers."""
@@ -238,31 +247,185 @@ class ServerManager:
         
         return None
     
+    def _append_pending_pod_to_master(self, pod_data: Dict) -> Dict:
+        """
+        Append a pending pod entry for the given server_id into master.json.
+        Raises if pod_id already exists or required fields are missing.
+        Returns the pod entry that was added.
+        """
+        pod_id = pod_data.get("pod_name") 
+        server_id = pod_data.get("server_id")
+
+        namespace = f"{pod_id}-ns"
+        image_url = pod_data.get("image_url") or None
+
+        resources = pod_data.get("Resources") or {}
+        requested = {
+            "cpus": resources.get("cpus", 0),
+            "ram_gb": resources.get("ram_gb", 0),
+            "storage_gb": resources.get("storage_gb", 0),
+            "gpus": resources.get("gpus", 0)
+        }
+
+        owner = pod_data.get("owner", "unknown")
+        status = "pending"
+        timestamp = datetime.now().isoformat()
+        pod_ip = None
+
+        pending_pod = {
+            "pod_id": pod_id,
+            "name": pod_id,
+            "namespace": namespace,
+            "server_id": server_id,
+            "image_url": image_url,
+            "requested": requested,
+            "owner": owner,
+            "status": status,
+            "timestamp": timestamp,
+            "pod_ip": pod_ip
+        }
+
+        # Locate server
+        for server in self.master_config.get("servers", []):
+            if server.get("id") == server_id:
+                server.setdefault("pods", [])
+
+                # Check for existing pod
+                for existing in server["pods"]:
+                    if (existing.get("pod_id") and existing.get("pod_id") == pod_id) or \
+                    (existing.get("name") and existing.get("name") == pod_id):
+                        print(f"❌ Pod '{pod_id}' already exists on server '{server_id}'")
+                        raise ValueError(f"Pod '{pod_id}' already exists on server '{server_id}'")
+
+                # Append and persist
+                server["pods"].append(pending_pod)
+                config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+                temp_path = config_path + ".tmp"
+                with open(temp_path, "w") as f:
+                    json.dump(self.master_config, f, indent=2)
+                os.replace(temp_path, config_path)
+                return pending_pod
+
+        # Server not found
+        raise ValueError(f"Server '{server_id}' not found in master config")
+
+
+    def validation_steps(self, pod_data) -> Dict:
+        server_id = pod_data.get('server_id')
+        pod_id = pod_data.get("pod_name") 
+
+        # Append pending pod; will raise if pod exists or server missing
+        pod_object = self._append_pending_pod_to_master(pod_data)
+        print(f"✅ Appended pending pod {pod_object.get('pod_id')}")
+
+        # Validate resources against the static/master view
+        servers = self.get_all_servers_static()
+        server_data = next((s for s in servers if s.get('server_id') == server_id), None)
+        if not server_data:
+            raise ValueError(f"Server '{server_id}' not found")
+
+        ok, err = validate_resource_request(server_data, pod_data.get('Resources', {}))
+        if not ok:
+            raise ValueError(err)
+        
+        provider = self.server_providers[server_id]["provider"]
+        
+        # Get fresh live data for backend validation
+        print(f"🔍 Validating pod creation for {pod_data.get('PodName', '')} on server {server_id}")
+        cluster_server = provider.get_cluster_available_resources_raw()
+        print(f"✅ Cluster resources: {cluster_server}")
+        if cluster_server:
+            # Backend validation: Validate against live Kubernetes data
+            ok, err = validate_resource_request(cluster_server, pod_data.get("Resources", {}))
+            if not ok:
+                return jsonify({'error': err}), 400
+            
+        updated_resources = self.reserve_resources_in_master_simple(
+                    self.master_config,
+                    server_id,
+                    pod_object.get("requested", {})
+                )
+            
+        return pod_object
+
     def create_pod(self, server_id: str, pod_data: Dict) -> Dict:
         """Create a pod on the specified server."""
-        # OPTIMIZATION: Only reload config if provider doesn't exist
+        try:
+            pod_object = self.validation_steps(pod_data)
+        except ValueError as e:
+            return {'status': 'error', 'message': str(e)}
+
         if server_id not in self.server_providers:
             self.reload_config()
             if server_id not in self.server_providers:
                 return {"error": f"Server {server_id} not found"}
-        
         try:
             provider = self.server_providers[server_id]["provider"]
-            result = provider.create_pod(pod_data)
+            result = provider.create_pod(pod_object)
             
             # OPTIMIZATION: Sync pods synchronously after successful creation
             if result.get('status') == 'success':
                 try:
-                    # Add a small delay to allow pod to start transitioning from Pending to Running
-                    import time
                     time.sleep(2)
-                    self.sync_pods_from_kubernetes(server_id)
+                    self.update_pod_object(server_id, pod_object, creation_result=result)
                 except Exception as e:
                     print(f"Sync failed but pod was created: {e}")
-            
+            else:
+                self.update_pod_object(server_id, pod_object, creation_result=result)
+
             return result
         except Exception as e:
             return {"error": f"Failed to create pod: {e}"}
+        
+    def update_pod_object(self, server_id: str, pod_object: Dict, creation_result: Dict) -> Dict:
+        """
+        Update the pending pod_object in master.json based on creation_result.
+        - If creation succeeded, mark as online and inject pod_ip / external_ip.
+        - If it failed, mark as failed and record error.
+        """
+        pod_id = pod_object.get("pod_id") or pod_object.get("name")
+        if not pod_id:
+            return pod_object  # nothing to do
+
+        # Update status and fields based solely on creation_result
+        if creation_result.get("status") == "success":
+            pod_object["status"] = "online"
+            # Prefer whatever the result returned, fallback to existing
+            if "pod_ip" in creation_result:
+                pod_object["pod_ip"] = creation_result.get("pod_ip")
+            if "external_ip" in creation_result:
+                pod_object["external_ip"] = creation_result.get("external_ip")
+        else:
+            pod_object["status"] = "failed"
+
+        pod_object["timestamp"] = datetime.now().isoformat()
+
+        # Persist into master.json: replace existing pod entry or append
+        for server in self.master_config.get("servers", []):
+            if server.get("id") == server_id:
+                server.setdefault("pods", [])
+                replaced = False
+                for idx, existing in enumerate(server["pods"]):
+                    if (existing.get("pod_id") and existing.get("pod_id") == pod_id) or \
+                    (existing.get("name") and existing.get("name") == pod_id):
+                        server["pods"][idx] = pod_object
+                        replaced = True
+                        break
+                if not replaced:
+                    server["pods"].append(pod_object)
+                break
+
+        # Atomic write back
+        try:
+            config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+            temp_path = config_path + ".tmp"
+            with open(temp_path, "w") as f:
+                json.dump(self.master_config, f, indent=2)
+            os.replace(temp_path, config_path)
+        except Exception as e:
+            print(f"Failed to persist updated pod_object to master.json: {e}")
+
+        return pod_object
 
     def delete_pod(self, server_id: str, pod_name: str, pod_data: Dict = None) -> Dict:
         """Delete a pod from the specified server and update master.json only if successful."""
@@ -280,17 +443,13 @@ class ServerManager:
                 if server.get('id') == server_id:
                     for pod in server.get('pods', []):
                         if pod.get('pod_id') == pod_name or pod.get('name') == pod_name:
+                            pod_object = pod
                             pod_namespace = pod.get('namespace', 'default')
                             print(f"ServerManager: Found pod {pod_name} in namespace {pod_namespace}")
                             break
                     break
             
-            if not pod_namespace:
-                print(f"ServerManager: Pod {pod_name} not found in master.json, using default namespace")
-                pod_namespace = 'default'
-            
             provider = self.server_providers[server_id]["provider"]
-            # Pass pod_data with namespace information
             pod_data = pod_data or {"PodName": pod_name, "namespace": pod_namespace}
             print(f"ServerManager: Calling provider delete_pod with data: {pod_data}")
             
@@ -299,34 +458,31 @@ class ServerManager:
             
             if result.get('status') == 'success':
                 print(f"ServerManager: Pod deletion successful, syncing pods from Kubernetes")
-                # Sync pods from Kubernetes to update master.json with fresh data
+
                 try:
-                    import time
-                    time.sleep(2)  # Small delay to allow deletion to complete
-                    sync_result = self.sync_pods_from_kubernetes(server_id)
-                    print(f"ServerManager: Sync result: {sync_result}")
+                    self.release_resources_in_master_simple(self.master_config, server_id, pod_object.get('requested'))
+                    print(f"ServerManager: Released resources for pod {pod_name}")
                 except Exception as e:
-                    print(f"ServerManager: Sync failed but pod was deleted: {e}")
+                    print(f"ServerManager: Failed to release resources for pod {pod_name}: {e}")
                     # Fallback: manually remove from master.json
-                    self.master_config = self._load_master_config()
-                    for server in self.master_config.get('servers', []):
-                        if server.get('id') == server_id:
-                            original_count = len(server.get('pods', []))
-                            server['pods'] = [p for p in server.get('pods', []) if p.get('pod_id') != pod_name and p.get('name') != pod_name]
-                            new_count = len(server.get('pods', []))
-                            print(f"ServerManager: Removed {original_count - new_count} pods from master.json")
-                    config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
-                    with open(config_path, 'w') as f:
-                        json.dump(self.master_config, f, indent=2)
+                self.master_config = self._load_master_config()
+                for server in self.master_config.get('servers', []):
+                    if server.get('id') == server_id:
+                        original_count = len(server.get('pods', []))
+                        server['pods'] = [p for p in server.get('pods', []) if p.get('pod_id') != pod_name and p.get('name') != pod_name]
+                        new_count = len(server.get('pods', []))
+                        print(f"ServerManager: Removed {original_count - new_count} pods from master.json")
+                config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+                with open(config_path, 'w') as f:
+                    json.dump(self.master_config, f, indent=2)
             else:
                 print(f"ServerManager: Pod deletion failed: {result}")
+                return {"error": f"Failed to delete pod: {result.get('message', 'Unknown error')}"}
             
             return result
         except Exception as e:
             print(f"ServerManager: Exception during pod deletion: {e}")
             return {"error": f"Failed to delete pod: {e}"}
-    
-
     
     def reload_config(self):
         """Reload the master configuration."""
@@ -334,35 +490,70 @@ class ServerManager:
         self.server_providers = {}
         self._initialize_providers()
 
-    def sync_pods_from_kubernetes(self, server_id: str) -> Dict:
-        """Fetch live pod data from the provider and update the pods field in master.json for the given server."""
-        if server_id not in self.server_providers:
-            return {"error": f"Server {server_id} not found"}
-        try:
-            provider = self.server_providers[server_id]["provider"]
-            # Fetch live pods from provider
-            servers_data = provider.get_servers_with_pods()
-            
-            # Flatten all pods from all nodes (if node-based)
-            live_pods = []
-            for node in servers_data:
-                if "pods" in node:
-                    for pod in node["pods"]:
-                        live_pods.append(pod)
-            
-            # Update master.json
-            self.master_config = self._load_master_config()
-            for server in self.master_config.get("servers", []):
-                if server.get("id") == server_id:
-                    server["pods"] = live_pods
-            
-            # Write back to master.json
+    def reserve_resources_in_master_simple(self,master_config: dict, server_id: str, pod_requested: dict) -> dict:
+        """
+        Subtract requested resources from available and add to allocated in master.json for given server_id.
+        Persists the change immediately by overwriting master.json (no temp file).
+        Returns the updated resources dict.
+        """
+        # Locate server
+        server = next((s for s in master_config.get("servers", []) if s.get("id") == server_id), None)
+        if not server:
+            raise ValueError(f"Server '{server_id}' not found in master config")
+
+        # Ensure resource structure exists
+        server.setdefault("resources", {})
+        resources = server["resources"]
+
+        # Adjust each resource
+        for key in ["cpus", "ram_gb", "storage_gb", "gpus"]:
+            req = pod_requested.get(key, 0) or 0
+            # Increase allocated
+            prev_alloc = resources["allocated"].get(key, 0)
+            resources["allocated"][key] = prev_alloc + req
+            # Decrease available, floor at 0
+            prev_avail = resources["available"].get(key, 0)
+            resources["available"][key] = max(0, prev_avail - req)
+
+        # Persist immediately (overwrite)
+        config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
+        with open(config_path, "w") as f:
+            json.dump(master_config, f, indent=2)
+
+        return resources
+    
+    def release_resources_in_master_simple(self, master_config: dict, server_id: str, pod_requested: dict) -> dict:
+        """
+        Reverse of reserve: add requested resources back to available and subtract from allocated
+        for given server_id. Caps available so allocated+available <= total. Persists immediately.
+        Returns updated resources dict.
+        """
+        print(f"ServerManager: Releasing resources for server {server_id} with request: {pod_requested}")
+        server = next((s for s in master_config.get("servers", []) if s.get("id") == server_id), None)
+        if not server:
+            raise ValueError(f"Server '{server_id}' not found in master config")
+        
+        resources = server["resources"]
+        allocated = resources["allocated"]
+        available = resources["available"]
+
+        for key in ["cpus", "ram_gb", "storage_gb", "gpus"]:
+            req = pod_requested.get(key, 0) or 0
+
+            # Decrease allocated (floor at 0)
+            prev_alloc = allocated.get(key, 0)
+            allocated[key] = max(0, prev_alloc - req)
+
+            # Increase available by released amount
+            prev_avail = available.get(key, 0)
+            available[key] = prev_avail + req
+
+            # Persist immediately
             config_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'master.json')
-            with open(config_path, 'w') as f:
-                json.dump(self.master_config, f, indent=2)
-            return {"status": "success", "pods": live_pods}
-        except Exception as e:
-            return {"error": f"Failed to sync pods: {e}"}
+            with open(config_path, "w") as f:
+                json.dump(master_config, f, indent=2)
+
+        return resources
 
 
 # Create a global instance
