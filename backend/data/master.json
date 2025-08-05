@@ -59,14 +59,14 @@
         },
         "allocated": {
           "cpus": 6,
-          "ram_gb": 159,
-          "storage_gb": 169,
+          "ram_gb": 160,
+          "storage_gb": 170,
           "gpus": 0
         },
         "available": {
           "cpus": 1.6999999999999997,
-          "ram_gb": 54.70000000000002,
-          "storage_gb": 71,
+          "ram_gb": 53.70000000000002,
+          "storage_gb": 70,
           "gpus": 0
         },
         "actual_usage": {
@@ -88,60 +88,9 @@
       },
       "pods": [
         {
-          "pod_id": null,
-          "name": null,
-          "namespace": "None-ns",
-          "server_id": "kubernetes-4-246-178-26",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 1,
-            "storage_gb": 1,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "pending",
-          "timestamp": "2025-08-01T16:44:30.878424",
-          "pod_ip": null
-        },
-        {
-          "pod_id": null,
-          "name": null,
-          "namespace": "None-ns",
-          "server_id": "kubernetes-4-246-178-26",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 4,
-            "storage_gb": 2,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "pending",
-          "timestamp": "2025-08-01T16:48:51.322424",
-          "pod_ip": null
-        },
-        {
-          "pod_id": null,
-          "name": null,
-          "namespace": "None-ns",
-          "server_id": "kubernetes-4-246-178-26",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 1,
-            "storage_gb": 1,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "pending",
-          "timestamp": "2025-08-01T16:53:55.284973",
-          "pod_ip": null
-        },
-        {
-          "pod_id": "centific",
-          "name": "centific",
-          "namespace": "centific-ns",
+          "pod_id": "centidicc643",
+          "name": "centidicc643",
+          "namespace": "centidicc643-ns",
           "server_id": "kubernetes-4-246-178-26",
           "image_url": "nginx:latest",
           "requested": {
@@ -152,115 +101,9 @@
           },
           "owner": "unknown",
           "status": "online",
-          "timestamp": "2025-08-01T16:59:21.005050",
-          "pod_ip": "10.1.0.44",
-          "external_ip": "10.1.0.44"
-        },
-        {
-          "pod_id": "testing",
-          "name": "testing",
-          "namespace": "testing-ns",
-          "server_id": "kubernetes-4-246-178-26",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 1,
-            "storage_gb": 1,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-08-01T17:00:22.685327",
-          "pod_ip": "10.1.0.41",
-          "external_ip": "10.1.0.41"
-        },
-        {
-          "pod_id": "centific07",
-          "name": "centific07",
-          "namespace": "centific07-ns",
-          "server_id": "kubernetes-4-246-178-26",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 1,
-            "storage_gb": 1,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-08-01T17:24:25.213043",
+          "timestamp": "2025-08-04T17:15:05.791893",
           "pod_ip": "10.1.0.60",
           "external_ip": "10.1.0.60"
-        },
-        {
-          "pod_id": "centific_123",
-          "name": "centific_123",
-          "namespace": "centific_123-ns",
-          "server_id": "kubernetes-4-246-178-26",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 1,
-            "storage_gb": 1,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "failed",
-          "timestamp": "2025-08-01T18:56:20.992873",
-          "pod_ip": null
-        },
-        {
-          "pod_id": "test",
-          "name": "test",
-          "namespace": "test-ns",
-          "server_id": "kubernetes-4-246-178-26",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 1,
-            "storage_gb": 1,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-08-01T18:59:14.014547",
-          "pod_ip": "10.1.0.9",
-          "external_ip": "10.1.0.9"
-        },
-        {
-          "pod_id": "centific_12",
-          "name": "centific_12",
-          "namespace": "centific_12-ns",
-          "server_id": "kubernetes-4-246-178-26",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 10,
-            "storage_gb": 10,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "failed",
-          "timestamp": "2025-08-04T10:27:57.586919",
-          "pod_ip": null
-        },
-        {
-          "pod_id": "centific0001",
-          "name": "centific0001",
-          "namespace": "centific0001-ns",
-          "server_id": "kubernetes-4-246-178-26",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 10,
-            "storage_gb": 10,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-08-04T11:45:32.922544",
-          "pod_ip": "10.1.0.38",
-          "external_ip": "10.1.0.38"
         }
       ],
       "status": "Online"
@@ -318,21 +161,21 @@
       "resources": {
         "total": {
           "cpus": 10,
-          "ram_gb": 10,
-          "storage_gb": 10,
+          "ram_gb": 110,
+          "storage_gb": 28,
           "gpus": 10
         },
         "allocated": {
           "cpus": 0,
-          "ram_gb": 10,
-          "storage_gb": 5,
+          "ram_gb": 0,
+          "storage_gb": 0,
           "gpus": 0
         },
         "available": {
-          "cpus": 10,
-          "ram_gb": 0,
-          "storage_gb": 5,
-          "gpus": 10
+          "cpus": 0,
+          "ram_gb": 109,
+          "storage_gb": 27,
+          "gpus": 0
         }
       },
       "metadata": {
@@ -345,26 +188,7 @@
         "last_updated": "2025-07-30T14:55:07.158204",
         "live_data_fresh": false
       },
-      "pods": [
-        {
-          "pod_id": "centific",
-          "name": "centific",
-          "namespace": "centific-ns",
-          "server_id": "kubernetes-4-246-163-135",
-          "image_url": "nginx:latest",
-          "requested": {
-            "cpus": 0,
-            "ram_gb": 10,
-            "storage_gb": 5,
-            "gpus": 0
-          },
-          "owner": "unknown",
-          "status": "online",
-          "timestamp": "2025-08-04T12:10:23.007833",
-          "pod_ip": "10.1.83.83",
-          "external_ip": "10.1.83.83"
-        }
-      ],
+      "pods": [],
       "status": "Online"
     }
   ],

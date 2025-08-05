@@ -9,7 +9,7 @@ import os
 
 # Add the current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
+from flask_cors import CORS
 # Import the Flask app from the core module
 from core.app import app
 
